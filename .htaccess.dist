@@ -1,0 +1,47 @@
+# RESTfm .htaccess file for use with Apache 2.2 and 2.4.
+
+Options -Indexes
+
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Work around an Apache 2.4 < 2.4.9 bug where RewriteRule
+    # is overridden by DirectoryIndex. i.e. index.html will always
+    # be loaded no matter what RewriteRules say!
+    #DirectoryIndex disabled
+
+    # Uncomment to enforce SSL with redirect.
+    #RewriteCond %{HTTPS} !=on
+    #RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Work around for HTTP Basic Auth for Apache CGI/FCGI/suExec server modes.
+    RewriteRule ".*" - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Block access to .svn directories.
+    RewriteRule ".*\.svn/.*" - [F]
+
+    # Block access to .git directory.
+    RewriteRule ".*\.git/.*" - [F]
+
+    # Block access to .gitignore.
+    RewriteRule ".*\.gitignore" - [F]
+
+    # Block access to .htaccess files.
+    RewriteRule "(^|/)\.htaccess" - [F]
+
+    # Block access to RESTfm.ini.php
+    RewriteRule "RESTfm.ini.php" - [F]
+
+    # Set RewriteBase if RESTfm is in a subdirectory.
+    # Must also set baseURI in RESTfm.ini.php
+    # Example for: http://example.com/~user/RESTfm
+    #    would be: RewriteBase /~user/RESTfm
+    RewriteBase /RESTfm
+
+    # Redirect all URLs to RESTfm.php
+    RewriteCond %{REQUEST_URI} !RESTfm\.php$
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ".*" RESTfm.php [L,QSA]
+</IfModule>

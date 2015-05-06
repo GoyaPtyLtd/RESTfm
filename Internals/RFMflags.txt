@@ -1,0 +1,44 @@
+RESTfm takes various flags and parameters in the form RFM*. These are parsed
+in RESTfmRequest::parse() and stored in a RESTfmParameters instance. The
+RESTfmParameters instance for a RESTfmRequest instance is accesible through
+the RESTfmRequest::getRESTfmParameters() method.
+
+The priority of parameter sources is defined as:
+
+    Parameters are populated from multiple sources, in the following lowest
+    to heighest priority:
+       3) Any RFM* parameters inside the 'info' section of the submitted
+          HTTP data.
+       2) Any RFM* parameters in application/x-www-form-urlencoded or
+          multipart/form-data.
+       1) Any RFM* parameters in the URI query string.
+
+This document lists existing RFM* flags/parameters and the files they
+are referenced in. (See relevant file for details on parameter usage).
+
+RFMappend - uriRecord.php
+RFMcheckFMAPI - Diagnostics.php
+RFMdata - RESTfmRequest.php
+RFMechoServer - uriDatabaseEcho.php
+RFMelseCreate - uriBulk.php, uriRecord.php
+RFMelsePOST - uriBulk.php, uriRecord.php
+RFMfixFM01 - RESTfmQueryString.php
+RFMfixFM02 - RESTfmQueryString.php
+RFMformat - RESTfmRequest.php
+RFMkey - RESTfmCredentials.php
+RFMlink - uriRoot.php
+RFMmax - uriLayout.php
+RFMmetaFieldOnly - uriLayout.php
+RFMmethod - RESTfmRequest.php
+RFMpreScriptParam - uriField.php, uriLayout.php, uriRecord.php
+RFMpreScript - uriField.php, uriLayout.php, uriRecord.php
+RFMreauth - RESTfmResponse.php
+RFMscriptParam - uriField.php, uriLayout.php, uriRecord.php, uriScript.php
+RFMscript - uriField.php, uriLayout.php, uriRecord.php
+RFMsF - uriLayout.php
+RFMskip - uriLayout.php
+RFMsquash2XX - RESTfm.php
+RFMsuppressData - uriLayout.php, uriScript.php
+RFMsV - uriLayout.php
+RFMurlencoded - RESTfmRequest.php
+RFMversion - Diagnostics.php

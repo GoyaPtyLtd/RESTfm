@@ -1,0 +1,10 @@
+Notes on RESTfm internals - Goya internal use only, not for redistribution.
+---------------------------------------------------------------------------
+
+RESTfm uses rawurlencode() for RFC 3986 compliance, but uses urldecode() to
+remain compatible with systems that encode spaces as '+'. This combination 
+seems to work well for all cases, where matching raw and non-raw functions does
+not!
+
+RESTfm does not use PHP namespaces (introduced in PHP 5.3.0) due to supporting
+FileMaker Server 11 which deploys PHP 5.2.17.

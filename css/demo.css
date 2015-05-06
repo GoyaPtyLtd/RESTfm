@@ -1,0 +1,221 @@
+/**
+ * RESTfm Demonstration Web Application.
+ *
+ * @copyright
+ *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *
+ * @license
+ *  Licensed under The MIT License. For full copyright and license information,
+ *  please see the LICENSE file distributed with this package.
+ *  Redistributions of files must retain the above copyright notice.
+ *
+ * @link
+ *  http://restfm.com
+ *
+ * @author
+ *  Gavin Stewart
+ */
+
+/* Main page and content style. */
+body {
+    background-color: #333333;
+    font-family: Lucida Grande, Lucida Sans, Arial, sans-serif;
+    font-size: 62.5%;
+    margin: 5px;
+}
+
+.content {
+    background-color: white;
+    border: 1px solid black;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -khtml-border-radius: 5px;
+    border-radius: 5px;
+    font-size: 1.3em;
+    margin: auto;
+    padding: 5px;
+}
+
+/* Some colour classes used from javascript. */
+.color_disabled { color: #bbbbbb; }
+.color_disabled_background { background-color: #edeceb; }
+.color_error { color: #FF0000; }
+.row_alt_color { background-color: #EEEEEE; }
+.row_highlight { background-color: #ec8e0c !important; color: white !important;}
+
+/* Stop FireFox from decorating clicked links with a dotted outline. */
+a:active, a:focus {
+  outline: none;
+}
+
+/* Initial visibility state. */
+#throbber { visibility: hidden; }
+#D_record { display: none; }
+#D_info { display: none; }
+#D_options { display: none; }
+
+/* Layout working down the page */
+
+#throbber {
+    float: right;
+    padding-top: 2px;
+}
+
+#logo {
+    vertical-align: top;
+}
+
+#content > h1 {
+    color: #444;
+    display: inline-block;
+    margin: 4px;
+}
+
+#credentials {
+    float: right;
+    margin-bottom: 4px;
+    position: relative;
+}
+
+#credentials .credentials_input {
+    width: 100px;
+}
+
+#credentials > div#login_block {
+    margin-right: 36px;
+    text-align: end;
+}
+
+#credentials > div#login_block > div.hide_on_auth > span {
+    clear: both;
+    display: block;
+    float: right;
+    margin-bottom: 3px;
+    white-space: nowrap;
+}
+
+#credentials > div#options_block {
+    bottom: 0;
+    position: absolute;
+    right: 0;
+}
+
+#selector_group_1 {
+    display: inline-block;
+    vertical-align: text-bottom;
+}
+
+#content select {
+    min-width: 100px;
+    disabled: true;
+}
+
+.selector {
+    white-space: nowrap;
+}
+
+#results_box {
+    border: 1px solid black;
+    clear: both;
+    margin-bottom: 5px;
+    margin-top: 5px;
+    min-height: 200px;
+    overflow: scroll;
+    overflow-y: hidden;
+}
+
+#results table {
+    padding: 4px;
+}
+
+#results tr {
+    height: 1em;
+}
+
+#results th {
+    font-size: 0.8em;
+    text-align: left;
+}
+
+#results td {
+    padding: 0;
+    vertical-align: top;
+    white-space: nowrap;
+}
+
+#results pre {
+    font-family: Lucida Grande, Lucida Sans, Arial, sans-serif;
+    margin: 0;
+    overflow: auto;
+}
+
+#button_group_2 {
+    float: right;
+}
+
+#results tr:hover:not(.row_highlight) {
+    background-color: #1c94c4;
+    color: white;
+}
+
+#status_bar {
+    background-color: #eeeeee;
+    border-style: inset;
+    border-width: 1px;
+    clear: both;
+    margin-top: 8px;
+    padding: 2px;
+    min-height: 1.1em;
+}
+
+#console_box {
+    background-color: #eeeeee;
+    border-style: inset;
+    border-width: 1px;
+    clear: both;
+    display: none;
+    margin-top: 8px;
+    max-height: 200px;
+    overflow: auto;
+    padding: 2px;
+}
+
+#footer {
+    clear: both;
+}
+
+#version {
+    float: right;
+}
+
+#D_options > span {
+    display: block;
+    padding-left: 16px;
+    text-indent: -20px;
+}
+
+#D_options > span input {
+    margin-bottom: 0;
+    margin-left: 0;
+    margin-right: 0;
+    margin-top: 10px;
+    vertical-align: bottom;
+}
+
+/* Override and set jQuery UI styles. */
+.ui-widget {
+    font-family: Lucida Grande, Lucida Sans, Arial, sans-serif;
+    font-size: 1em;
+}
+
+.ui-dialog {
+    font-size: 1.3em;
+}
+
+.ui-widget-overlay { background: black;}
+
+.ui-button-text-only .ui-button-text { padding: 0.1em 0.5em; }
+.ui-button-icon-only .ui-button-text, .ui-button-icons-only .ui-button-text { padding: 0.1em }
+.ui-button-text-icon-primary .ui-button-text, .ui-button-text-icons .ui-button-text { padding: 0.1em 0.5em 0.1em 2.2em; }
+.ui-button-text-icon-secondary .ui-button-text, .ui-button-text-icons .ui-button-text { padding: 0.1em 2.2em 0.1em 0.5em; }
+.ui-button-text-icons .ui-button-text { padding: 0.1em 2.2em; }

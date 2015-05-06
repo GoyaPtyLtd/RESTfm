@@ -1,0 +1,86 @@
+/**
+ * Basic formatting for RESTfm html output.
+ *
+ * @copyright
+ *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *
+ * @license
+ *  Licensed under The MIT License. For full copyright and license information,
+ *  please see the LICENSE file distributed with this package.
+ *  Redistributions of files must retain the above copyright notice.
+ *
+ * @link
+ *  http://restfm.com
+ *
+ * @author
+ *  Gavin Stewart
+ */
+
+body {
+    font-family: Lucida Grande, Lucida Sans, Arial, sans-serif;
+    font-size: 62.5%;
+}
+
+body > div {
+    border: 1px solid;
+    display: table;
+    font-size: 1.3em;
+    margin: 4px;
+    min-height: 1em;
+    padding: 8px;
+}
+
+#logo {
+    border: none;
+    float: right;
+    font-size: 1.0em;
+    margin: 0px;
+    padding: 0px;
+}
+
+#logo > a {
+    display: block;
+}
+
+#logo > span {
+    float: right;
+    margin-top: -7px;
+}
+
+.warn {
+    color: red;
+    font-weight: bold;
+    font-size: 2em;
+}
+
+h3 {
+    margin: 0px;
+    text-decoration:underline;
+}
+
+th {
+    font-size: 0.8em;
+    text-align: left;
+    vertical-align: top;
+}
+
+td {
+    padding: 0;
+    vertical-align: top;
+    white-space: nowrap;
+}
+
+.alt-colour {
+    background-color: #EEEEEE;
+}
+
+pre {
+    font-size: 1.3em;
+    margin: 0px;
+    overflow: auto;
+}
+
+/* Stop FireFox from decorating clicked links with a dotted outline. */
+a:active, a:focus {
+  outline: none;
+}

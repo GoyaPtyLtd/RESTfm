@@ -1,0 +1,14 @@
+- The REST frontend (where we use an older version of the Tonic PHP REST
+API) takes Requests on REST URI Resources and produces Responses.
+
+- HTTP Request data is parsed through an import filter into an internal
+RESTfmData object/format (which looks remarkably similar to the .txt
+format you get from the RESTfm web API (see manual)).
+  - All of the RFM* flags and arguments (see manual) are also parsed out
+here.
+
+- The request RESTfmData is passed to a backend database for processing,
+which returns another RESTfmData object in response.
+
+- The response RESTfmData is parsed through an export filter for the
+final HTTP Response that is returned.

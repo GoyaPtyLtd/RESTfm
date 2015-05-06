@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    RESTfm Microsoft IIS 7.0 web.config file.
+
+    RESTfm requires the URL rewrite module available from Microsoft:
+    http://www.iis.net/download/urlrewrite
+-->
+<configuration>
+    <system.webServer>
+
+        <!-- Rewrite all URLs to RESTfm.php (converted from .htaccess RewriteRules). -->
+        <rewrite>
+            <rules>
+
+            <!-- Uncomment to enforce SSL with redirect.
+                <rule name="Redirect to https" stopProcessing="true">
+                    <match url="(.*)" />
+                    <conditions>
+                        <add input="{HTTPS}" pattern="off" ignoreCase="true" />
+                    </conditions>
+                    <action type="Redirect" url="https://{HTTP_HOST}{REQUEST_URI}" redirectType="Permanent" />
+                </rule>
+            -->
+
+                <rule name="RESTfm root rewrite rules" stopProcessing="true">
+                    <match url=".*" ignoreCase="false" />
+                    <conditions>
+                        <add input="{URL}" pattern="RESTfm\.php$" ignoreCase="false" negate="true" />
+                        <add input="{REQUEST_FILENAME}" matchType="IsFile" ignoreCase="false" negate="true" />
+                    </conditions>
+                    <action type="Rewrite" url="RESTfm.php" appendQueryString="true" />
+                </rule>
+            </rules>
+        </rewrite>
+
+        <!-- Ensure RESTfm custom error responses are visible. -->
+        <httpErrors existingResponse="PassThrough" />
+
+    </system.webServer>
+</configuration>

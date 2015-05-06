@@ -1,0 +1,22 @@
+The RESTfm software distribution includes the following code under the
+described licenses.
+
+    Tonic
+    http://peej.github.com/tonic
+    MIT License (see lib/tonic/LICENSE)
+
+
+The RESTfm Demonstration Web Application included with the RESTfm distribution
+includes the following code under the described licenses.
+
+    jQuery
+    http://jquery.org
+    MIT License (see http://jquery.org/license)
+    
+    jQuery UI
+    http://jqueryui.com/
+    MIT License (see http://jquery-ui.googlecode.com/svn/tags/latest/MIT-LICENSE.txt)
+    
+    Webtoolkit Base64
+    http://www.webtoolkit.info
+    CreativeCommons Attribution 2.0 UK (see http://www.webtoolkit.info/license)

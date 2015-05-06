@@ -1,0 +1,121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd">
+<!--
+ * RESTfm Demonstration Web Application.
+ *
+ * @copyright
+ *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *
+ * @license
+ *  Licensed under The MIT License. For full copyright and license information,
+ *  please see the LICENSE file distributed with this package.
+ *  Redistributions of files must retain the above copyright notice.
+ *
+ * @link
+ *  http://restfm.com
+ *
+ * @author
+ *  Gavin Stewart
+-->
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <title>RESTfm Demonstration Web Application</title>
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/jquery-ui-1.8.18.custom.min.js"></script>
+    <script type="text/javascript" src="js/webtoolkit.base64.js"></script>
+    <script type="text/javascript" src="js/demo.js"></script>
+    <link type="text/css" rel="stylesheet" href="css/ui-lightness/jquery-ui-1.8.18.custom.css" media="all">
+    <link type="text/css" rel="stylesheet" href="css/demo.css" media="all">
+</head>
+<body>
+    <div id="content" class="content">
+        <a target="_blank" href="http://www.restfm.com"><img id="logo" width="106" height="36" src="css/RESTfm.logo.png" alt="RESTfm logo"></a>
+        <div id="credentials">
+            <div id="login_block">
+                <div class="hide_on_auth">
+                    <span>
+                        <label for="input_username">Username:</label>
+                        <input id="input_username" class="credentials_input" type="text" name="username">
+                    </span>
+                    <span>
+                        <label for="input_password">Password:</label>
+                        <input id="input_password" class="credentials_input" type="password" name="password">
+                    </span>
+                </div>
+                <div>
+                    <a href="#" id="B_login" class="button">Login</a>
+                </div>
+            </div>
+            <div id="options_block">
+                <a href="#" id="B_options" class="button">Options</a>
+            </div>
+        </div>
+        <img id="throbber" alt="Busy Throbber" src="css/demo_throbber.gif" width="22" height="22">
+        <h1>Demonstration Web Application</h1>
+        <div id="selector_group_1">
+            <span id="database_selector" class="selector">
+                <label for="database">Database:</label>
+                <select id="database">
+                </select>
+            </span>
+            <span id="layout_selector" class="selector">
+                <label for="layout">Layout:</label>
+                <select id="layout">
+                </select>
+            </span>
+            <span id="findMax_selector" class="selector">
+                <label for="findMax">Max results:</label>
+                <select id="findMax">
+                    <option selected>15</option>
+                    <option>30</option>
+                    <option>45</option>
+                </select>
+            </span>
+        </div>
+        <div id="results_box">
+        <table id="results">
+        </table>
+        </div>
+        <span id="button_group_1">
+            <a href="#" id="B_navRefresh" class="button">Refresh</a>
+            <a href="#" id="B_navStart" class="button">Start</a>
+            <a href="#" id="B_navPrev" class="button">Prev</a>
+            <a href="#" id="B_navNext" class="button">Next</a>
+            <a href="#" id="B_navEnd" class="button">End</a>
+        </span>
+        <span id="button_group_2">
+            <a href="#" id="B_createRecord" class="button">Create Record</a>
+            <a href="#" id="B_updateRecord" class="button">Update Record</a>
+            <a href="#" id="B_deleteRecord" class="button">Delete Record</a>
+            <a href="#" id="B_refineSearch" class="button">Refine Search</a>
+        </span>
+        <div id="status_bar" class="color_error">
+            JavaScript required.
+        </div>
+        <div id="console_box"></div>
+        <div id="footer"></div>
+    </div>
+
+    <div id="D_record" title="">
+        <div id="D_record_content">
+        </div>
+    </div>
+
+    <div id="D_info" title="">
+    </div>
+
+    <div id="D_options" title="">
+        <span title="The console shows URI and status codes of all ajax calls.">
+            <input type="checkbox" id="option_console">
+            <label for="option_console">Show console.</label>
+        </span>
+        <span title="Use GET instead of PUT, POST and DELETE.">
+            <input type="checkbox" id="option_useGet">
+            <label for="option_useGet">Use GET method override.<br>Note: limited by length of URI.</label>
+        </span>
+    </div>
+
+    <div id="version">%%VERSION%%</div>
+</body>
+</html>

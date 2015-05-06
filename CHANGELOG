@@ -1,0 +1,135 @@
+### 3.3.1 (Released 20XX-XX-XX) ###
+- Experimental PDO: MySQL improvements.
+- Move .dict format internal to RESTfm and add import handling. Import was
+  not possible with XSL 1.1.
+- Disable execution profiling output when diagnostics is disabled.
+- Add data dumping as a diagnostic aid.
+
+### 3.3.0 (Released 2015-02-20) ###
+- Execution profiling info: Real/wall time (ms), Peak mem usage, Max mem limit.
+- Experimental PDO support for alternate database backends. Currently MySQL
+  is supported.
+- Fix "change user" link when using html format to prevent cancel loop.
+- RESTfmSync additions and fixes (see code/RESTfmSync/CHANGELOG).
+
+### 3.2.0 (Released 2015-01-20) ###
+- FileMaker 13v5 support.
+- Mac OS X Yosemite (10.10) support.
+- Cleanup code warnings on newer PHP.
+- Prevent error logs being served to clients when diagnostics is disabled.
+- RESTfmSync code updated (3.2.0).
+- Improved FileMaker Server detection in report.
+- Update SSL checks in report for changes in libcurl.
+- New configuration options to control strict SSL certificate checking between
+  RESTfm and FileMaker Server, and in report self checks.
+
+### 3.1.1 (Released 2014-10-22) ###
+- Add RFMsquash2XX flag to return HTTP 200 for any 2XX response.
+- Fix bug where unique-key-recordID returns 200 OK instead of 401 Unauthorized.
+- RESTfmSync remove unused code and update documentation.
+
+### 3.1.0 (Released 2014-09-16) ###
+- Significant speed improvements to RESTfmSync.
+- Improve RFMformat parameter to allow override of
+  application/x-www-form-urlencoded HTTP Content-type header.
+- Fix Container handling for Record level Read operation.
+
+### 3.0.2 (Released 2014-04-28) ###
+- Fix RFMkey bug.
+
+### 3.0.1 (Released 2014-04-09) ###
+- Workaround processing of HTTP POST ARGS for BaseElements plug-in.
+
+### 3.0.0 (Released 2014-03-06) ###
+- FileMaker 13 support.
+- Mac OS X Mavericks (10.9) support.
+- Major refactor and modularisation of RESTfm core.
+- Add support for field repetitions.
+- Move .simple format internal to RESTfm and add import handling. Import was
+  not possible with XSL 1.1.
+- Support any RESTfm import format embedded within an "RFMdata" field of a
+  HTTP application/x-www-form-urlencoded or multipart/form-data POST. Requires
+  an accompanying "RFMformat" field specifying the embedded data format.
+- Bug fix: ensure diagnostics includes a User Agent string to properly
+  identify RESTfm as the source of HTTP connections.
+- Add an "echo" service URI (when "diagnostics" is enabled) as an aid in
+  checking data is correctly formatted when submitted to RESTfm.
+- Bulk operations handling. Multiple operations of the same type may now be
+  bundled into the one HTTP transaction, greatly reducing cumulative latency
+  for many small transactions.
+- Add "RFMfixFM02" flag to support FM13 httppost: (Insert From URL) additional
+  encoding requirements.
+- Extend "RFMformat" function to allow mismatched import and export formats.
+  i.e. data may be submitted in XML, and the response returned in JSON.
+- Add "RFMsuppressData" flag on POST/CREATE operations to suppress data
+  section in response.
+- Various updates to report.php diagnostic information.
+- XML output changes, recordID and href/xlink attributes to row entities now
+  exist in meta section, making this format consistent with other RESTfm
+  formats.
+
+### 2.1.1 (Released 2013-08-14) ###
+- RESTfmSync:
+  - Fix an issue with the SyncUTC field not being set for local records.
+  - Update documentation for extra search criteria.
+  - Add an error trap for the default server detail.
+
+### 2.1.0 (Released 2013-08-06) ###
+ - New sample code folder with full source code : RESTfm/code
+ - Now comes bundled with RESTfmSync : code/RESTfmSync. RESTfmSync is a fast
+   data synchronisation framework for use between FileMaker Pro/Go and
+   FileMaker Server.
+ - FastSpring validation tool : code/FastSpring/Validate
+ - Full CRUD demonstration PHP code : code/RESTfmCRUDDemo
+ - Minor bug fixes.
+
+### 2.0.2 (Released 2013-07-02) ###
+ - Add override of POST/PUT upload format to application/x-www-form-urlencoded
+   with RFMurlencoded query string flag, while still allowing determined format
+   for result.
+ - Relax SSL test failure to warning for time-outs on Windows Server in
+   report.php
+ - Update report.php installation instructions for Mac OSX Mountain Lion.
+
+### 2.0.1 (Released 2013-06-13) ###
+ - Minor bug fixes.
+ - Check XSL PHP extension in report.php
+ - Add support for JSON pretty printing where PHP < 5.4.0
+
+### 2.0.0 (Released 2013-06-06) ###
+ - Add cross-site HTTP support (CORS) for use with web applications in
+   multi-domain environments.
+ - Add simple XSLT export format for systems incapable of JSON or XML.
+ - Add field meta data table to record output.
+ - Add support to show fully qualified URL for container fields (FMS 12 and up).
+ - Extend info section to include a list of field names in layout, independent
+   of any records returned.
+ - Extend XSLT support to present xsl:output method as content type.
+ - Bug fix: layouts with dots in name were truncated.
+ - Add field-level REST URI for individual field access.
+ - Add work around to FileMaker's buggy 'Insert From URL' function by double
+   encoding bad characters. The RFMfixFM01 query string flag is used to signal
+   the use of this non-standard percent-encoding method.
+ - Add RFMappend flag for PUT operations. Allows appending submitted data to
+   existing field data.
+ - All HTTP response codes (under RESTfm control) now returned in response
+   info table in determined format.
+ - Add a field=value replacement for recordID in RESTfm URIs, where value
+   must be unique and match only a single record. (a.k.a. unique-key-recordID).
+ - Add RFMelsePOST flag for Record level PUT operations. Allows a Layout level
+   POST (create) operation to be executed if the recordID does not already
+   exist.
+ - Optional pretty printing of the native XML and JSON formats.
+ - Fix report.php installation instructions for Mac OSX Lion Server.
+
+### 1.1.0 (Released 2012-08-23) ###
+ - Add script and pre-script support to layout and record CRUD operations.
+ - Add OSX Snow Leopard specific instructions to report.php
+ - Add report.php plain text to copy and paste report.php to support.
+ - Add more diagnostic information to report.php
+
+### 1.0.2 (Released 2012-07-18) ###
+ - Improved installation instructions in report.php
+ - Case sensitive URL fault for Darwin in report diagnostics.
+
+### 1.0.0 (Released 2012-07-13) ###

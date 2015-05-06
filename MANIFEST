@@ -1,0 +1,17 @@
+.htaccess.dist
+web.config.dist
+ATTRIBUTIONS
+CHANGELOG
+INSTALL
+LICENSE
+RESTfm.php
+RESTfm.ini.php.dist
+demo.html
+index.html
+report.php
+css/
+js/
+lib/
+contrib/
+code/
+FileMaker.dist/
