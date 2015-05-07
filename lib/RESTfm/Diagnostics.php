@@ -383,13 +383,13 @@ class Diagnostics {
         $hostspec = RESTfmConfig::getVar('database', 'hostspec');
         $reportItem->details .= $hostspec . "\n";
 
-        // Probe hostspec for fmi/xml path using cURL, this will verify that
-        // FileMaker Web Publishing Engine is really configured and listening.
-        // Otherwise the second part of this test using the FileMaker API can
-        // give a false positive as any webserver listening can give a 404 error
-        // (which the FM API returns as error 22, which may just be related
-        // to bad credentials !).
-        $ch = curl_init($hostspec . '/fmi/xml');
+        // Probe hostspec for fmi/xml/fmresultset.xml path using cURL, this
+        // will verify that FileMaker Web Publishing Engine is really
+        // configured and listening. Otherwise the second part of this test
+        // using the FileMaker API can give a false positive as any webserver
+        // listening can give a 404 error (which the FM API returns as
+        // error 22, which may just be related to bad credentials !).
+        $ch = curl_init($hostspec . '/fmi/xml/fmresultset.xml');
         curl_setopt($ch, CURLOPT_HEADER, FALSE);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
         if (RESTfmConfig::getVar('settings', 'strictSSLCertsFMS') === FALSE) {
