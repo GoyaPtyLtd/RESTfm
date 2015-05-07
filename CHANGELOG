@@ -1,9 +1,12 @@
-### 3.3.1 (Released 20XX-XX-XX) ###
+### 3.4.0 (Released 2015-05-07) ###
 - Experimental PDO: MySQL improvements.
 - Move .dict format internal to RESTfm and add import handling. Import was
   not possible with XSL 1.1.
 - Disable execution profiling output when diagnostics is disabled.
 - Add data dumping as a diagnostic aid.
+- RESTfm released as Open Source under The MIT Licence (see LICENSE file).
+- RESTfm Version Control System moved to git (hosted on GitHub).
+- Fix report.php FMS connection diagnostic for FMS11 compatibility.
 
 ### 3.3.0 (Released 2015-02-20) ###
 - Execution profiling info: Real/wall time (ms), Peak mem usage, Max mem limit.
