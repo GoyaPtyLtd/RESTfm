@@ -53,7 +53,7 @@ features may run RESTfm directly from a local git repository.
     cp -a FileMaker.dist FileMaker
   * When setting up on IIS, also ensure `web.config.dist` is copied to `web.config`
   * Use a browser to see if RESTfm needs further configuration: http://example.com/RESTfm/report.php
-  * Refer to the RESTfm manual for futher configuration information: http://restfm.com/manual
+  * Refer to the RESTfm manual for further configuration information: http://restfm.com/manual
 
 ### Bugs
 The development git code may be buggy and is unsupported. Bug reports are
