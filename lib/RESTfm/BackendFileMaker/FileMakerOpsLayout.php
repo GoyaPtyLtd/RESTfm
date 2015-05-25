@@ -61,6 +61,11 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
             // This search query will contain criterion.
             $findCommand = $FM->newFindCommand($this->_layout);
             foreach ($this->_findCriteria as $fieldName => $testValue) {
+                // Strip index suffix '[n]' from $fieldName for repetitions.
+                $matches = array();
+                if (preg_match('/^(.+)\[(\d+)\]$/', $fieldName, $matches)) {
+                    $fieldName = $matches[1];   // Real fieldName minus index.
+                }
                 $findCommand->addFindCriterion($fieldName, $testValue);
             }
         } else {
