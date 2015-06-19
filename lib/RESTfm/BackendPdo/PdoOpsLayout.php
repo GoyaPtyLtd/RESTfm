@@ -105,7 +105,7 @@ class PdoOpsLayout extends OpsLayoutAbstract {
         $findMax = $this->_readCount;
 
         // Find the number of records in this table.
-        // This is _not_ a cheap operation.
+        // This may not be a cheap operation, may be ok in some databases.
         $statement = $pdo->prepare('SELECT COUNT(*) FROM `'. $this->_validatedTable);
         try {
             $statement->execute();

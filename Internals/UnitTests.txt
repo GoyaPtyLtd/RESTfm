@@ -1,5 +1,0 @@
-RESTfm uses the RESTfmUnitTests.fm12 database file for unit tests, with the
-credentials:
-
-RESTfm
-racegVidtec4
