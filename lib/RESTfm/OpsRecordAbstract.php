@@ -421,6 +421,25 @@ abstract class OpsRecordAbstract {
     }
 
     /**
+     * Allowed container encoding formats.
+     */
+    const   CONTAINER_DEFAULT   = 0,
+            CONTAINER_BASE64    = 1,
+            CONTAINER_RAW       = 2;
+
+    /**
+     * Encode container data rather than returning the URL.
+     *
+     * @param integer $encoding
+     *  CONTAINER_DEFAULT: FileMaker container URL.
+     *  CONTAINER_BASE64: [<filename>;]<base64 encoding>
+     *  CONTAINER_RAW: No RESTfm formatting, RAW data for single field returned.
+     */
+    public function setContainerEncoding ($encoding = CONTAINER_DEFAULT) {
+        $this->_containerEncoding = $encoding;
+    }
+
+    /**
      * Suppress 'data' section in RESTfmData result. Also suppresses
      * 'metaField' section.
      *
@@ -517,6 +536,12 @@ abstract class OpsRecordAbstract {
      *  Flag this operation as a single (non-bulk) type.
      */
     protected $_isSingle = FALSE;
+
+    /**
+     * @var integer
+     *  Requested container encoding format.
+     */
+    protected $_containerEncoding = self::CONTAINER_DEFAULT;
 
     /**
      * @var boolean

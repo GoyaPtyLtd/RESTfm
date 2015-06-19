@@ -1,6 +1,6 @@
 <?php
 /**
- *  RESTfm - FileMaker RESTful Web Service
+ * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
  *  Copyright (c) 2011-2015 Goya Pty Ltd.
@@ -34,6 +34,9 @@ class uriRecord extends RESTfmResource {
     /**
      * Handle a GET request for this resource
      *
+     * Query String Parameters:
+     *  - RFMcontainer=<encoding> : [default: DEFAULT], BASE64, RAW
+     *
      * @param RESTfmRequest $request
      * @param string $database
      *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}
@@ -52,6 +55,20 @@ class uriRecord extends RESTfmResource {
         $backend = BackendFactory::make($request, $database);
 
         $opsRecord = $backend->makeOpsRecord($database, $layout);
+        $restfmParameters = $request->getRESTfmParameters();
+
+        // Determine requirements for container encoding.
+        if (isset($restfmParameters->RFMcontainer)) {
+            $containerEncoding = strtoupper($restfmParameters->RFMcontainer);
+            if ($containerEncoding == 'BASE64') {
+                $containerEncoding = $opsRecord::CONTAINER_BASE64;
+            } elseif ($containerEncoding == 'RAW') {
+                $containerEncoding = $opsRecord::CONTAINER_RAW;
+            } else {
+                $containerEncoding = $opsRecord::CONTAINER_DEFAULT;
+            }
+            $opsRecord->setContainerEncoding($containerEncoding);
+        }
 
         $restfmData = $opsRecord->readSingle($rawRecordID);
 

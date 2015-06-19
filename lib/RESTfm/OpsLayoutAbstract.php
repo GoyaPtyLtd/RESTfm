@@ -73,6 +73,26 @@ abstract class OpsLayoutAbstract {
     // -- Implemented Methods --
 
     /**
+     * Allowed container encoding formats.
+     */
+    const   CONTAINER_DEFAULT   = 0,
+            CONTAINER_BASE64    = 1,
+            CONTAINER_RAW       = 2;
+
+    /**
+     * Encode container data rather than returning the URL.
+     *
+     * @param integer $encoding
+     *  CONTAINER_DEFAULT: FileMaker container URL.
+     *  CONTAINER_BASE64: [<filename>;]<base64 encoding>
+     *  CONTAINER_RAW: No RESTfm formatting, RAW data for single field returned.
+     */
+    public function setContainerEncoding ($encoding = CONTAINER_DEFAULT) {
+        $this->_containerEncoding = $encoding;
+    }
+
+
+    /**
      * Set limits for number of records returned by read().
      *
      * @param integer $offset
@@ -136,6 +156,12 @@ abstract class OpsLayoutAbstract {
     }
 
     // -- Protected --
+
+    /**
+     * @var integer
+     *  Requested container encoding format.
+     */
+    protected $_containerEncoding = self::CONTAINER_DEFAULT;
 
     /**
      * @var integer $_readOffset

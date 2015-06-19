@@ -58,6 +58,7 @@ class uriLayout extends RESTfmResource {
      *                                 to pass to pre-script.
      *  - RFMmetaFieldOnly  : Set flag to return only field metadata from
      *                        layout (metaField), no record data.
+     *  - RFMcontainer=<encoding> : [default: DEFAULT], BASE64, RAW
      *
      * @param RESTfmRequest $request
      * @param string $database
@@ -110,6 +111,19 @@ class uriLayout extends RESTfmResource {
                 $scriptParameters = $restfmParameters->RFMpreScriptParam;
             }
             $opsLayout->setPreOpScript($restfmParameters->RFMpreScript, $scriptParameters);
+        }
+
+        // Determine requirements for container encoding.
+        if (isset($restfmParameters->RFMcontainer)) {
+            $containerEncoding = strtoupper($restfmParameters->RFMcontainer);
+            if ($containerEncoding == 'BASE64') {
+                $containerEncoding = $opsLayout::CONTAINER_BASE64;
+            } elseif ($containerEncoding == 'RAW') {
+                $containerEncoding = $opsLayout::CONTAINER_RAW;
+            } else {
+                $containerEncoding = $opsLayout::CONTAINER_DEFAULT;
+            }
+            $opsLayout->setContainerEncoding($containerEncoding);
         }
 
         // Determine skip and max returned results.

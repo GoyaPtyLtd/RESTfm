@@ -18,6 +18,7 @@ are referenced in. (See relevant file for details on parameter usage).
 
 RFMappend - uriRecord.php
 RFMcheckFMAPI - Diagnostics.php
+RFMcontainer - uriRecord.php, uriLayout.php
 RFMdata - RESTfmRequest.php
 RFMechoServer - uriDatabaseEcho.php
 RFMelseCreate - uriBulk.php, uriRecord.php

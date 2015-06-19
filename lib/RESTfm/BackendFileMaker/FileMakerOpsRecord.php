@@ -527,9 +527,26 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
                 $fieldData = $record->getFieldUnencoded($fieldName, $repetition);
 
                 // Handle container types differently.
-                if ($restfmData->getFieldMetaValue($fieldName, 'resultType') == 'container' && method_exists($FM, 'getContainerDataURL')) {
-                    // Note: FileMaker::getContainerDataURL() only exists in the FMSv12 PHP API
-                    $fieldData = $FM->getContainerDataURL($record->getField($fieldName, $repetition));
+                if ($restfmData->getFieldMetaValue($fieldName, 'resultType') == 'container') {
+                    switch ($this->_containerEncoding) {
+                        case self::CONTAINER_BASE64:
+                            $filename = '';
+                            $matches = array();
+                            if (preg_match('/^\/fmi\/xml\/cnt\/([^\?]*)\?/', $fieldData, $matches)) {
+                                $filename = $matches[1] . ';';
+                            }
+                            $fieldData = $filename . base64_encode($FM->getContainerData($record->getField($fieldName, $repetition)));
+                            break;
+                        case self::CONTAINER_RAW:
+                            // TODO
+                            break;
+                        case self::CONTAINER_DEFAULT:
+                        default:
+                            if (method_exists($FM, 'getContainerDataURL')) {
+                                // Note: FileMaker::getContainerDataURL() only exists in the FMSv12 PHP API
+                                $fieldData = $FM->getContainerDataURL($record->getField($fieldName, $repetition));
+                            }
+                    }
                 }
 
                 // Store this field's data for this row.
