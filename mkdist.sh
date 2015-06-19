@@ -104,15 +104,17 @@ if [ ! -z "${FULL_BUILDDIR}" ]; then
     fi
 
     # Determine git revision.
-    REVISION=`cd "${BASEDIR}"; git rev-parse --short HEAD`
-    VERSION="${PACKAGERELEASE}/r${REVISION}"
+    DATESTAMP=`date "+%Y%m%d"`
+    REPOREVISION=`cd "${BASEDIR}"; git rev-parse --short HEAD`
+    REVISION="${DATESTAMP}-${REPOREVISION}"
+    VERSION="${PACKAGERELEASE}/${REVISION}"
 
-    # Check we have a full release, or a beta where we attach repo revision
-    # to the release.
+    # Check we have a full release, or a beta where we attach a revision
+    # to the release name.
     echo "${PACKAGERELEASE}" | grep "^[0-9].[0-9].[0-9]$"
     RET=$?
     if [ "$RET" != "0" ]; then
-        PACKAGERELEASE="${PACKAGERELEASE}-r${REVISION}"
+        PACKAGERELEASE="${PACKAGERELEASE}-${REVISION}"
     fi
 
     echo " ++ Building ${PACKAGEBASE} ${PACKAGERELEASE}"

@@ -34,7 +34,7 @@ class Version {
     }
 
     public static function getVersion() {
-        $revision = 'r'.self::$_revision;
+        $revision = self::$_revision;
         if (strpos($revision, 'REVISION') !== FALSE) {
             $revision = 'UNKNOWN';
         }
