@@ -4,6 +4,9 @@
 - Allow container data to be read (and base64 encoded) by using a
   RFMcontainer=base64 query string parameter on record and layout level
   read operations.
+- Fix diagnostic tracing to include all chained exceptions.
+- Support complex layout queries/finds through an SQL subset via the RFMfind
+  query string parameter.
 
 ### 3.4.0 (Released 2015-05-07) ###
 - Experimental PDO: MySQL improvements.

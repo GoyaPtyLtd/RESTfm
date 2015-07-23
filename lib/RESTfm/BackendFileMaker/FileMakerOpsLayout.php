@@ -18,6 +18,7 @@
  */
 
 require_once 'FileMakerResponseException.php';
+require_once 'FileMakerSQLParser.php';
 
 /**
  * FileMakerOpsLayout
@@ -56,6 +57,8 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
         $FM = $this->_backend->getFileMaker();
         $FM->setProperty('database', $this->_database);
 
+        $selectList = array();
+
         // New FileMaker find command.
         if (count($this->_findCriteria) > 0) {
             // This search query will contain criterion.
@@ -68,6 +71,14 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
                 }
                 $findCommand->addFindCriterion($fieldName, $testValue);
             }
+        } elseif ($this->_SQLquery !== NULL) {
+            // This search is using SQL-like syntax.
+            $parser = new FileMakerSQLParser($this->_SQLquery, $FM, $this->_layout);
+            //$parser->setDebug(TRUE);
+            $parser->parse();
+
+            $findCommand = $parser->getFMFind();
+            $selectList = $parser->getSelectList();
         } else {
             // No criteria, so 'find all'.
             $findCommand = $FM->newFindAllCommand($this->_layout);
@@ -84,17 +95,18 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
         $findSkip = $this->_readOffset;
         $findMax = $this->_readCount;
 
-        // If we are to skip to the end, do a single result query to determine
-        // the actual skip value.
-        if ($findSkip == -1) {
-            $findCommand->setRange(0, 1);
-            // Query FileMaker
-            $result = $findCommand->execute();
-            if (FileMaker::isError($result)) {
-                throw new FileMakerResponseException($result);
+        // Use SQL OFFSET and LIMIT where available.
+        if ($this->_SQLquery !== NULL) {
+            // Always override by SQL LIMIT clause.
+            if ($parser->getLimit() !== NULL ) {
+                $findMax = $parser->getLimit();
             }
-            $findSkip = $result->getFoundSetCount() - $findMax;
-            $findSkip = max(0, $findSkip);  // Ensure not less than zero.
+
+            // Override by SQL OFFSET clause only if currently zero.
+            // This allows RFMskip paging to work as expected with SQL queries.
+            if ($parser->getOffset() !== NULL && $findSkip == 0) {
+                $findSkip = $parser->getOffset();
+            }
         }
 
         // Confine results range from calculated skip and max values.
@@ -113,6 +125,11 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
 
         // Process records and push data.
         $fieldNames = $result->getFields();
+        if (! empty($selectList)) {     // Empty select list is considered "*".
+            // Only keep fieldNames that are common to both, preserving
+            // $selectList order.
+            $fieldNames = array_intersect($selectList, $fieldNames);
+        }
         foreach ($result->getRecords() as $record) {
             // @todo This code is duplicated in FileMakerOpsRecord, should be
             //       moved into a static FileMakerParser::record($restfmData, $record).

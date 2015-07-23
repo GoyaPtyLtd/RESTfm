@@ -59,6 +59,8 @@ class uriLayout extends RESTfmResource {
      *  - RFMmetaFieldOnly  : Set flag to return only field metadata from
      *                        layout (metaField), no record data.
      *  - RFMcontainer=<encoding> : [default: DEFAULT], BASE64, RAW
+     *  - RFMfind=<SQLquery> : A simple SQL-like syntax that may include
+     *                         SELECT, WHERE, ORDER BY, OFFSET, LIMIT
      *
      * @param RESTfmRequest $request
      * @param string $database
@@ -95,6 +97,13 @@ class uriLayout extends RESTfmResource {
                     $opsLayout->addFindCriterion($searchField, $searchValues[$searchValueKey]);
                 }
             }
+        }
+
+        // SQL-like query
+        if (isset($restfmParameters->RFMfind)) {
+            // Ensure we unset any basic find criterion from RFMsF*/RFMsV* first.
+            $opsLayout->clearCriteria();
+            $opsLayout->setSQLquery($restfmParameters->RFMfind);
         }
 
         // Allow script calling.
@@ -210,7 +219,7 @@ class uriLayout extends RESTfmResource {
         }
 
         // End nav link.
-        $queryString->RFMskip = 'end';
+        $queryString->RFMskip = $foundSetCount - 1;
         $restfmData->pushNav('end',
             $request->baseUri.'/'.
                 $databaseEnc.'/layout/'.

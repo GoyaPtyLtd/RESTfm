@@ -23,6 +23,7 @@ RFMdata - RESTfmRequest.php
 RFMechoServer - uriDatabaseEcho.php
 RFMelseCreate - uriBulk.php, uriRecord.php
 RFMelsePOST - uriBulk.php, uriRecord.php
+RFMfind - uriLayout.php
 RFMfixFM01 - RESTfmQueryString.php
 RFMfixFM02 - RESTfmQueryString.php
 RFMformat - RESTfmRequest.php

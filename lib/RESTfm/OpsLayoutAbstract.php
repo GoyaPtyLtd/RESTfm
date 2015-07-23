@@ -91,7 +91,6 @@ abstract class OpsLayoutAbstract {
         $this->_containerEncoding = $encoding;
     }
 
-
     /**
      * Set limits for number of records returned by read().
      *
@@ -127,6 +126,15 @@ abstract class OpsLayoutAbstract {
      */
     public function clearCriteria () {
         $this->_findCriteria = array();
+    }
+
+    /**
+     * Set SQL-like query string.
+     *
+     * @param string $sql
+     */
+    public function setSQLquery ($sql) {
+        $this->_SQLquery = $sql;
     }
 
     /**
@@ -182,6 +190,13 @@ abstract class OpsLayoutAbstract {
      *  http://www.filemaker.com/help/html/find_sort.5.4.html
      */
     protected $_findCriteria = array();
+
+    /**
+     * @var string $_SQLquery
+     *  SQL-like query string, that may include SELECT, WHERE, ORDER BY,
+     *  OFFSET and LIMIT.
+     */
+    protected $_SQLquery = NULL;
 
     /**
      * @var array $_preOpScript
