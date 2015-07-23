@@ -58,16 +58,15 @@ class RESTfmResponseException extends ResponseException {
      * @param Exception $previous
      */
     public function  __construct ($exceptionMessage, $exceptionCode = 0, Exception $previous = null) {
-
-        if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
-            $this->addInfo('X-RESTfm-Trace', $this->__toSTring());
-        }
-
         // Call parent constructor.
         if (version_compare(phpversion(), '5.3.0', '>=')) {
             parent::__construct($exceptionMessage, $exceptionCode, $previous);
         } else {
             parent::__construct($exceptionMessage, $exceptionCode);
+        }
+
+        if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
+            $this->addInfo('X-RESTfm-Trace', $this->__toSTring());
         }
     }
 
