@@ -42,7 +42,7 @@ if (strpos($_SERVER['QUERY_STRING'], 'RFMcheckFMAPI') !== FALSE) {
         'FileMaker/Error/sv.php' => '82ac207c77fb95ead1d9fbdcd49c28ff:14',
         'FileMaker/Implementation/Command/EditImpl.php' => 'e55064465260f2a4e1c0049abc77e90d:13',
         'FileMaker/Implementation/FileMakerImpl.php' => '344a84eafa71167103dbfa3927f3d13e:12',
-        'FileMaker.php' => '008060aa0c780956cbae8d924a83b46b:11',
+        'FileMaker/Implementation/FileMakerImpl.php' => '5a526472505610de33affefc5df92f6a:11',
     );
 
     $fileMakerReflection = new ReflectionClass('FileMaker');
