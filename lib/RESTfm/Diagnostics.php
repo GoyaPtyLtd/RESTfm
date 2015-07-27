@@ -361,7 +361,7 @@ class Diagnostics {
         if (curl_errno($ch)) {
             $reportItem->status = ReportItem::ERROR;
             $reportItem->details .=  'cURL failed with error: ' . curl_errno($ch) . ': ' . curl_error($ch) . "\n";
-        } elseif (strpos($result, 'FileMaker API found') === FALSE) {
+        } elseif (strpos($result, 'Found at path') === FALSE) {
             $reportItem->status = ReportItem::ERROR;
             $reportItem->details .=  'FileMaker PHP API not found in PHP include path.' . "\n";
         } else {
