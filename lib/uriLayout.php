@@ -40,8 +40,7 @@ class uriLayout extends RESTfmResource {
      *
      * Query String Parameters:
      *  - RFMmax=<n>        : [default: 24] Maximum number of records to return.
-     *  - RFMskip=<n>|end   : Number of records to skip past or skip to end
-     *                        minus RFMmax.
+     *  - RFMskip=<n>       : Number of records to skip past.
      *  - RFMsF<n>=<s>      : Search Field <n> for find criterion. Must have
      *                        matching Search Value.
      *  - RFMsV<n>=<s>      : Search Value <n> for find criterion. Must have
@@ -59,8 +58,11 @@ class uriLayout extends RESTfmResource {
      *  - RFMmetaFieldOnly  : Set flag to return only field metadata from
      *                        layout (metaField), no record data.
      *  - RFMcontainer=<encoding> : [default: DEFAULT], BASE64, RAW
-     *  - RFMfind=<SQLquery> : A simple SQL-like syntax that may include
-     *                         SELECT, WHERE, ORDER BY, OFFSET, LIMIT
+     *              DEFAULT - The container data URL to be fetched separately.
+     *              BASE64  - Encode the container data in BASE64 as
+     *                        <filename>;<base64 data>
+     *  - RFMfind=<SQL query> : An SQL subset syntax that may include
+     *                          SELECT, WHERE, ORDER BY, OFFSET, LIMIT
      *
      * @param RESTfmRequest $request
      * @param string $database
