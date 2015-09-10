@@ -1,0 +1,269 @@
+# init-functions for OSX. Minimised to log_* functions only - Goya Pty. Ltd.
+#
+#Copyright (c) 2002-08 Chris Lawrence
+#All rights reserved.
+#
+#Redistribution and use in source and binary forms, with or without
+#modification, are permitted provided that the following conditions
+#are met:
+#1. Redistributions of source code must retain the above copyright
+#   notice, this list of conditions and the following disclaimer.
+#2. Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+#3. Neither the name of the author nor the names of other contributors
+#   may be used to endorse or promote products derived from this software
+#   without specific prior written permission.
+#
+#THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+#IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+#ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+#LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+#CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+#SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+#BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+#WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+#OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+#EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+log_use_fancy_output () {
+    TPUT=/usr/bin/tput
+    EXPR=/bin/expr
+
+    # The next two lines force fancy tty detection.
+    true
+    return
+
+    if  [ -t 1 ] &&
+	[ "x${TERM:-}" != "x" ] &&
+	[ "x${TERM:-}" != "xdumb" ] &&
+	[ -x $TPUT ] && [ -x $EXPR ] &&
+	$TPUT hpa 60 >/dev/null 2>&1 &&
+	$TPUT setaf 1 >/dev/null 2>&1
+    then
+        [ -z $FANCYTTY ] && FANCYTTY=1 || true
+    else
+        FANCYTTY=0
+    fi
+    case "$FANCYTTY" in
+        1|Y|yes|true)   true;;
+        *)              false;;
+    esac
+}
+
+log_success_msg () {
+    if [ -n "${1:-}" ]; then
+        log_begin_msg $@
+    fi
+    log_end_msg 0
+}
+
+log_failure_msg () {
+    if [ -n "${1:-}" ]; then
+        log_begin_msg $@ "..."
+    fi
+    log_end_msg 1 || true
+}
+
+log_warning_msg () {
+    if [ -n "${1:-}" ]; then
+        log_begin_msg $@ "..."
+    fi
+    log_end_msg 255 || true
+}
+
+# int log_begin_message (char *message)
+log_begin_msg () {
+    log_begin_msg_pre "$@"
+    if [ -z "${1:-}" ]; then
+        return 1
+    fi
+    echo -n "$@" || true
+    log_begin_msg_post "$@"
+}
+
+# Sample usage:
+# log_daemon_msg "Starting GNOME Login Manager" "gdm"
+#
+# On Debian, would output "Starting GNOME Login Manager: gdm"
+# On Ubuntu, would output " * Starting GNOME Login Manager..."
+#
+# If the second argument is omitted, logging suitable for use with
+# log_progress_msg() is used:
+#
+# log_daemon_msg "Starting remote filesystem services"
+#
+# On Debian, would output "Starting remote filesystem services:"
+# On Ubuntu, would output " * Starting remote filesystem services..."
+
+log_daemon_msg () {
+    if [ -z "${1:-}" ]; then
+        return 1
+    fi
+    log_daemon_msg_pre "$@"
+
+    if [ -z "${2:-}" ]; then
+        echo -n "$1:" || true
+        return
+    fi
+
+    echo -n "$1: $2" || true
+    log_daemon_msg_post "$@"
+}
+
+# #319739
+#
+# Per policy docs:
+#
+#     log_daemon_msg "Starting remote file system services"
+#     log_progress_msg "nfsd"; start-stop-daemon --start --quiet nfsd
+#     log_progress_msg "mountd"; start-stop-daemon --start --quiet mountd
+#     log_progress_msg "ugidd"; start-stop-daemon --start --quiet ugidd
+#     log_end_msg 0
+#
+# You could also do something fancy with log_end_msg here based on the
+# return values of start-stop-daemon; this is left as an exercise for
+# the reader...
+#
+# On Ubuntu, one would expect log_progress_msg to be a no-op.
+log_progress_msg () {
+    if [ -z "${1:-}" ]; then
+        return 1
+    fi
+    echo -n " $@" || true
+}
+
+
+# int log_end_message (int exitstatus)
+log_end_msg () {
+    # If no arguments were passed, return
+    if [ -z "${1:-}" ]; then
+        return 1
+    fi
+
+    local retval
+    retval=$1
+
+    log_end_msg_pre "$@"
+
+    # Only do the fancy stuff if we have an appropriate terminal
+    # and if /usr is already mounted
+    if log_use_fancy_output; then
+        RED=$( $TPUT setaf 1)
+        YELLOW=$( $TPUT setaf 3)
+        NORMAL=$( $TPUT op)
+    else
+        RED=''
+        YELLOW=''
+        NORMAL=''
+    fi
+
+    if [ $1 -eq 0 ]; then
+        echo "." || true
+    elif [ $1 -eq 255 ]; then
+        echo -e " ${YELLOW}(warning).${NORMAL}" || true
+    else
+        echo -e " ${RED}failed!${NORMAL}" || true
+    fi
+    log_end_msg_post "$@"
+    return $retval
+}
+
+log_action_msg () {
+    log_action_msg_pre "$@"
+    echo "$@." || true
+    log_action_msg_post "$@"
+}
+
+log_action_begin_msg () {
+    log_action_begin_msg_pre "$@"
+    echo -n "$@..." || true
+    log_action_begin_msg_post "$@"
+}
+
+log_action_cont_msg () {
+    echo -n "$@..." || true
+}
+
+log_action_end_msg () {
+    local end
+    log_action_end_msg_pre "$@"
+    if [ -z "${2:-}" ]; then
+        end="."
+    else
+        end=" ($2)."
+    fi
+
+    if [ $1 -eq 0 ]; then
+        echo "done${end}" || true
+    else
+        if log_use_fancy_output; then
+            RED=$( $TPUT setaf 1)
+            NORMAL=$( $TPUT op)
+            echo -e "${RED}failed${end}${NORMAL}" || true
+        else
+            echo "failed${end}" || true
+        fi
+    fi
+    log_action_end_msg_post "$@"
+}
+
+# Pre&Post empty function declaration, to be overriden from /lib/lsb/init-functions.d/*
+log_daemon_msg_pre () { :; }
+log_daemon_msg_post () { :; }
+log_begin_msg_pre () { :; }
+log_begin_msg_post () { :; }
+log_end_msg_pre () { :; }
+log_end_msg_post () { :; }
+log_action_msg_pre () { :; }
+log_action_msg_post () { :; }
+log_action_begin_msg_pre () { :; }
+log_action_begin_msg_post () { :; }
+log_action_end_msg_pre () { :; }
+log_action_end_msg_post () { :; }
+
+# Include "hooks"
+# Default info blocks put to the left of the screen
+log_daemon_msg_pre () {
+    if log_use_fancy_output; then
+        echo -n "[....] " || true
+    fi
+}
+log_begin_msg_pre () {
+    log_daemon_msg_pre "$@"
+}
+log_end_msg_pre () {
+    if log_use_fancy_output; then
+        RED=$( $TPUT setaf 1)
+        GREEN=$( $TPUT setaf 2)
+        YELLOW=$( $TPUT setaf 3)
+        NORMAL=$( $TPUT op)
+
+        $TPUT civis || true
+        $TPUT sc && \
+        $TPUT hpa 0 && \
+        if [ $1 -eq 0 ]; then
+            echo -ne "[${GREEN} ok ${NORMAL}" || true
+        elif [ $1 -eq 255 ]; then
+            echo -ne "[${YELLOW}warn${NORMAL}" || true
+        else
+            echo -ne "[${RED}FAIL${NORMAL}" || true
+        fi && \
+        $TPUT rc || true
+        $TPUT cnorm || true
+    fi
+}
+log_action_msg_pre () {
+    if log_use_fancy_output; then
+        CYAN=$( $TPUT setaf 6)
+        NORMAL=$( $TPUT op)
+        echo -ne "[${CYAN}info${NORMAL}] " || true
+    fi
+}
+log_action_begin_msg_pre () {
+    log_daemon_msg_pre "$@"
+}
+log_action_end_msg_pre () {
+    log_end_msg_pre "$@"
+}
