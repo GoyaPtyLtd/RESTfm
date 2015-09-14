@@ -18,6 +18,8 @@
 ARGV0=`basename $0`
 cd `dirname $0`
 BASEDIR=`pwd`
+ARGS=("$@")
+LOGNAME=`logname`
 
 ### Global variables ###
 
@@ -32,11 +34,6 @@ usage() {
     echo "  -h          This help."
     echo ""
 }
-
-#if [ $# -le 0 ]; then
-#    usage
-#    exit 1
-#fi
 
 #
 # Parse command line arguments.
@@ -58,6 +55,9 @@ done
 # Define LSB log_* functions.
 . "${BASEDIR}"/init-functions
 
+# A general use one second granular timestamp.
+TIMESTAMP=`date +%Y%m%d%H%M%S`
+
 ### Output functions ###
 
 showHeader () {
@@ -71,12 +71,11 @@ EOCAT
 }
 
 setupLogfile () {
-    local TIMESTAMP=`date +%Y%m%d%H%M%S`
-
     # Log all output to file.
     local LOGFILE="${BASEDIR}/${ARGV0}.${TIMESTAMP}.log"
     # DEBUG
     LOGFILE="foo.log"
+    # Truncate log file, and redirect STDOUT and STDERR through tee.
     > "$LOGFILE"
     exec >  >(tee -ia "$LOGFILE")
     exec 2> >(tee -ia "$LOGFILE" >&2)
@@ -172,9 +171,120 @@ check_FMSVersion() {
 
 }
 
+##
+# Check that we are root.
+#
+check_Privilege() {
+    local MSGPREFIX='Check administrator privilege:'
+
+    if [ "$EUID" != "0" ]; then
+        log_failure_msg "$MSGPREFIX No - ${LOGNAME}"
+        echo 'Error: Please try again using: sudo' "$0" "${args[@]}"
+        exit 1
+    fi
+
+    log_success_msg "$MSGPREFIX Yes (${LOGNAME})"
+}
+
+##
+# Check the user answers Y or y, else abort.
+#
+check_Y() {
+    echo "$1"
+    local CONTINUE
+    read CONTINUE
+    if [ "X${CONTINUE}" != 'XY' -a "X${CONTINUE}" != 'Xy' ]; then
+        echo "++ user aborted with \"${CONTINUE}\", exiting."
+        exit
+    fi
+}
+
+##
+# Check the RESTfm report page for any errors.
+check_RESTfmReport() {
+    MSGPREFIX='Check RESTfm report:'
+    curl -s -L http://localhost/RESTfm/report.php | grep -q "RESTfm is working"
+    local RET=$?
+
+    if [ "$RET" != "0" ]; then
+        log_failure_msg "${MSGPREFIX} not working"
+        echo
+        echo "Please check: http://localhost/RESTfm/report.php"
+        echo
+        exit 1
+    fi
+
+    log_success_msg "${MSGPREFIX} http://localhost/RESTfm is working"
+}
+
 ### Utility Functions ###
 
+##
+# Install the appropriate Apache config in RESTfm/contrib
+#
+installRESTfmApacheConfig() {
+    local MSGPREFIX="Install RESTfm Apache config:"
+    local SRC="${BASEDIR}/httpd-RESTfm.FMS13.Apache24.OSX.conf"
+    local DST="/Library/FileMaker Server/HTTPServer/conf/extra/"
+
+    cp "${SRC}" "${DST}"
+    local RET=$?
+
+    if [ "$RET" != "0" ]; then
+        log_failure_msg "${MSGPREFIX} error copying file"
+        exit 1
+    fi
+
+    log_success_msg "${MSGPREFIX} success"
+}
+
+##
+# Update the FMS Apache httpd.conf file to include the RESTfm .conf
+#
+updateFMSApacheConfig() {
+    local MSGPREFIX="Update FMS Apache config:"
+    local CONFBASENAME="/Library/FileMaker Server/HTTPServer/conf"
+    local SRC="${CONFBASENAME}/httpd.conf"
+    local DST="${CONFBASENAME}/httpd.conf.${TIMESTAMP}.bak"
+
+    cp "${SRC}" "${DST}"
+    local RET=$?
+
+    if [ "$RET" != "0" ]; then
+        log_failure_msg "${MSGPREFIX} error backing up original file"
+        exit 1
+    fi
+
+    cat << EOFMSAPACHEUPDATE >> "${SRC}"
+
+# RESTfm - ${TIMESTAMP} - ${ARGV0} - ${LOGNAME}
+Include conf/extra/httpd-RESTfm.FMS13.Apache24.OSX.conf
+EOFMSAPACHEUPDATE
+
+    log_success_msg "${MSGPREFIX} success"
+}
+
+##
+# Restart FMS Apache web server instance.
+#
+restartFMSApache() {
+    log_daemon_msg 'Restarting Web Server'
+    launchctl start com.filemaker.httpd.restart
+
+    # We want to give httpd some time to settle otherwise any web queries
+    # following this function might fail.
+    local COUNT=3
+    while [ $COUNT -gt 0 ]; do
+        log_progress_msg $COUNT
+        sleep 1
+        COUNT=$(($COUNT - 1))
+    done
+    log_end_msg 0
+}
+
 ### Main ###
+
+echo
 
 setupLogfile
 
@@ -186,41 +296,19 @@ check_OSXVersion
 
 check_FMSVersion
 
-# Note: Checking if WPE+PHP is enabled in FMS:
-# xpath "/Library/FileMaker Server/Admin/conf/server_config.xml" '//component[@name="WPE"]//technology[@name="PHP"]//parameter[@name="enabled"]/text()'
-# Found 1 nodes:
-# -- NODE --
-# true
+check_Privilege
 
+check_Y "Type Y to continue with installation, anything else will abort."
 
-# Note: Checking FMS version:
-# unzip -c /Library/FileMaker\ Server/Admin/admin-server/WEB-INF/lib/fmversion.jar META-INF/MANIFEST.MF | grep Specification-Version:
-# Specification-Version: 14.0.2.226
+installRESTfmApacheConfig
 
+updateFMSApacheConfig
+
+restartFMSApache
+
+check_RESTfmReport
+
+echo "Done."
+echo
 
 exit
-
-log_daemon_msg "Doing something cool"
-log_progress_msg 'progress .'
-sleep 1
-log_progress_msg '.'
-sleep 1
-log_progress_msg '.'
-sleep 1
-log_end_msg 0
-
-log_success_msg 'Standalone success message'
-log_warning_msg 'Standalone warning message'
-log_failure_msg 'Standalone failure message'
-
-log_daemon_msg 'test daemon message - 0'
-log_success_msg 'Test success message'
-log_end_msg 0
-
-log_daemon_msg 'test daemon message - 2'
-echo -n "Sending a two!"
-log_end_msg 2
-
-log_daemon_msg 'test daemon message - 1'
-log_failure_msg 'Test failure message'
-log_end_msg 1
