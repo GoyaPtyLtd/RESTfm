@@ -58,6 +58,23 @@ done
 # A general use one second granular timestamp.
 TIMESTAMP=`date +%Y%m%d%H%M%S`
 
+# Cross platform path resolving function. Original verion by user "arifsaha":
+# http://www.linuxquestions.org/questions/programming-9/bash-script-return-full-path-and-filename-680368/page3.html
+function abspath {
+    if [[ -d "$1" ]]; then
+        pushd "$1" >/dev/null
+        pwd
+        popd >/dev/null
+    elif [[ -e $1 ]]; then
+        pushd $(dirname $1) >/dev/null
+        echo $(pwd)/$(basename $1)
+        popd >/dev/null
+    else
+        echo $1 does not exist! >&2
+        return 127
+    fi
+}
+
 ### Output functions ###
 
 showHeader () {
@@ -172,6 +189,54 @@ check_FMSVersion() {
 }
 
 ##
+# Check that we are in the correct location. i.e. in an immediate subdirectory
+# to /Library/FileMaker Server/HTTPServer/htdocs
+#
+# Initialises global variables:
+#   RESTFMPATHMD5   - Unique hash of RESTfm installation directory.
+#   RESTFMDIRNAME   - Dirname part of RESTfm installation directory.
+#   RESTFMBASENAME  - Basename part of RESTfm installation directory.
+#
+check_Location() {
+    local MSGPREFIX='Check RESTfm location:'
+    local REQUIREDHTDOCSPATH='/Library/FileMaker Server/HTTPServer/htdocs'
+
+    # Search back up directory tree from $BASEDIR looking for RESTfm.php,
+    # then we know our RESTfm root directory.
+    local TESTROOT=$BASEDIR
+    local BAILOUT=10
+    local RESTFMROOT=''
+    while [ $BAILOUT -gt 0 ]; do
+        TESTROOT="${TESTROOT}/.."
+        if [ -r "${TESTROOT}/RESTfm.php" ]; then
+            RESTFMROOT=$TESTROOT
+            break
+        fi
+        BAILOUT=$(($BAILOUT - 1))
+    done
+    if [ -z "$RESTFMROOT" ]; then
+        log_failure_msg "$MSGPREFIX Unable to locate RESTfm.php"
+        exit 1
+    fi
+    RESTFMROOT=$(abspath "$RESTFMROOT")
+    RESTFMPATHMD5=`echo -n "${RESTFMROOT}" | md5`
+    RESTFMDIRNAME=`dirname "$RESTFMROOT"`
+    RESTFMBASENAME=`basename "$RESTFMROOT"`
+
+    # Ensure that the $RESTFMDIRNAME is $REQUIREDHTDOCSPATH
+    if [ "$RESTFMDIRNAME" != "$REQUIREDHTDOCSPATH" ]; then
+        log_failure_msg "$MSGPREFIX not under FileMaker Server htdocs"
+        echo
+        echo "Please copy RESTfm folder to: \"$REQUIREDHTDOCSPATH\""
+        echo "Then re-run installer from that location."
+        echo
+        exit 1
+    fi
+
+    log_success_msg $MSGPREFIX $RESTFMBASENAME
+}
+
+##
 # Check that we are root.
 #
 check_Privilege() {
@@ -179,7 +244,9 @@ check_Privilege() {
 
     if [ "$EUID" != "0" ]; then
         log_failure_msg "$MSGPREFIX No - ${LOGNAME}"
-        echo 'Error: Please try again using: sudo' "$0" "${args[@]}"
+        echo
+        echo 'Please try again using: sudo' "$0" "${args[@]}"
+        echo
         exit 1
     fi
 
@@ -224,18 +291,68 @@ check_RESTfmReport() {
 #
 installRESTfmApacheConfig() {
     local MSGPREFIX="Install RESTfm Apache config:"
-    local SRC="${BASEDIR}/httpd-RESTfm.FMS13.Apache24.OSX.conf"
-    local DST="/Library/FileMaker Server/HTTPServer/conf/extra/"
+    local SRC="${BASEDIR}/../httpd-RESTfm.FMS13.Apache24.OSX.conf"
+    local DST="/Library/FileMaker Server/HTTPServer/conf/extra"
+    local DSTFILENAME="${DST}/httpd-RESTfm.${RESTFMPATHMD5}.conf"
 
-    cp "${SRC}" "${DST}"
+    # Clobbering any existing conf for this RESTfm fully qualified pathname.
+    echo "# ${TIMESTAMP} - ${ARGV0} - ${LOGNAME}" > "$DSTFILENAME"
     local RET=$?
 
     if [ "$RET" != "0" ]; then
-        log_failure_msg "${MSGPREFIX} error copying file"
+        log_failure_msg "${MSGPREFIX} error intialising file"
+        exit 1
+    fi
+
+    # Use sed to update paths in config.
+    sed "s|/Library/FileMaker Server/HTTPServer/htdocs/RESTfm|${RESTFMDIRNAME}/${RESTFMBASENAME}|" "$SRC" | \
+    sed "s|/Library/FileMaker Server/HTTPServer/htdocs/httpsRoot/RESTfm|${RESTFMDIRNAME}/httpsRoot/${RESTFMBASENAME}|" >> \
+    "$DSTFILENAME"
+    local RET=$?
+
+    if [ "$RET" != "0" ]; then
+        log_failure_msg "${MSGPREFIX} error updating paths"
         exit 1
     fi
 
     log_success_msg "${MSGPREFIX} success"
+}
+
+##
+# Update the FileMaker Server htdocs/httpsRoot/ symlink.
+#
+updateHttpsRootSymlink(){
+    local MSGPREFIX="Update httpsRoot symlink:"
+    local SRC="${RESTFMDIRNAME}/${RESTFMBASENAME}"
+    local DST="${RESTFMDIRNAME}/httpsRoot/${RESTFMBASENAME}"
+
+    # If $DST exists.
+    if [ -a "$DST" ]; then
+        # If $DST is a symlink.
+        if [ -h "$DST" ]; then
+            # Remove existing symlink.
+            rm -f "$DST"
+            local RET=$?
+            if [ "$RET" != "0" ]; then
+                log_warning_msg "${MSGPREFIX} unable to remove existing"
+                return
+            fi
+        else
+            # Else we don't touch this, just issue a warning.
+            log_warning_msg "${MSGPREFIX} path already exists"
+            return
+        fi
+    fi
+
+    # If we get here, we can create the new symlink.
+    ln -s "$SRC" "$DST"
+    local RET=$?
+    if [ "$RET" != "0" ]; then
+        log_warning_msg "${MSGPREFIX} failed to create"
+        exit 1
+    fi
+
+    log_success_msg "${MSGPREFIX} done"
 }
 
 ##
@@ -245,7 +362,15 @@ updateFMSApacheConfig() {
     local MSGPREFIX="Update FMS Apache config:"
     local CONFBASENAME="/Library/FileMaker Server/HTTPServer/conf"
     local SRC="${CONFBASENAME}/httpd.conf"
-    local DST="${CONFBASENAME}/httpd.conf.${TIMESTAMP}.bak"
+    local DST="${CONFBASENAME}/httpd.conf.RESTfm.${TIMESTAMP}.bak"
+    local INCLUDESTR="Include conf/extra/httpd-RESTfm.${RESTFMPATHMD5}.conf"
+
+    # Check if we have this entry already.
+    grep -q "$INCLUDESTR" "$SRC"
+    if [ "$?" == "0" ]; then
+        log_success_msg "${MSGPREFIX} already included"
+        return
+    fi
 
     cp "${SRC}" "${DST}"
     local RET=$?
@@ -255,13 +380,10 @@ updateFMSApacheConfig() {
         exit 1
     fi
 
-    cat << EOFMSAPACHEUPDATE >> "${SRC}"
+    # Append include string to FMS Apache config.
+    echo "$INCLUDESTR" >> "${SRC}"
 
-# RESTfm - ${TIMESTAMP} - ${ARGV0} - ${LOGNAME}
-Include conf/extra/httpd-RESTfm.FMS13.Apache24.OSX.conf
-EOFMSAPACHEUPDATE
-
-    log_success_msg "${MSGPREFIX} success"
+    log_success_msg "${MSGPREFIX} updated"
 }
 
 ##
@@ -296,11 +418,15 @@ check_OSXVersion
 
 check_FMSVersion
 
+check_Location
+
 check_Privilege
 
 check_Y "Type Y to continue with installation, anything else will abort."
 
 installRESTfmApacheConfig
+
+updateHttpsRootSymlink
 
 updateFMSApacheConfig
 
