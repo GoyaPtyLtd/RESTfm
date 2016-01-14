@@ -144,19 +144,32 @@ if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
         // microtime(TRUE) returns seconds as a float.
         $profRealTimeMs = round((microtime(TRUE) - $startTimeUs) * 1000, 0);
 
-        // Peak Memeory (bytes)
+        // Peak Memory (human readable bytes)
         // We use the FALSE parameter as we want to know allocated memory
         // against the memory limit. We don't want the "real" usage which is
         // too coarse.
         $profPeakMem = prettyBytes(memory_get_peak_usage(FALSE));
 
-        // Memory Limit (bytes)
+        // Memory Limit (human readable bytes)
         $profLimitMem = prettyBytes(iniToBytes(ini_get('memory_limit')));
 
         $response->addInfo('X-RESTfm-Profile',  $profRealTimeMs . 'ms ' .
                                                 $profPeakMem . ' ' .
                                                 $profLimitMem);
     }
+}
+
+// Add maximum POST size and memory limit information for all RESTfm 2xx
+// responses where a username was specified (non-guest).
+if ( is_a($response, 'RESTfmResponse') &&
+     preg_match('/^2\d\d$/', $response->code) &&
+     ! empty($request->getRESTfmCredentials()->getPassword()) ) {
+        // All RESTfm URIs perform a database query to validate credentials,
+        // so all RESTfm 2xx responses imply successful authorisation.
+        $response->addInfo('X-RESTfm-PHP-memory_limit',
+                           prettyBytes(iniToBytes(ini_get('memory_limit'))));
+        $response->addInfo('X-RESTfm-PHP-post_max_size',
+                           prettyBytes(iniToBytes(ini_get('post_max_size'))));
 }
 
 // Final response output.
