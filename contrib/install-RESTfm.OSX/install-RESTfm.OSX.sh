@@ -63,9 +63,9 @@ done
 
 echo
 
-setupLogfile
+setup_Logfile
 
-showHeader
+show_Header
 
 date
 
@@ -79,17 +79,17 @@ check_Privilege
 
 check_Y "Type Y to continue with installation, anything else will abort."
 
-installRESTfmApacheConfig
+install_RESTfmApacheConfig
 
-updateHttpsRootSymlink
+install_HttpsRootSymlink
 
-updateFMSApacheConfig
+update_FMSApacheConfig
 
-updateRESTfmHtaccess
+update_RESTfmHtaccess
 
-updateRESTfmIni
+update_RESTfmIni
 
-restartFMSApache
+restart_FMSApache
 
 check_RESTfmReport
 

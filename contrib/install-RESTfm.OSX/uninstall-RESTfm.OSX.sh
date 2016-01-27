@@ -55,9 +55,9 @@ done
 
 echo
 
-setupLogfile
+setup_Logfile
 
-showHeaderUninstall
+show_HeaderUninstall
 
 date
 
@@ -71,7 +71,26 @@ check_Installed
 
 select_Uninstall
 
-echo "Done."
+echo
+
+check_Y "Type Y to continue with uninstall, anything else will abort."
+
+update_FMSApacheConfigRemove
+
+if [[ ${RESTFMUNINSTALLBASENAME} != "Orphan entry"* ]]; then
+    uninstall_RESTfmApacheConfig
+
+    uninstall_HttpsRootSymlink
+fi
+
+restart_FMSApache
+
+echo -n "Done."
+if [[ ${RESTFMUNINSTALLBASENAME} != "Orphan entry"* ]]; then
+    echo -n " The \"${RESTFMUNINSTALLBASENAME}\" folder may now be removed."
+fi
+echo
+
 echo
 
 exit

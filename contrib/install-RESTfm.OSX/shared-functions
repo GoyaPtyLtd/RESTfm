@@ -54,7 +54,7 @@ rawurlencode() {
 
 ### Output functions ###
 
-showHeader () {
+show_Header () {
     cat <<EOCAT
 
 +-----------------------------------------------------------------------------+
@@ -64,7 +64,7 @@ showHeader () {
 EOCAT
 }
 
-showHeaderUninstall () {
+show_HeaderUninstall () {
     cat <<EOCAT
 
 +-----------------------------------------------------------------------------+
@@ -74,7 +74,7 @@ showHeaderUninstall () {
 EOCAT
 }
 
-setupLogfile () {
+setup_Logfile () {
     # Log all output to file.
     local LOGFILE="${BASEDIR}/${ARGV0}.${TIMESTAMP}.log"
     # DEBUG
@@ -234,7 +234,7 @@ check_Privilege() {
     if [ "$EUID" != "0" ]; then
         log_failure_msg "$MSGPREFIX No - ${LOGNAME}"
         echo
-        echo 'Please try again using: sudo' "$0" "${args[@]}"
+        echo 'Please try again using: sudo "'$0'"'
         echo
         exit 1
     fi
@@ -256,14 +256,12 @@ check_Y() {
 }
 
 ##
-# Check for configured RESTfm installs in FileMaker Server's httpd.conf file.
+# Check for configured RESTfm installs in FileMaker Server's httpd.conf file,
+# else abort.
 #
 # Initialises global variables:
 #   RESTFMCONFLIST  - An array of config_file_name/RESTfm_basename pairs in
 #                     consecutive indices.
-#                     The first index [0] is the index for the name that
-#                     matches the current $RESTFMBASENAME. Set to 0 if nothing
-#                     matched.
 check_Installed() {
     local MSGPREFIX='Checking for RESTfm installations:'
     local CONFDIRNAME="/Library/FileMaker Server/HTTPServer/conf"
@@ -271,7 +269,7 @@ check_Installed() {
     local SRC="${CONFDIRNAME}/httpd.conf"
 
     # Initialise list.
-    RESTFMCONFLIST[0]=0
+    RESTFMCONFLIST=()
 
     # Scan the FMS httpd.conf for the installer's md5sum fingerprint.
     local SCAN_RESTFMCONFNAME=''
@@ -279,16 +277,12 @@ check_Installed() {
     local SCAN_RESTFMBASENAME=''
     local INSTALLINDEX=1
     for SCAN_RESTFMCONFNAME in `grep -Eo 'httpd-RESTfm\.([a-f0-9]{32})\.conf' "${SRC}"`; do
-        SCAN_RESTFMBASENAME='orphan'
+        SCAN_RESTFMBASENAME='Orphan entry. Webserver will not start!'
 
-        # Extract actual RESTfm install basename from conf in extra directory.
+        # Extract actual RESTfm install basename from conf in "extra" directory.
         if [ -r "${EXTRADIRNAME}/${SCAN_RESTFMCONFNAME}" ]; then
             SCAN_RESTFMDIRNAME=`grep -E '^<Directory\s+' "${EXTRADIRNAME}/${SCAN_RESTFMCONFNAME}" | head -n 1 | sed -E  's|^<Directory[[:space:]]+"([^"]+)">|\1|'`
             SCAN_RESTFMBASENAME=`basename "$SCAN_RESTFMDIRNAME"`
-            if [ "${RESTFMBASENAME}" == "${SCAN_RESTFMBASENAME}" ]; then
-                # Update the 0 index as we found a matching RESTfm basename.
-                RESTFMCONFLIST[0]=$INSTALLINDEX
-            fi
         fi
 
         RESTFMCONFLIST+=("$SCAN_RESTFMCONFNAME")
@@ -297,7 +291,7 @@ check_Installed() {
         INSTALLINDEX=$(($INSTALLINDEX + 1))
     done
 
-    if [ ${#RESTFMCONFLIST[@]} -eq 1 ]; then
+    if [ ${#RESTFMCONFLIST[@]} -eq 0 ]; then
         log_failure_msg "${MSGPREFIX} none found"
         exit 1
     fi
@@ -330,7 +324,7 @@ check_RESTfmReport() {
 ##
 # Install the appropriate Apache config in RESTfm/contrib
 #
-installRESTfmApacheConfig() {
+install_RESTfmApacheConfig() {
     local MSGPREFIX="Install RESTfm Apache config:"
     local SRC="${BASEDIR}/../httpd-RESTfm.FMS13.Apache24.OSX.conf"
     local DST="/Library/FileMaker Server/HTTPServer/conf/extra"
@@ -362,8 +356,8 @@ installRESTfmApacheConfig() {
 ##
 # Update the FileMaker Server htdocs/httpsRoot/ symlink.
 #
-updateHttpsRootSymlink(){
-    local MSGPREFIX="Update httpsRoot symlink:"
+install_HttpsRootSymlink(){
+    local MSGPREFIX="Install httpsRoot symlink:"
     local SRC="${RESTFMDIRNAME}/${RESTFMBASENAME}"
     local DST="${RESTFMDIRNAME}/httpsRoot/${RESTFMBASENAME}"
 
@@ -399,7 +393,7 @@ updateHttpsRootSymlink(){
 ##
 # Update the FMS Apache httpd.conf file to include the RESTfm .conf
 #
-updateFMSApacheConfig() {
+update_FMSApacheConfig() {
     local MSGPREFIX="Update FMS Apache config:"
     local CONFDIRNAME="/Library/FileMaker Server/HTTPServer/conf"
     local SRC="${CONFDIRNAME}/httpd.conf"
@@ -430,7 +424,7 @@ updateFMSApacheConfig() {
 ##
 # Restart FMS Apache web server instance.
 #
-restartFMSApache() {
+restart_FMSApache() {
     log_daemon_msg 'Restarting Web Server'
     launchctl start com.filemaker.httpd.restart
 
@@ -448,7 +442,7 @@ restartFMSApache() {
 ##
 # Update RESTfm .htaccess to set RewriteBase.
 #
-updateRESTfmHtaccess() {
+update_RESTfmHtaccess() {
     local MSGPREFIX="Update RESTfm .htaccess:"
     local HTACCESS="${RESTFMDIRNAME}/${RESTFMBASENAME}/.htaccess"
 
@@ -467,7 +461,7 @@ updateRESTfmHtaccess() {
 ##
 # Update RESTfm.ini.php to set baseURI.
 #
-updateRESTfmIni() {
+update_RESTfmIni() {
     local MSGPREFIX="Update RESTfm.ini.php:"
     local RESTFMINI="${RESTFMDIRNAME}/${RESTFMBASENAME}/RESTfm.ini.php"
 
@@ -487,13 +481,15 @@ updateRESTfmIni() {
 ##
 # Allow user to select which RESTfm to uninstall.
 #
-# Reads global vairable: RESTFMCONFLIST
+# Reads global variable: RESTFMCONFLIST
 #
-# Initialises global variable: RESTFMUNININSTALLCHOICE
+# Initialises global variables:
+#   RESTFMUNINSTALLCONFNAME
+#   RESTFMUNINSTALLBASENAME
 #
 select_Uninstall() {
     local CHOICES=()
-    local INDEX=2
+    local INDEX=1
     while [ ${INDEX} -lt ${#RESTFMCONFLIST[@]} ]; do
         CHOICES+=("${RESTFMCONFLIST[$INDEX]}")
         INDEX=$(($INDEX + 2))
@@ -509,9 +505,97 @@ select_Uninstall() {
                 ;;
             *)
                 echo "Continuing with selection $REPLY) \"$CHOICE\""
-                RESTFMUNININSTALLCHOICE=$REPLY
-                return
+                break
                 ;;
         esac
     done
+
+    local INDEX=$(( ($REPLY - 1) * 2 ))
+    RESTFMUNINSTALLCONFNAME=${RESTFMCONFLIST[$INDEX]}
+    RESTFMUNINSTALLBASENAME=${RESTFMCONFLIST[$(( $INDEX + 1 ))]}
+}
+
+##
+# Update the FMS Apache httpd.conf file to remove the RESTfm .conf
+#
+# Reads globals:
+#   RESTFMUNINSTALLCONFNAME
+#
+update_FMSApacheConfigRemove() {
+    local MSGPREFIX="Update FMS Apache config:"
+    local CONFDIRNAME="/Library/FileMaker Server/HTTPServer/conf"
+    local SRC="${CONFDIRNAME}/httpd.conf"
+    local DST="${CONFDIRNAME}/httpd.conf.RESTfm.${TIMESTAMP}.bak"
+
+    cp "${SRC}" "${DST}"
+    local RET=$?
+
+    if [ "$RET" != "0" ]; then
+        log_failure_msg "${MSGPREFIX} error backing up original file"
+        exit 1
+    fi
+
+    # Remove RESTfm conf Include string from FMS Apache config.
+    sed -i -E "s/^.*${RESTFMUNINSTALLCONFNAME}.*$//" "${SRC}"
+    local RET=$?
+
+    if [ "$RET" != "0" ]; then
+        log_failure_msg "${MSGPREFIX} error removing Include"
+        exit 1
+    fi
+
+    log_success_msg "${MSGPREFIX} updated"
+}
+
+##
+# Uninstall the Apache config in "extra" directory.
+#
+# Reads globals:
+#   RESTFMUNINSTALLCONFNAME
+#
+uninstall_RESTfmApacheConfig() {
+    local MSGPREFIX="Uninstall RESTfm Apache config:"
+    local SRCDIR="/Library/FileMaker Server/HTTPServer/conf/extra"
+
+    # Use sed to update paths in config.
+    rm -f "${SRCDIR}/${RESTFMUNINSTALLCONFNAME}"
+    local RET=$?
+
+    if [ "$RET" != "0" ]; then
+        log_failure_msg "${MSGPREFIX} error removing .conf"
+        exit 1
+    fi
+
+    log_success_msg "${MSGPREFIX} success"
+}
+
+##
+# Remove the FileMaker Server htdocs/httpsRoot/ symlink.
+#
+# Reads globals:
+#   RESTFMUNINSTALLBASENAME
+#
+uninstall_HttpsRootSymlink(){
+    local MSGPREFIX="Uninstall httpsRoot symlink:"
+    local DST="${RESTFMDIRNAME}/httpsRoot/${RESTFMUNINSTALLBASENAME}"
+
+    # If $DST exists.
+    if [ -a "$DST" ]; then
+        # If $DST is a symlink.
+        if [ -h "$DST" ]; then
+            # Remove existing symlink.
+            rm -f "$DST"
+            local RET=$?
+            if [ "$RET" != "0" ]; then
+                log_warning_msg "${MSGPREFIX} unable to remove"
+                return
+            fi
+        else
+            # Else we don't touch this, just issue a warning.
+            log_warning_msg "${MSGPREFIX} path is not a symlink"
+            return
+        fi
+    fi
+
+    log_success_msg "${MSGPREFIX} success"
 }
