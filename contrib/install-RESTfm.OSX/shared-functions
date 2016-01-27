@@ -64,6 +64,16 @@ showHeader () {
 EOCAT
 }
 
+showHeaderUninstall () {
+    cat <<EOCAT
+
++-----------------------------------------------------------------------------+
+|                       RESTfm uninstaller for Mac OS X                       |
++-----------------------------------------------------------------------------+
+
+EOCAT
+}
+
 setupLogfile () {
     # Log all output to file.
     local LOGFILE="${BASEDIR}/${ARGV0}.${TIMESTAMP}.log"
@@ -246,7 +256,58 @@ check_Y() {
 }
 
 ##
+# Check for configured RESTfm installs in FileMaker Server's httpd.conf file.
+#
+# Initialises global variables:
+#   RESTFMCONFLIST  - An array of config_file_name/RESTfm_basename pairs in
+#                     consecutive indices.
+#                     The first index [0] is the index for the name that
+#                     matches the current $RESTFMBASENAME. Set to 0 if nothing
+#                     matched.
+check_Installed() {
+    local MSGPREFIX='Checking for RESTfm installations:'
+    local CONFDIRNAME="/Library/FileMaker Server/HTTPServer/conf"
+    local EXTRADIRNAME="${CONFDIRNAME}/extra"
+    local SRC="${CONFDIRNAME}/httpd.conf"
+
+    # Initialise list.
+    RESTFMCONFLIST[0]=0
+
+    # Scan the FMS httpd.conf for the installer's md5sum fingerprint.
+    local SCAN_RESTFMCONFNAME=''
+    local SCAN_RESTFMDIRNAME=''
+    local SCAN_RESTFMBASENAME=''
+    local INSTALLINDEX=1
+    for SCAN_RESTFMCONFNAME in `grep -Eo 'httpd-RESTfm\.([a-f0-9]{32})\.conf' "${SRC}"`; do
+        SCAN_RESTFMBASENAME='orphan'
+
+        # Extract actual RESTfm install basename from conf in extra directory.
+        if [ -r "${EXTRADIRNAME}/${SCAN_RESTFMCONFNAME}" ]; then
+            SCAN_RESTFMDIRNAME=`grep -E '^<Directory\s+' "${EXTRADIRNAME}/${SCAN_RESTFMCONFNAME}" | head -n 1 | sed -E  's|^<Directory[[:space:]]+"([^"]+)">|\1|'`
+            SCAN_RESTFMBASENAME=`basename "$SCAN_RESTFMDIRNAME"`
+            if [ "${RESTFMBASENAME}" == "${SCAN_RESTFMBASENAME}" ]; then
+                # Update the 0 index as we found a matching RESTfm basename.
+                RESTFMCONFLIST[0]=$INSTALLINDEX
+            fi
+        fi
+
+        RESTFMCONFLIST+=("$SCAN_RESTFMCONFNAME")
+        RESTFMCONFLIST+=("$SCAN_RESTFMBASENAME")
+
+        INSTALLINDEX=$(($INSTALLINDEX + 1))
+    done
+
+    if [ ${#RESTFMCONFLIST[@]} -eq 1 ]; then
+        log_failure_msg "${MSGPREFIX} none found"
+        exit 1
+    fi
+
+    log_success_msg "${MSGPREFIX} $((${INSTALLINDEX} - 1)) found"
+}
+
+##
 # Check the RESTfm report page for any errors.
+#
 check_RESTfmReport() {
     local MSGPREFIX='Check RESTfm report:'
     local URL="http://localhost/${RESTFMBASENAMEURLENCODED}/report.php"
@@ -340,9 +401,9 @@ updateHttpsRootSymlink(){
 #
 updateFMSApacheConfig() {
     local MSGPREFIX="Update FMS Apache config:"
-    local CONFBASENAME="/Library/FileMaker Server/HTTPServer/conf"
-    local SRC="${CONFBASENAME}/httpd.conf"
-    local DST="${CONFBASENAME}/httpd.conf.RESTfm.${TIMESTAMP}.bak"
+    local CONFDIRNAME="/Library/FileMaker Server/HTTPServer/conf"
+    local SRC="${CONFDIRNAME}/httpd.conf"
+    local DST="${CONFDIRNAME}/httpd.conf.RESTfm.${TIMESTAMP}.bak"
     local INCLUDESTR="Include conf/extra/httpd-RESTfm.${RESTFMPATHMD5}.conf"
 
     # Check if we have this entry already.
@@ -421,4 +482,36 @@ updateRESTfmIni() {
 
     log_success_msg "${MSGPREFIX} success"
 
+}
+
+##
+# Allow user to select which RESTfm to uninstall.
+#
+# Reads global vairable: RESTFMCONFLIST
+#
+# Initialises global variable: RESTFMUNININSTALLCHOICE
+#
+select_Uninstall() {
+    local CHOICES=()
+    local INDEX=2
+    while [ ${INDEX} -lt ${#RESTFMCONFLIST[@]} ]; do
+        CHOICES+=("${RESTFMCONFLIST[$INDEX]}")
+        INDEX=$(($INDEX + 2))
+    done
+
+    PS3="Select number to uninstall, any other characters will abort: "
+    local CHOICE
+    select CHOICE in "${CHOICES[@]}"; do
+        case $CHOICE in
+            '')
+                echo "++ user aborted, exiting."
+                exit 1
+                ;;
+            *)
+                echo "Continuing with selection $REPLY) \"$CHOICE\""
+                RESTFMUNININSTALLCHOICE=$REPLY
+                return
+                ;;
+        esac
+    done
 }
