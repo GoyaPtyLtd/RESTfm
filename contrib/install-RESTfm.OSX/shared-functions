@@ -89,11 +89,6 @@ setup_Logfile () {
 
 ### Check-or-die functions ###
 
-check_OSX () {
-    local MSG='Check for Mac OS X'
-    log_success_msg $MSG
-}
-
 ##
 # Check:
 #   - that we are running on Mac OS X.
@@ -115,6 +110,9 @@ check_OSXVersion() {
     # Trim off any patch version, e.g. 10.10.1 -> 10.10
     OSXVERSION=`echo "${OSXVERSION}" | grep -Eo '^[0-9]+\.[0-9]+'`
     case "$OSXVERSION" in
+        "10.11")
+            log_success_msg "$MSGPREFIX $OSXVERSION El Capitan"
+            ;;
         "10.10")
             log_success_msg "$MSGPREFIX $OSXVERSION Yosemite"
             ;;
