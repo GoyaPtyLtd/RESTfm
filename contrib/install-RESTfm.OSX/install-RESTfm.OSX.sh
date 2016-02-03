@@ -73,6 +73,8 @@ check_OSXVersion
 
 check_FMSVersion
 
+check_ApacheVersion
+
 check_Location
 
 check_Privilege

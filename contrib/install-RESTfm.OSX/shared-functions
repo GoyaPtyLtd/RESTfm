@@ -174,14 +174,42 @@ check_FMSVersion() {
 }
 
 ##
+# Check:
+#   - that the Apache version is supported.
+#
+# Initialises global variables:
+#   APACHE_VERSION - x.y Apache version.
+#   APACHE_CONF - Full path to Apache conf file with version suffix for FMS13+.
+#
+function check_ApacheVersion() {
+    local MSGPREFIX='Check Apache version: '
+
+    # Match usage in FMS /Library/FileMaker Server/HTTPServer/bin/httpdctl
+    APACHE_VERSION=$(/usr/sbin/httpd -version | head -1 | cut -d "/" -f 2 | cut -d "." -f 1,2)
+
+    case "$APACHE_VERSION" in
+        '2.2'|'2.4')
+            log_success_msg "$MSGPREFIX $APACHE_VERSION"
+            ;;
+        *)
+            log_failure_msg "$MSGPREFIX $APACHE_VERSION, unsupported"
+            exit 1
+            ;;
+    esac
+
+    APACHE_CONF="/Library/FileMaker Server/HTTPServer/conf/httpd.conf.${APACHE_VERSION}"
+}
+
+
+##
 # Check that we are in the correct location. i.e. in an immediate subdirectory
 # to /Library/FileMaker Server/HTTPServer/htdocs
 #
 # Initialises global variables:
-#   RESTFMPATHMD5   - Unique hash of RESTfm installation directory.
-#   RESTFMDIRNAME   - Dirname part of RESTfm installation directory.
-#   RESTFMBASENAME  - Basename part of RESTfm installation directory.
-#   RESTFMBASENAMEURLENCODED    - As above but raw urlencoded.
+#   RESTFM_PATH_MD5   - Unique hash of RESTfm installation directory.
+#   RESTFM_DIRNAME   - Dirname part of RESTfm installation directory.
+#   RESTFM_BASENAME  - Basename part of RESTfm installation directory.
+#   RESTFM_BASENAME_URLENCODED    - As above but raw urlencoded.
 #
 check_Location() {
     local MSGPREFIX='Check RESTfm location:'
@@ -205,13 +233,13 @@ check_Location() {
         exit 1
     fi
     RESTFMROOT=$(abspath "$RESTFMROOT")
-    RESTFMPATHMD5=`echo -n "${RESTFMROOT}" | md5`
-    RESTFMDIRNAME=`dirname "$RESTFMROOT"`
-    RESTFMBASENAME=`basename "$RESTFMROOT"`
-    RESTFMBASENAMEURLENCODED=$(rawurlencode "${RESTFMBASENAME}")
+    RESTFM_PATH_MD5=`echo -n "${RESTFMROOT}" | md5`
+    RESTFM_DIRNAME=`dirname "$RESTFMROOT"`
+    RESTFM_BASENAME=`basename "$RESTFMROOT"`
+    RESTFM_BASENAME_URLENCODED=$(rawurlencode "${RESTFM_BASENAME}")
 
-    # Ensure that the $RESTFMDIRNAME is $REQUIREDHTDOCSPATH
-    if [ "$RESTFMDIRNAME" != "$REQUIREDHTDOCSPATH" ]; then
+    # Ensure that the $RESTFM_DIRNAME is $REQUIREDHTDOCSPATH
+    if [ "$RESTFM_DIRNAME" != "$REQUIREDHTDOCSPATH" ]; then
         log_failure_msg "$MSGPREFIX not under FileMaker Server htdocs"
         echo
         echo "Please copy RESTfm folder to: \"$REQUIREDHTDOCSPATH\""
@@ -220,7 +248,7 @@ check_Location() {
         exit 1
     fi
 
-    log_success_msg $MSGPREFIX $RESTFMBASENAME
+    log_success_msg $MSGPREFIX $RESTFM_BASENAME
 }
 
 ##
@@ -254,42 +282,44 @@ check_Y() {
 }
 
 ##
-# Check for configured RESTfm installs in FileMaker Server's httpd.conf file,
+# Check for configured RESTfm installs in FileMaker Server's Apache .conf file,
 # else abort.
 #
+# Reads globals:
+#   APACHE_CONF
+#
 # Initialises global variables:
-#   RESTFMCONFLIST  - An array of config_file_name/RESTfm_basename pairs in
+#   RESTFM_CONF_LIST  - An array of config_file_name/RESTfm_basename pairs in
 #                     consecutive indices.
 check_Installed() {
     local MSGPREFIX='Checking for RESTfm installations:'
-    local CONFDIRNAME="/Library/FileMaker Server/HTTPServer/conf"
-    local EXTRADIRNAME="${CONFDIRNAME}/extra"
-    local SRC="${CONFDIRNAME}/httpd.conf"
+    local EXTRADIRNAME="/Library/FileMaker Server/HTTPServer/conf/extra"
+    local SRC="${APACHE_CONF}"
 
     # Initialise list.
-    RESTFMCONFLIST=()
+    RESTFM_CONF_LIST=()
 
-    # Scan the FMS httpd.conf for the installer's md5sum fingerprint.
+    # Scan the FMS Apache .conf for the installer's md5sum fingerprint.
     local SCAN_RESTFMCONFNAME=''
-    local SCAN_RESTFMDIRNAME=''
-    local SCAN_RESTFMBASENAME=''
+    local SCAN_RESTFM_DIRNAME=''
+    local SCAN_RESTFM_BASENAME=''
     local INSTALLINDEX=1
     for SCAN_RESTFMCONFNAME in `grep -Eo 'httpd-RESTfm\.([a-f0-9]{32})\.conf' "${SRC}"`; do
-        SCAN_RESTFMBASENAME='Orphan entry. Webserver will not start!'
+        SCAN_RESTFM_BASENAME='Orphan entry. Webserver will not start until removed!'
 
         # Extract actual RESTfm install basename from conf in "extra" directory.
         if [ -r "${EXTRADIRNAME}/${SCAN_RESTFMCONFNAME}" ]; then
-            SCAN_RESTFMDIRNAME=`grep -E '^<Directory\s+' "${EXTRADIRNAME}/${SCAN_RESTFMCONFNAME}" | head -n 1 | sed -E  's|^<Directory[[:space:]]+"([^"]+)">|\1|'`
-            SCAN_RESTFMBASENAME=`basename "$SCAN_RESTFMDIRNAME"`
+            SCAN_RESTFM_DIRNAME=`grep -E '^<Directory\s+' "${EXTRADIRNAME}/${SCAN_RESTFMCONFNAME}" | head -n 1 | sed -E  's|^<Directory[[:space:]]+"([^"]+)">|\1|'`
+            SCAN_RESTFM_BASENAME=`basename "$SCAN_RESTFM_DIRNAME"`
         fi
 
-        RESTFMCONFLIST+=("$SCAN_RESTFMCONFNAME")
-        RESTFMCONFLIST+=("$SCAN_RESTFMBASENAME")
+        RESTFM_CONF_LIST+=("$SCAN_RESTFMCONFNAME")
+        RESTFM_CONF_LIST+=("$SCAN_RESTFM_BASENAME")
 
         INSTALLINDEX=$(($INSTALLINDEX + 1))
     done
 
-    if [ ${#RESTFMCONFLIST[@]} -eq 0 ]; then
+    if [ ${#RESTFM_CONF_LIST[@]} -eq 0 ]; then
         log_failure_msg "${MSGPREFIX} none found"
         exit 1
     fi
@@ -302,7 +332,7 @@ check_Installed() {
 #
 check_RESTfmReport() {
     local MSGPREFIX='Check RESTfm report:'
-    local URL="http://localhost/${RESTFMBASENAMEURLENCODED}/report.php"
+    local URL="http://localhost/${RESTFM_BASENAME_URLENCODED}/report.php"
     curl -s -L "${URL}" | grep -q "RESTfm is working"
     local RET=$?
 
@@ -324,9 +354,16 @@ check_RESTfmReport() {
 #
 install_RESTfmApacheConfig() {
     local MSGPREFIX="Install RESTfm Apache config:"
-    local SRC="${BASEDIR}/../httpd-RESTfm.FMS13.Apache24.OSX.conf"
+    case "$APACHE_VERSION" in
+        '2.2')
+            local SRC="${BASEDIR}/../httpd-RESTfm.FMS13.Apache22.OSX.conf"
+            ;;
+        '2.4')
+            local SRC="${BASEDIR}/../httpd-RESTfm.FMS13.Apache24.OSX.conf"
+            ;;
+    esac
     local DST="/Library/FileMaker Server/HTTPServer/conf/extra"
-    local DSTFILENAME="${DST}/httpd-RESTfm.${RESTFMPATHMD5}.conf"
+    local DSTFILENAME="${DST}/httpd-RESTfm.${RESTFM_PATH_MD5}.conf"
 
     # Clobbering any existing conf for this RESTfm fully qualified pathname.
     echo "# ${TIMESTAMP} - ${ARGV0} - ${LOGNAME}" > "$DSTFILENAME"
@@ -338,8 +375,8 @@ install_RESTfmApacheConfig() {
     fi
 
     # Use sed to update paths in config.
-    sed "s|/Library/FileMaker Server/HTTPServer/htdocs/RESTfm|${RESTFMDIRNAME}/${RESTFMBASENAME}|" "$SRC" | \
-    sed "s|/Library/FileMaker Server/HTTPServer/htdocs/httpsRoot/RESTfm|${RESTFMDIRNAME}/httpsRoot/${RESTFMBASENAME}|" >> \
+    sed "s|/Library/FileMaker Server/HTTPServer/htdocs/RESTfm|${RESTFM_DIRNAME}/${RESTFM_BASENAME}|" "$SRC" | \
+    sed "s|/Library/FileMaker Server/HTTPServer/htdocs/httpsRoot/RESTfm|${RESTFM_DIRNAME}/httpsRoot/${RESTFM_BASENAME}|" >> \
     "$DSTFILENAME"
     local RET=$?
 
@@ -356,8 +393,8 @@ install_RESTfmApacheConfig() {
 #
 install_HttpsRootSymlink(){
     local MSGPREFIX="Install httpsRoot symlink:"
-    local SRC="${RESTFMDIRNAME}/${RESTFMBASENAME}"
-    local DST="${RESTFMDIRNAME}/httpsRoot/${RESTFMBASENAME}"
+    local SRC="${RESTFM_DIRNAME}/${RESTFM_BASENAME}"
+    local DST="${RESTFM_DIRNAME}/httpsRoot/${RESTFM_BASENAME}"
 
     # If $DST exists.
     if [ -a "$DST" ]; then
@@ -389,14 +426,16 @@ install_HttpsRootSymlink(){
 }
 
 ##
-# Update the FMS Apache httpd.conf file to include the RESTfm .conf
+# Update the FMS Apache .conf file to include the RESTfm .conf
+#
+# Reads globals:
+#   APACHE_CONF
 #
 update_FMSApacheConfig() {
     local MSGPREFIX="Update FMS Apache config:"
-    local CONFDIRNAME="/Library/FileMaker Server/HTTPServer/conf"
-    local SRC="${CONFDIRNAME}/httpd.conf"
-    local DST="${CONFDIRNAME}/httpd.conf.RESTfm.${TIMESTAMP}.bak"
-    local INCLUDESTR="Include conf/extra/httpd-RESTfm.${RESTFMPATHMD5}.conf"
+    local SRC="${APACHE_CONF}"
+    local DST="${SRC}.RESTfm.${TIMESTAMP}.bak"
+    local INCLUDESTR="Include conf/extra/httpd-RESTfm.${RESTFM_PATH_MD5}.conf"
 
     # Check if we have this entry already.
     grep -q "$INCLUDESTR" "$SRC"
@@ -442,10 +481,10 @@ restart_FMSApache() {
 #
 update_RESTfmHtaccess() {
     local MSGPREFIX="Update RESTfm .htaccess:"
-    local HTACCESS="${RESTFMDIRNAME}/${RESTFMBASENAME}/.htaccess"
+    local HTACCESS="${RESTFM_DIRNAME}/${RESTFM_BASENAME}/.htaccess"
 
     # Use sed to update RewriteBase.
-    sed -i.bak -E "s/^([[:space:]]*RewriteBase[[:space:]]*)(.*)$/\1\/${RESTFMBASENAMEURLENCODED}/" "${HTACCESS}"
+    sed -i.bak -E "s/^([[:space:]]*RewriteBase[[:space:]]*)(.*)$/\1\/${RESTFM_BASENAME_URLENCODED}/" "${HTACCESS}"
     local RET=$?
 
     if [ "$RET" != "0" ]; then
@@ -461,10 +500,10 @@ update_RESTfmHtaccess() {
 #
 update_RESTfmIni() {
     local MSGPREFIX="Update RESTfm.ini.php:"
-    local RESTFMINI="${RESTFMDIRNAME}/${RESTFMBASENAME}/RESTfm.ini.php"
+    local RESTFMINI="${RESTFM_DIRNAME}/${RESTFM_BASENAME}/RESTfm.ini.php"
 
     # Use sed to update baseURI.
-    sed -i.bak -E "s/^([[:space:]]*\'baseURI\'[[:space:]]*\=\>[[:space:]]*\')(.*)(\'[,[:space:]]*)/\1\/${RESTFMBASENAMEURLENCODED}\3/" "${RESTFMINI}"
+    sed -i.bak -E "s/^([[:space:]]*\'baseURI\'[[:space:]]*\=\>[[:space:]]*\')(.*)(\'[,[:space:]]*)/\1\/${RESTFM_BASENAME_URLENCODED}\3/" "${RESTFMINI}"
     local RET=$?
 
     if [ "$RET" != "0" ]; then
@@ -479,17 +518,17 @@ update_RESTfmIni() {
 ##
 # Allow user to select which RESTfm to uninstall.
 #
-# Reads global variable: RESTFMCONFLIST
+# Reads global variable: RESTFM_CONF_LIST
 #
 # Initialises global variables:
-#   RESTFMUNINSTALLCONFNAME
-#   RESTFMUNINSTALLBASENAME
+#   RESTFM_UNINSTALL_CONF_NAME
+#   RESTFM_UNINSTALL_BASE_NAME
 #
 select_Uninstall() {
     local CHOICES=()
     local INDEX=1
-    while [ ${INDEX} -lt ${#RESTFMCONFLIST[@]} ]; do
-        CHOICES+=("${RESTFMCONFLIST[$INDEX]}")
+    while [ ${INDEX} -lt ${#RESTFM_CONF_LIST[@]} ]; do
+        CHOICES+=("${RESTFM_CONF_LIST[$INDEX]}")
         INDEX=$(($INDEX + 2))
     done
 
@@ -509,21 +548,21 @@ select_Uninstall() {
     done
 
     local INDEX=$(( ($REPLY - 1) * 2 ))
-    RESTFMUNINSTALLCONFNAME=${RESTFMCONFLIST[$INDEX]}
-    RESTFMUNINSTALLBASENAME=${RESTFMCONFLIST[$(( $INDEX + 1 ))]}
+    RESTFM_UNINSTALL_CONF_NAME=${RESTFM_CONF_LIST[$INDEX]}
+    RESTFM_UNINSTALL_BASE_NAME=${RESTFM_CONF_LIST[$(( $INDEX + 1 ))]}
 }
 
 ##
-# Update the FMS Apache httpd.conf file to remove the RESTfm .conf
+# Update the FMS Apache .conf file to remove the RESTfm .conf
 #
 # Reads globals:
-#   RESTFMUNINSTALLCONFNAME
+#   APACHE_CONF
+#   RESTFM_UNINSTALL_CONF_NAME
 #
 update_FMSApacheConfigRemove() {
     local MSGPREFIX="Update FMS Apache config:"
-    local CONFDIRNAME="/Library/FileMaker Server/HTTPServer/conf"
-    local SRC="${CONFDIRNAME}/httpd.conf"
-    local DST="${CONFDIRNAME}/httpd.conf.RESTfm.${TIMESTAMP}.bak"
+    local SRC="${APACHE_CONF}"
+    local DST="${SRC}.RESTfm.${TIMESTAMP}.bak"
 
     cp "${SRC}" "${DST}"
     local RET=$?
@@ -534,7 +573,7 @@ update_FMSApacheConfigRemove() {
     fi
 
     # Remove RESTfm conf Include string from FMS Apache config.
-    sed -i -E "s/^.*${RESTFMUNINSTALLCONFNAME}.*$//" "${SRC}"
+    sed -i -E "s/^.*${RESTFM_UNINSTALL_CONF_NAME}.*$//" "${SRC}"
     local RET=$?
 
     if [ "$RET" != "0" ]; then
@@ -549,14 +588,14 @@ update_FMSApacheConfigRemove() {
 # Uninstall the Apache config in "extra" directory.
 #
 # Reads globals:
-#   RESTFMUNINSTALLCONFNAME
+#   RESTFM_UNINSTALL_CONF_NAME
 #
 uninstall_RESTfmApacheConfig() {
     local MSGPREFIX="Uninstall RESTfm Apache config:"
     local SRCDIR="/Library/FileMaker Server/HTTPServer/conf/extra"
 
     # Use sed to update paths in config.
-    rm -f "${SRCDIR}/${RESTFMUNINSTALLCONFNAME}"
+    rm -f "${SRCDIR}/${RESTFM_UNINSTALL_CONF_NAME}"
     local RET=$?
 
     if [ "$RET" != "0" ]; then
@@ -571,11 +610,11 @@ uninstall_RESTfmApacheConfig() {
 # Remove the FileMaker Server htdocs/httpsRoot/ symlink.
 #
 # Reads globals:
-#   RESTFMUNINSTALLBASENAME
+#   RESTFM_UNINSTALL_BASE_NAME
 #
 uninstall_HttpsRootSymlink(){
     local MSGPREFIX="Uninstall httpsRoot symlink:"
-    local DST="${RESTFMDIRNAME}/httpsRoot/${RESTFMUNINSTALLBASENAME}"
+    local DST="${RESTFM_DIRNAME}/httpsRoot/${RESTFM_UNINSTALL_BASE_NAME}"
 
     # If $DST exists.
     if [ -a "$DST" ]; then

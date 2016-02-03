@@ -61,13 +61,19 @@ show_HeaderUninstall
 
 date
 
+check_OSXVersion
+
+check_FMSVersion
+
+check_ApacheVersion
+
 check_Location
 
 check_Privilege
 
 check_Installed
 # DEBUG
-#echo ${RESTFMCONFLIST[@]}
+#echo ${RESTFM_CONF_LIST[@]}
 
 select_Uninstall
 
@@ -77,7 +83,7 @@ check_Y "Type Y to continue with uninstall, anything else will abort."
 
 update_FMSApacheConfigRemove
 
-if [[ ${RESTFMUNINSTALLBASENAME} != "Orphan entry"* ]]; then
+if [[ ${RESTFM_UNINSTALL_BASE_NAME} != "Orphan entry"* ]]; then
     uninstall_RESTfmApacheConfig
 
     uninstall_HttpsRootSymlink
@@ -86,8 +92,8 @@ fi
 restart_FMSApache
 
 echo -n "Done."
-if [[ ${RESTFMUNINSTALLBASENAME} != "Orphan entry"* ]]; then
-    echo -n " The \"${RESTFMUNINSTALLBASENAME}\" folder may now be removed."
+if [[ ${RESTFM_UNINSTALL_BASE_NAME} != "Orphan entry"* ]]; then
+    echo -n " The \"${RESTFM_UNINSTALL_BASE_NAME}\" folder may now be removed."
 fi
 echo
 
