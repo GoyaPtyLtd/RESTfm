@@ -241,12 +241,18 @@ class Diagnostics {
                 $prefix_details .= "  Please correct the URL in your browser, and try again.\n\n";
                 $prefix_details .= "- Reload this page immediately after this one change to see a reduction in further instructions.\n\n";
             } elseif ($calculatedBaseURI != '/RESTfm') {
-                // If the baseURI is not /RESTfm, then suggest it should be.
-                $prefix_details = "\n* For ease of installation, URI should be: /RESTfm but was accessed as: $calculatedBaseURI\n\n";
-                $prefix_details .= "Instructions:\n\n";
-                $prefix_details .= "- To considerably simplify installation, it is *strongly* suggested the RESTfm install folder: $calculatedBaseURI\n";
-                $prefix_details .= "  be changed to: /RESTfm\n\n";
-                $prefix_details .= "- Reload this page immediately after this one change to see a reduction in further instructions.\n\n";
+                if ($this->_isDarwinFileMaker13()) {
+                    // This is not a problem for FMS13+ on OSX, as we have an install script that will handle this.
+                    $prefix_details = $this->_darwinFMS13InstallerInstructions();
+                    $reportItem->details = '';
+                } else {
+                    // If the baseURI is not /RESTfm, then suggest it should be.
+                    $prefix_details = "\n* For ease of installation, URI should be: /RESTfm but was accessed as: $calculatedBaseURI\n\n";
+                    $prefix_details .= "Instructions:\n\n";
+                    $prefix_details .= "- To considerably simplify installation, it is *strongly* suggested the RESTfm install folder: $calculatedBaseURI\n";
+                    $prefix_details .= "  be changed to: /RESTfm\n\n";
+                    $prefix_details .= "- Reload this page immediately after this one change to see a reduction in further instructions.\n\n";
+                }
             }
             $reportItem->details = $prefix_details . $reportItem->details;
         }
@@ -712,9 +718,11 @@ class Diagnostics {
         $fms13ApacheConfDir = "/Library/FileMaker Server/HTTPServer/conf";
         if (version_compare($this->_isApache(), '2.4', '>=')) {
             $restfmApacheConf = "httpd-RESTfm.FMS13.Apache24.OSX.conf";
+            $fmsApacheVersion = '2.4';
         } else {
             // Otherwise we will assume the older Apache 2.2
             $restfmApacheConf = "httpd-RESTfm.FMS13.Apache22.OSX.conf";
+            $fmsApacheVersion = '2.2';
         }
 
         $s = "\nFileMaker Server 13 on Apple OSX instructions:\n\n";
@@ -732,7 +740,7 @@ class Diagnostics {
         }
 
         $s .= "\n";
-        $s .= '- Edit "'.$fms13ApacheConfDir.'/httpd.conf" and append the following line to the end of the file:' . "\n";
+        $s .= '- Edit "'.$fms13ApacheConfDir.'/httpd.conf.'.$fmsApacheVersion.'" and append the following line to the end of the file:' . "\n";
         $s .= '    Include conf/extra/'.$restfmApacheConf . "\n";
         $s .= "\n";
         $s .= '- Stop the FileMaker service by typing the following in a terminal:' . "\n";
@@ -759,6 +767,34 @@ class Diagnostics {
      * breaking automatic SSL usage on the same site content !?
      *
      * @return
+     *  String of instructions to execute script installer for FMS13+ on Darwin
+     *  (Apple OSX)
+     */
+    private function _darwinFMS13InstallerInstructions() {
+        $s = "\nFileMaker Server 13/14 on Apple OSX instructions:\n\n";
+
+        if (strcasecmp(dirname($this->_RESTfmDocumentRoot), '/Library/FileMaker Server/HTTPServer/htdocs') != 0) {
+            $s .= '* Custom document root outside of FMS detected. Please contact Goya support: http://www.restfm.com/help' . "\n";
+            return $s;
+        }
+
+        $s .= ' - Execute the RESTfm installer script by typing the following in a terminal:' . "\n";
+        $s .= '    sudo "' . $this->_RESTfmDocumentRoot . '/contrib/install-RESTfm.OSX/install-RESTfm.OSX.sh"' . "\n";
+        $s .= "\n";
+        $s .= '- Reload this page.' . "\n";
+
+        return $s;
+    }
+
+    /**
+     * ** DEPRECATED - We now have a script installer **
+     *
+     * FileMaker Server 13 has taken control of Apache by default now.
+     *
+     * FMS13 puts the SSL web root as a subdirectory to non-SSL webroot,
+     * breaking automatic SSL usage on the same site content !?
+     *
+     * @return
      *  String of instructions to enable AllowOverride on FMS13 on Darwin
      *  (Apple OSX)
      */
@@ -776,7 +812,7 @@ class Diagnostics {
 
         if ($this->_RESTfmDocumentRoot == '/Library/FileMaker Server/HTTPServer/htdocs/RESTfm') {
             # This is the default configuration, easier to get right.
-            $s .= 'Create a symbolic link by typing the following in a terminal:' . "\n";
+            $s .= '- Create a symbolic link by typing the following in a terminal:' . "\n";
             $s .= '    sudo ln -s "/Library/FileMaker Server/HTTPServer/htdocs/RESTfm" "/Library/FileMaker Server/HTTPServer/htdocs/httpsRoot"' . "\n";
             $s .= "\n";
             $s .= '- Reload this page.' . "\n";
@@ -821,7 +857,8 @@ class Diagnostics {
         // FileMaker Server 13 has taken control of Apache by default now.
         // We don't do OSX version specific instructions in this case.
         if ($this->_isDarwinFileMaker13()) {
-            return $this->_darwinFMS13AllowOverrideInstructions();
+            //return $this->_darwinFMS13AllowOverrideInstructions();
+            return $this->_darwinFMS13InstallerInstructions();
         }
 
         // Different Apache configuration dirs on different Darwin releases.

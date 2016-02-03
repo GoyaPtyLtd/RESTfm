@@ -78,7 +78,7 @@ setup_Logfile () {
     # Log all output to file.
     local LOGFILE="${BASEDIR}/${ARGV0}.${TIMESTAMP}.log"
     # DEBUG
-    LOGFILE="foo.log"
+    #LOGFILE="foo.log"
     # Truncate log file, and redirect STDOUT and STDERR through tee.
     > "$LOGFILE"
     exec >  >(tee -ia "$LOGFILE")
