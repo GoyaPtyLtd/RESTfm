@@ -339,7 +339,7 @@ check_RESTfmReport() {
     if [ "$RET" != "0" ]; then
         log_failure_msg "${MSGPREFIX} ${URL}"
         echo
-        echo "Please check: http://localhost/RESTfm/report.php"
+        echo "Please check: $URL"
         echo
         exit 1
     fi
@@ -350,7 +350,7 @@ check_RESTfmReport() {
 ### Utility Functions ###
 
 ##
-# Install the appropriate Apache config in RESTfm/contrib
+# Install the appropriate Apache config from RESTfm/contrib.
 #
 install_RESTfmApacheConfig() {
     local MSGPREFIX="Install RESTfm Apache config:"
@@ -541,7 +541,7 @@ select_Uninstall() {
                 exit 1
                 ;;
             *)
-                echo "Continuing with selection $REPLY) \"$CHOICE\""
+                echo "Continuing with selection \"$REPLY) $CHOICE\""
                 break
                 ;;
         esac
