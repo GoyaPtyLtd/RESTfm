@@ -162,14 +162,16 @@ if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
 // Add maximum POST size and memory limit information for all RESTfm 2xx
 // responses where a username was specified (non-guest).
 if ( is_a($response, 'RESTfmResponse') &&
-     preg_match('/^2\d\d$/', $response->code) &&
-     ! empty($request->getRESTfmCredentials()->getPassword()) ) {
+        preg_match('/^2\d\d$/', $response->code) ) {
+    $requestUsername = $request->getRESTfmCredentials()->getUsername();
+    if (! empty($requestUsername)) {
         // All RESTfm URIs perform a database query to validate credentials,
         // so all RESTfm 2xx responses imply successful authorisation.
         $response->addInfo('X-RESTfm-PHP-memory_limit',
-                           prettyBytes(iniToBytes(ini_get('memory_limit'))));
+                        prettyBytes(iniToBytes(ini_get('memory_limit'))));
         $response->addInfo('X-RESTfm-PHP-post_max_size',
-                           prettyBytes(iniToBytes(ini_get('post_max_size'))));
+                        prettyBytes(iniToBytes(ini_get('post_max_size'))));
+    }
 }
 
 // Final response output.

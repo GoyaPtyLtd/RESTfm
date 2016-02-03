@@ -18,7 +18,6 @@
  */
 
 require_once 'RESTfmConfig.php';
-require_once 'RESTfmLic.php';
 
 /**
  * Diagnostics class.
@@ -194,35 +193,6 @@ class Diagnostics {
     public function test_documentRoot($reportItem) {
         $reportItem->name = 'Install location';
         $reportItem->details = $this->_RESTfmDocumentRoot . "\n";
-    }
-
-    public function test_licence($reportItem) {
-        $reportItem->name = 'Licence';
-        $lic = new RESTfmLic();
-
-        if ($lic->exists() == TRUE) {
-            $reportItem->details = $lic;
-        } else {
-            $reportItem->details .= 'No "Licence.php" file found in: ' . $this->_RESTfmDocumentRoot . "\n";
-            $reportItem->status = ReportItem::ERROR;
-            return;
-        }
-
-        if ($lic->integrity() === TRUE) {
-            $reportItem->details .= "\n" . 'Integrity OK';
-        } else {
-            $reportItem->details .= "\n" . 'Integrity BAD';
-            $reportItem->status = ReportItem::ERROR;
-            return;
-        }
-
-        $validationResult = $lic->validate();
-        if ($validationResult === TRUE) {
-            $reportItem->details .= "\n" . 'Validation OK';
-        } else {
-            $reportItem->details .= "\n" . 'Validation BAD:' . "\n" . $validationResult;
-            $reportItem->status = ReportItem::ERROR;
-        }
     }
 
     public function test_baseURI($reportItem) {
