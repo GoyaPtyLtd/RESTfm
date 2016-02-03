@@ -455,7 +455,7 @@ update_FMSApacheConfig() {
     # Append include string to FMS Apache config.
     echo "$INCLUDESTR" >> "${SRC}"
 
-    log_success_msg "${MSGPREFIX} updated"
+    log_success_msg "${MSGPREFIX} success"
 }
 
 ##
