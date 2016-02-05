@@ -137,40 +137,83 @@ check_OSXVersion() {
 #   - that FMS appears to be installed.
 #   - that FMS is a supported version.
 #   - that FMS has both WPE and PHP enabled.
+#
+# Initialises global variables:
+#   FMS_VERSION_MAJOR   - The FMS major version number.
+#   FMS_VERSION_MINOR   - The FMS minor version number.
+#   FMS_VERSION_PATCH   - The FMS patch version number.
+#
 check_FMSVersion() {
-    local MSGPREFIX='Check FileMaker Server version: '
+    local MSGPREFIX='Check FMS version: '
 
-    local FMSADMINBIN='/Library/FileMaker Server/Database Server/bin/fmsadmin'
-    local FMSVERSIONJAR='/Library/FileMaker Server/Admin/admin-server/WEB-INF/lib/fmversion.jar'
-    local FMSSERVERCONFIG='/Library/FileMaker Server/Admin/conf/server_config.xml'
+    local FMSADMIN_EXE='/Library/FileMaker Server/Database Server/bin/fmsadmin'
+    local FMSVERSION_JAR='/Library/FileMaker Server/Admin/admin-server/WEB-INF/lib/fmversion.jar'
+    local FMS_SERVER_CONFIG='/Library/FileMaker Server/Admin/conf/server_config.xml'
 
     # Ensure that FMS is installed on this system.
-    if [ ! -r "$FMSADMINBIN" ]; then
-        log_failure_msg "$MSGPREFIX FileMaker Server not detected"
+    if [ ! -r "$FMSADMIN_EXE" ]; then
+        log_failure_msg "$MSGPREFIX FMS not detected"
         exit 1
     fi
 
     # Ensure FMS is a supported version.
-    local FMSVERSION=`unzip -c "$FMSVERSIONJAR" META-INF/MANIFEST.MF | grep Specification-Version: | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'`
-    local FMSMAJORVERSION=`echo "$FMSVERSION" | grep -Eo '^[0-9]+'`
-    case "$FMSMAJORVERSION" in
-        '14'|'13')
-            log_success_msg "$MSGPREFIX $FMSVERSION"
+    local FMS_VERSION=`unzip -c "$FMSVERSION_JAR" META-INF/MANIFEST.MF | grep Specification-Version: | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'`
+    FMS_VERSION_MAJOR=$(echo "$FMS_VERSION" | cut -d . -f 1)
+    FMS_VERSION_MINOR=$(echo "$FMS_VERSION" | cut -d . -f 2)
+    FMS_VERSION_PATCH=$(echo "$FMS_VERSION" | cut -d . -f 3)
+    case "$FMS_VERSION_MAJOR" in
+        '13')
+            if [ $FMS_VERSION_MINOR -eq 0 -a $FMS_VERSION_PATCH -lt 5 ]; then
+                log_failure_msg "$MSGPREFIX $FMS_VERSION unsupported, 13.0v5 is minimum"
+                exit 1
+            fi
+            log_success_msg "$MSGPREFIX $FMS_VERSION"
+            ;;
+        '14')
+            log_success_msg "$MSGPREFIX $FMS_VERSION"
             ;;
         *)
-            log_failure_msg "$MSGPREFIX $FMSVERSION, unsupported"
+            log_failure_msg "$MSGPREFIX $FMS_VERSION, unsupported"
             exit 1
             ;;
     esac
+}
 
-    # Ensure that both WPE and PHP are enabled.
-    local FMSWPEPHP=''
-    FMSWPEPHP=`xpath "$FMSSERVERCONFIG" '//component[@name="WPE"]//technology[@name="PHP"]//parameter[@name="enabled"]/text()' 2>/dev/null`
-    if [ "X${FMSWPEPHP}" != 'Xtrue' ]; then
-        log_failure_msg "FileMaker Server WPE and PHP not enabled"
+##
+# Check:
+#   - that FMS has both WPE and PHP enabled.
+#
+check_FMS_WPE_PHP() {
+    local MSGPREFIX='Check FMS WPE and PHP: '
+
+    # Ensure that both WPE and PHP are enabled (only works on FMS14)
+    #local FMSWPEPHP=''
+    #FMSWPEPHP=`xpath "$FMS_SERVER_CONFIG" '//component[@name="WPE"]//technology[@name="PHP"]//parameter[@name="enabled"]/text()' 2>/dev/null`
+    #if [ "X${FMSWPEPHP}" != 'Xtrue' ]; then
+    #    log_failure_msg "FileMaker Server WPE and PHP not enabled"
+    #    exit 1
+    #fi
+
+    # Check PHP technology test:
+    curl -s "http://localhost/fmi-test/phptest.php?lang=en" | grep -q "PHP connection to the FMServer_Sample database appears successful"
+    local RET=$?
+
+    if [ $RET != 0 ]; then
+        # Second chance, WPE and PHP might be up but the sample DB is closed,
+        # which is good enough for this test.
+        curl -s "http://localhost/fmi-test/phptest.php?lang=en" | grep -q "FMServer_Sample database is not open"
+        RET=$?
+    fi
+
+    if [ $RET != 0 ]; then
+        log_failure_msg "${MSGPREFIX} could not complete php test."
+        echo
+        echo "Please check FileMaker Server deployment in Admin Console."
+        echo
         exit 1
     fi
 
+    log_success_msg "$MSGPREFIX success"
 }
 
 ##
@@ -459,10 +502,80 @@ update_FMSApacheConfig() {
 }
 
 ##
+# Stop and Start the FileMaker Server.
+#
+restart_FMS() {
+    log_daemon_msg 'Stopping FileMaker Server'
+
+    launchctl stop com.filemaker.fms
+
+    local RET=0
+    while [ $RET -eq 0 ]; do
+        sleep 1
+        log_progress_msg "."
+        ps ax | grep "/FileMaker Server/Database Server/bin/fmserver_helperd -d" | grep -vq grep
+        RET=$?
+    done
+
+    log_end_msg 0
+
+    sleep 1
+
+    log_daemon_msg 'Starting FileMaker Server'
+
+    launchctl start com.filemaker.fms
+
+    RET=1
+    while [ $RET -eq 1 ]; do
+        sleep 1
+        log_progress_msg "."
+        ps ax | grep "FileMaker Server/Web Publishing/publishing-engine/cwpc/bin/fmscwpc" | grep -vq grep
+        RET=$?
+    done
+
+    # We want to give WPE some time to settle otherwise any web queries
+    # appear to cause termination of httpd!!?!
+    local COUNT=3
+    while [ $COUNT -gt 0 ]; do
+        log_progress_msg $COUNT
+        sleep 1
+        COUNT=$(($COUNT - 1))
+    done
+
+    log_end_msg 0
+
+    sleep 1
+
+    log_daemon_msg 'Waiting for WPE to return'
+
+    RET=1
+    while [ $RET -eq 1 ]; do
+        sleep 1
+        log_progress_msg "."
+        curl -s --connect-timeout 5 "http://localhost/fmi/xml/fmresultset.xml" | grep -q "FileMaker"
+        RET=$?
+    done
+
+    log_end_msg 0
+
+    sleep 1
+}
+
+##
 # Restart FMS Apache web server instance.
 #
 restart_FMSApache() {
+    case "$FMS_VERSION_MAJOR" in
+        "13")
+            # FMS 13 can't restart Apache, the whole FMS needs to go down!
+            restart_FMS
+            return
+            ;;
+    esac
+
     log_daemon_msg 'Restarting Web Server'
+
+    # Use launchctl to do restart.
     launchctl start com.filemaker.httpd.restart
 
     # We want to give httpd some time to settle otherwise any web queries

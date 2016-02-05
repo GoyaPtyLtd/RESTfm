@@ -75,6 +75,8 @@ check_FMSVersion
 
 check_ApacheVersion
 
+check_FMS_WPE_PHP
+
 check_Location
 
 check_Privilege
