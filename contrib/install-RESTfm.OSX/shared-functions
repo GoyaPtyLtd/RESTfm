@@ -4,7 +4,7 @@
 # All rights reserved.
 
 # A general use one second granular timestamp.
-TIMESTAMP=`date +%Y%m%d%H%M%S`
+TIMESTAMP=$(date +%Y%m%d%H%M%S)
 
 ### Helper functions ###
 
@@ -249,10 +249,10 @@ function check_ApacheVersion() {
 # to /Library/FileMaker Server/HTTPServer/htdocs
 #
 # Initialises global variables:
-#   RESTFM_PATH_MD5   - Unique hash of RESTfm installation directory.
-#   RESTFM_DIRNAME   - Dirname part of RESTfm installation directory.
-#   RESTFM_BASENAME  - Basename part of RESTfm installation directory.
-#   RESTFM_BASENAME_URLENCODED    - As above but raw urlencoded.
+#   RESTFM_PATH_MD5     - Unique hash of RESTfm installation directory.
+#   RESTFM_DIRNAME      - Dirname part of RESTfm installation directory.
+#   RESTFM_BASENAME     - Basename part of RESTfm installation directory.
+#   RESTFM_BASENAME_URLENCODED  - As above but raw urlencoded.
 #
 check_Location() {
     local MSGPREFIX='Check RESTfm location:'
@@ -332,8 +332,8 @@ check_Y() {
 #   APACHE_CONF
 #
 # Initialises global variables:
-#   RESTFM_CONF_LIST  - An array of config_file_name/RESTfm_basename pairs in
-#                     consecutive indices.
+#   RESTFM_CONF_LIST    - An array of config_file_name/RESTfm_basename pairs in
+#                         consecutive indices.
 check_Installed() {
     local MSGPREFIX='Checking for RESTfm installations:'
     local EXTRADIRNAME="/Library/FileMaker Server/HTTPServer/conf/extra"
@@ -374,20 +374,25 @@ check_Installed() {
 # Check the RESTfm report page for any errors.
 #
 check_RESTfmReport() {
-    local MSGPREFIX='Check RESTfm report:'
+    local MSGPREFIX='Check RESTfm report'
+    log_daemon_msg "${MSGPREFIX}"
+
     local URL="http://localhost/${RESTFM_BASENAME_URLENCODED}/report.php"
+    log_progress_msg "${URL}"
+
     curl -s -L "${URL}" | grep -q "RESTfm is working"
     local RET=$?
 
     if [ "$RET" != "0" ]; then
-        log_failure_msg "${MSGPREFIX} ${URL}"
+        log_end_msg 1
         echo
-        echo "Please check: $URL"
+        echo "Please use a browser to inspect report: $URL"
         echo
         exit 1
     fi
 
-    log_success_msg "${MSGPREFIX} ${URL}"
+    # OK
+    log_end_msg 0
 }
 
 ### Utility Functions ###
@@ -502,32 +507,41 @@ update_FMSApacheConfig() {
 }
 
 ##
-# Stop and Start the FileMaker Server.
+# Stop FileMaker Server.
 #
-restart_FMS() {
+# Only used for FMS13 where it is not possible to effectively restart just
+# Apache.
+#
+stop_FMS() {
     log_daemon_msg 'Stopping FileMaker Server'
 
     launchctl stop com.filemaker.fms
 
     local RET=0
     while [ $RET -eq 0 ]; do
-        sleep 1
+        sleep 2
         log_progress_msg "."
         ps ax | grep "/FileMaker Server/Database Server/bin/fmserver_helperd -d" | grep -vq grep
         RET=$?
     done
 
     log_end_msg 0
+}
 
-    sleep 1
-
+##
+# Start FileMaker Server.
+#
+# Only used for FMS13 where it is not possible to effectively restart just
+# Apache.
+#
+start_FMS() {
     log_daemon_msg 'Starting FileMaker Server'
 
     launchctl start com.filemaker.fms
 
-    RET=1
+    local RET=1
     while [ $RET -eq 1 ]; do
-        sleep 1
+        sleep 2
         log_progress_msg "."
         ps ax | grep "FileMaker Server/Web Publishing/publishing-engine/cwpc/bin/fmscwpc" | grep -vq grep
         RET=$?
@@ -537,23 +551,49 @@ restart_FMS() {
     # appear to cause termination of httpd!!?!
     local COUNT=3
     while [ $COUNT -gt 0 ]; do
-        log_progress_msg $COUNT
-        sleep 1
+        #log_progress_msg $COUNT
+        log_progress_msg "."
+        sleep 2
         COUNT=$(($COUNT - 1))
     done
 
     log_end_msg 0
+}
 
-    sleep 1
+##
+# Stop and Start the FileMaker Server.
+#
+# Only used for FMS13 where it is not possible to effectively restart just
+# Apache.
+#
+restart_FMS() {
+
+    stop_FMS
+
+    start_FMS
 
     log_daemon_msg 'Waiting for WPE to return'
 
-    RET=1
+    local RET=1
     while [ $RET -eq 1 ]; do
-        sleep 1
+        sleep 2
         log_progress_msg "."
-        curl -s --connect-timeout 5 "http://localhost/fmi/xml/fmresultset.xml" | grep -q "FileMaker"
+        curl -s --connect-timeout 2 --max-time 4 "http://localhost/fmi/xml/fmresultset.xml" | grep -q "FileMaker"
         RET=$?
+        if [ $RET -eq 1 ]; then
+            # Check that Apache httpd is actually in process list, as
+            # sometimes it terminates unexpectedly!
+            ps ax | grep /usr/sbin/httpd | grep -q -i filemaker
+            RET=$?
+            if [ $RET -eq 1 ]; then
+                # Apache is dead! Restart all over again.
+                log_progress_msg "Apache httpd has terminated, trying again."
+                log_end_msg 255
+                restart_FMS
+                return
+            fi
+        fi
+
     done
 
     log_end_msg 0
