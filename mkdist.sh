@@ -105,7 +105,11 @@ if [ ! -z "${FULL_BUILDDIR}" ]; then
 
     # Determine git revision.
     DATESTAMP=`date "+%Y%m%d"`
-    REPOREVISION=`cd "${BASEDIR}"; git rev-parse --short HEAD`
+    REPOREVISION=$(cd "${BASEDIR}"; git rev-parse --short HEAD)
+    if [ $? -ne 0 ]; then
+        echo "** Error: git must be installed."
+        exit 1
+    fi
     REVISION="${DATESTAMP}-${REPOREVISION}"
     VERSION="${PACKAGERELEASE}/${REVISION}"
 
