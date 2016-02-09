@@ -7,6 +7,9 @@
 - Fix diagnostic tracing to include all chained exceptions.
 - Support complex layout queries/finds through an SQL subset via the RFMfind
   query string parameter.
+- Include PHP memory_limit and post_max_size metadata for validated requests.
+- Mac OS X installer and uninstaller for OS X Mavericks onwards and FileMaker
+  Server 13v5 onwards.
 
 ### 3.4.0 (Released 2015-05-07) ###
 - Experimental PDO: MySQL improvements.
