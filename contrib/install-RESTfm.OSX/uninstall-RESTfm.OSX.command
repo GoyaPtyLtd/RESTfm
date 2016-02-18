@@ -6,6 +6,11 @@
 # Copyright (C) 2016, Goya Pty. Ltd.
 # All rights reserved.
 
+# Ensure we have the correct privilege
+if [ "$EUID" != "0" ]; then
+    exec sudo -p 'Type your password to allow RESTfm uninstall, %u:' bash "$0" "$@"
+fi
+
 # Identify precisely where we are.
 ARGV0=`basename "$0"`
 RELDIR=`dirname "$0"`
@@ -56,6 +61,8 @@ done
 echo
 
 setup_Logfile
+
+setup_Traps
 
 show_HeaderUninstall
 
