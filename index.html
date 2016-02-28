@@ -34,6 +34,15 @@
                     font-size: 1.3em;
                 }
         </style>
+        <script type="text/javascript">
+            // Stop Safari from loading this page from cache. Other
+            // browsers honour the Cache-control directives.
+            window.onpageshow = function(event) {
+                if (event.persisted) {
+                    window.location.reload()
+                }
+            };
+        </script>
     <title>RESTfm is not configured</title>
     </head>
     <body onunload="">

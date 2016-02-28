@@ -1,4 +1,4 @@
-### 3.4.1 (Released 20XX-XX-XX) ###
+### 4.0.0 (Released 20XX-XX-XX) ###
 - Handle searching on repetitions where submitted search field contains an
   index.
 - Allow container data to be read (and base64 encoded) by using a

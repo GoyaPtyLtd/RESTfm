@@ -87,6 +87,16 @@ setup_Logfile () {
     echo "All output is logged to: \"${LOGFILE}\""
 }
 
+on_Break () {
+    echo
+    echo "** User has interrupted script."
+    exit 1
+}
+
+setup_Traps () {
+    trap on_Break SIGINT
+}
+
 ### Check-or-die functions ###
 
 ##
@@ -319,7 +329,7 @@ check_Y() {
     local CONTINUE
     read CONTINUE
     if [ "X${CONTINUE}" != 'XY' -a "X${CONTINUE}" != 'Xy' ]; then
-        echo "++ user aborted with \"${CONTINUE}\", exiting."
+        echo "++ user aborted with \"${CONTINUE}\"."
         exit
     fi
 }
@@ -690,7 +700,7 @@ select_Uninstall() {
     select CHOICE in "${CHOICES[@]}"; do
         case $CHOICE in
             '')
-                echo "++ user aborted, exiting."
+                echo "++ user aborted with \"${REPLY}\"."
                 exit 1
                 ;;
             *)

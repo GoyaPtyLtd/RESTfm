@@ -88,7 +88,16 @@ $diagnostics->setDocumentRoot(dirname($_SERVER['SCRIPT_FILENAME']));
             echo '<h3>RESTfm is not working. Errors have been detected.</h3>' . "\n";
             echo '<h3>Start by correcting the topmost error first, and reloading the page each time.</h3>' . "\n";
         } else {
-            echo '<h3>RESTfm is working! Click <a href="' . RESTfmConfig::getVar('settings', 'baseURI') . '">here</a> to start browsing with RESTfm.</h3>' . "\n";
+            // Safari cannot get no-cache right, so we force it with a
+            // random parameter that does nothing other than make the browser
+            // request the page again rather than use it from cache.
+            $safariNoCache="";
+            if ( stripos($_SERVER['HTTP_USER_AGENT'], 'Safari') !== FALSE &&
+                 stripos($_SERVER['HTTP_USER_AGENT'], 'Chrome') === FALSE ) {
+                # User agent string has 'Safari' in it, but not 'Chrome'
+                $safariNoCache = "?safariNoCache=" . md5(uniqid());
+            }
+            echo '<h3>RESTfm is working! Click <a href="' . RESTfmConfig::getVar('settings', 'baseURI') . $safariNoCache . '">here</a> to start browsing with RESTfm.</h3>' . "\n";
         }
             $report = $diagnostics->getReport();
             echo $report;
