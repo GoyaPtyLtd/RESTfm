@@ -779,7 +779,7 @@ class Diagnostics {
         }
 
         $s .= ' - Execute the RESTfm installer script by typing the following in a terminal:' . "\n";
-        $s .= '    sudo "' . $this->_RESTfmDocumentRoot . '/contrib/install-RESTfm.OSX/install-RESTfm.OSX.sh"' . "\n";
+        $s .= '    sudo bash "' . $this->_RESTfmDocumentRoot . '/contrib/install-RESTfm.OSX/install-RESTfm.OSX.command"' . "\n";
         $s .= "\n";
         $s .= '- Reload this page.' . "\n";
 
