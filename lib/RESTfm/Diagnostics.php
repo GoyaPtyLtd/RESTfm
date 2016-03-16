@@ -266,7 +266,9 @@ class Diagnostics {
 
         $URL = $this->_calculatedRESTfmURL() . '/?RFMversion';
         if (RESTfmConfig::getVar('settings', 'SSLOnly') && ! $this->_isHTTPS()) {
-            $URL = preg_replace('/^http:/', 'https:', $URL);
+            $reportItem->status = ReportItem::WARN;
+            $reportItem->details .= 'Not tested, SSLOnly is TRUE in ' . RESTfmConfig::CONFIG_INI . ' configuration file.' . "\n";
+            return;
         }
 
         $reportItem->details .= '<a href="'. $URL . '">' . $URL . '</a>' . "\n";
@@ -698,11 +700,21 @@ class Diagnostics {
      * Returns the proper RESTfm URL as determined by the calculated base URI.
      */
     private function _calculatedRESTfmURL() {
-        $URL = 'http://';
+        $scheme = '';
+        $port = '';
+
         if ($this->_isHTTPS()) {
-            $URL = 'https://';
+            $scheme = 'https';
+            if ($_SERVER['SERVER_PORT'] !== '443') {
+                $port = ':' . $_SERVER['SERVER_PORT'];
+            }
+        } else {
+            $scheme = 'http';
+            if ($_SERVER['SERVER_PORT'] !== '80') {
+                $port = ':' . $_SERVER['SERVER_PORT'];
+            }
         }
-        $URL .= $_SERVER['SERVER_NAME'] . $this->_calculatedBaseURI();
+        $URL = $scheme . '://' . $_SERVER['SERVER_NAME'] . $port . $this->_calculatedBaseURI();
         return($URL);
     }
 
