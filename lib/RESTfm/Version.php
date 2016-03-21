@@ -21,7 +21,7 @@
  * Version static class to hold release version.
  */
 class Version {
-    private static $_release     = '4.0.0';
+    private static $_release     = '4.0.1';
     private static $_revision    = '%%REVISION%%';
     private static $_protocol    = '5';     // Bump this when REST API changes.
 
