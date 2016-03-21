@@ -38,14 +38,11 @@ class Diagnostics {
         'hostServerVersion',
         'hostSystemDate',
         'documentRoot',
-        //'licence',
         'baseURI',
         'webserverRedirect',
         'filemakerAPI',
         'filemakerConnect',
         'sslEnforced',
-        'sslServer',
-        'sslWebserverRedirect',
         'xslExtension',
         );
 
@@ -264,13 +261,13 @@ class Diagnostics {
     public function test_webserverRedirect($reportItem) {
         $reportItem->name = 'Web server redirect to RESTfm.php';
 
-        $URL = $this->_calculatedRESTfmURL() . '/?RFMversion';
-        if (RESTfmConfig::getVar('settings', 'SSLOnly') && ! $this->_isHTTPS()) {
+        if ($this->_isSSLOnlyAndNotHTTPS()) {
             $reportItem->status = ReportItem::WARN;
-            $reportItem->details .= 'Not tested, SSLOnly is TRUE in ' . RESTfmConfig::CONFIG_INI . ' configuration file.' . "\n";
+            $reportItem->details .= 'Unable to test, SSLOnly is TRUE. Try visiting this page with https instead.' . "\n";
             return;
         }
 
+        $URL = $this->_calculatedRESTfmURL() . '/?RFMversion';
         $reportItem->details .= '<a href="'. $URL . '">' . $URL . '</a>' . "\n";
 
         $ch = curl_init($URL);
@@ -301,8 +298,14 @@ class Diagnostics {
                     $reportItem->details .= htmlspecialchars($this->_darwinAllowOverrideInstructions());
                 } else {
                     $reportItem->details .= 'Check the Apache httpd configuration has \'AllowOverride All\' for the RESTfm directory.' . "\n";
+                    if ($this->_isHTTPS()) {
+                        $reportItem->details .= 'May also be needed in the VirtualHost section for SSL port (443).' . "\n";
+                    }
                 }
             }
+        } elseif ($this->_isHTTPS && curl_getinfo($ch, CURLINFO_HTTP_CODE) == 404 && $this->_isDarwinFileMaker13()) {
+            $reportItem->status = ReportItem::ERROR;
+            $reportItem->details .= htmlspecialchars($this->_darwinFMS13InstallerInstructions());
         } elseif ( $result != Version::getVersion() ) {
             $reportItem->status = ReportItem::ERROR;
             $reportItem->details .=  'RESTfm failed to respond correctly: ' . $result . "\n";
@@ -316,11 +319,13 @@ class Diagnostics {
     public function test_filemakerAPI($reportItem) {
         $reportItem->name = 'FileMaker PHP API';
 
-        $URL = $this->_calculatedRESTfmURL() . '/RESTfm.php?RFMcheckFMAPI';
-        if (RESTfmConfig::getVar('settings', 'SSLOnly') && ! $this->_isHTTPS()) {
-            $URL = preg_replace('/^http:/', 'https:', $URL);
+        if ($this->_isSSLOnlyAndNotHTTPS()) {
+            $reportItem->status = ReportItem::WARN;
+            $reportItem->details .= 'Unable to test, SSLOnly is TRUE. Try visiting this page with https instead.' . "\n";
+            return;
         }
 
+        $URL = $this->_calculatedRESTfmURL() . '/RESTfm.php?RFMcheckFMAPI';
         $reportItem->details .= '<a href="'. $URL . '">' . $URL . '</a>' . "\n";
 
         $ch = curl_init($URL);
@@ -351,6 +356,12 @@ class Diagnostics {
 
     public function test_filemakerConnect($reportItem) {
         $reportItem->name = 'FileMaker Server connection test';
+
+        if ($this->_isSSLOnlyAndNotHTTPS()) {
+            $reportItem->status = ReportItem::WARN;
+            $reportItem->details .= 'Unable to test, SSLOnly is TRUE. Try visiting this page with https instead.' . "\n";
+            return;
+        }
 
         if ($this->_report->filemakerAPI->status != ReportItem::OK) {
             $reportItem->status = ReportItem::ERROR;
@@ -443,120 +454,13 @@ class Diagnostics {
     public function test_sslEnforced($reportItem) {
         $reportItem->name = 'SSL enforced (' . RESTfmConfig::CONFIG_INI . ')';
 
-        if (RESTfmConfig::getVar('settings', 'SSLOnly') != TRUE) {
+        if (RESTfmConfig::getVar('settings', 'SSLOnly') === TRUE) {
+            $reportItem->details .= 'SSLOnly is TRUE in ' . RESTfmConfig::CONFIG_INI . "\n";
+        } else {
             $reportItem->status = ReportItem::WARN;
-            $reportItem->details .= "SSLOnly not TRUE in " . RESTfmConfig::CONFIG_INI . ' configuration file.' . "\n";
+            $reportItem->details .= "SSLOnly not TRUE in " . RESTfmConfig::CONFIG_INI . "\n";
             $reportItem->details .= 'SSL is highly recommended to protect data, usernames and passwords from eavesdropping.' . "\n";
-        } else {
-            $reportItem->details .= 'OK' . "\n";
         }
-    }
-
-    public function test_sslServer($reportItem) {
-        $reportItem->name = 'SSL enabled on web server';
-
-        // Increase error level if user has enforced SSL in config.
-        $SSLfailureCode = ReportItem::WARN;
-        if ($this->_report->sslEnforced->status == ReportItem::OK) {
-            $SSLfailureCode = ReportItem::ERROR;
-        }
-
-        if ($this->_isHTTPS() && $this->_report->webserverRedirect->status == ReportItem::OK) {
-            // Already working.
-            $reportItem->details = "OK";
-            $reportItem->status = ReportItem::NA;
-            return;
-        }
-
-        $URL = 'https://' . $_SERVER['SERVER_NAME'];
-        $reportItem->details .= '<a href="'. $URL . '">' . $URL . '</a>' . "\n";
-
-        $ch = curl_init($URL);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        if (RESTfmConfig::getVar('settings', 'strictSSLCertsReport') === FALSE) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
-        }
-        curl_setopt($ch, CURLOPT_FRESH_CONNECT, TRUE);
-        curl_setopt($ch, CURLOPT_FORBID_REUSE, TRUE);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'RESTfm Diagnostics');
-        $result = curl_exec($ch);
-
-        if (curl_errno($ch)) {
-            $reportItem->status = $SSLfailureCode;
-            $reportItem->details .=  'cURL failed with error: ' . curl_errno($ch) . ': ' . curl_error($ch) . "\n";
-            if (curl_errno($ch) == 60) {    // SSL certificate problem: self signed certificate
-                $reportItem->details .= 'On development (not production) systems it is possible to disable this check' ."\n";
-                $reportItem->details .= 'by setting "strictSSLCertsReport" to FALSE in ' . RESTfmConfig::CONFIG_INI ."\n";
-            }
-        } else {
-            $reportItem->details .= "OK" . "\n";
-        }
-        curl_close($ch);
-    }
-
-    public function test_sslWebserverRedirect($reportItem) {
-        $reportItem->name = 'SSL redirect to RESTfm';
-
-        // Increase error level if user has enforced SSL in config.
-        $SSLfailureCode = ReportItem::WARN;
-        if ($this->_report->sslEnforced->status == ReportItem::OK) {
-            $SSLfailureCode = ReportItem::ERROR;
-        }
-
-        if ($this->_isHTTPS() && $this->_report->webserverRedirect->status == ReportItem::OK) {
-            // Already working.
-            $reportItem->details = "OK";
-            $reportItem->status = ReportItem::NA;
-            return;
-        } elseif ($this->_report->sslServer->status != ReportItem::OK) {
-            // No chance.
-            $reportItem->details = "Not tested, SSL not enabled on web server.";
-            $reportItem->status = $SSLfailureCode;
-            return;
-        }
-
-        $URL = $this->_calculatedRESTfmURL() . '/?RFMversion';
-        $URL = preg_replace('/^http:/', 'https:', $URL);
-
-        $reportItem->details .= '<a href="'. $URL . '">' . $URL . '</a>' . "\n";
-
-        $ch = curl_init($URL);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        if (RESTfmConfig::getVar('settings', 'strictSSLCertsReport') === FALSE) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
-        }
-        curl_setopt($ch, CURLOPT_FRESH_CONNECT, TRUE);
-        curl_setopt($ch, CURLOPT_FORBID_REUSE, TRUE);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'RESTfm Diagnostics');
-        $result = curl_exec($ch);
-
-        if (curl_errno($ch)) {
-            $reportItem->status = ReportItem::WARN;
-            $reportItem->details .=  'cURL failed with error: ' . curl_errno($ch) . ': ' . curl_error($ch) . "\n";
-        } elseif ( strpos($result, 'RESTfm is not configured') ) {
-            $reportItem->status = $SSLfailureCode;
-            $reportItem->details .= 'Redirection not working, index.html was returned instead.' . "\n";
-            if ($this->_isApache()) {
-                $reportItem->details .= 'Check the Apache httpd configuration has \'AllowOverride All\' for the RESTfm Directory,' . "\n";
-                $reportItem->details .= 'may also be needed in the VirtualHost section for port 443.' . "\n";
-            }
-        } elseif (curl_getinfo($ch, CURLINFO_HTTP_CODE) == 404 && $this->_isDarwinFileMaker13()) {
-            $reportItem->status = $SSLfailureCode;
-            $reportItem->details .= htmlspecialchars($this->_darwinFMS13SSLAllowOverrideInstructions());
-        } elseif ( $result != Version::getVersion() ) {
-            $reportItem->status = $SSLfailureCode;
-            $reportItem->details .=  'RESTfm failed to respond correctly: ' . $result . "\n";
-        } else {
-            $reportItem->details .= 'OK';
-        }
-
-        curl_close($ch);
     }
 
     public function test_xslExtension ($reportItem) {
@@ -633,11 +537,22 @@ class Diagnostics {
     }
 
     /**
-     * Returns TRUE if https was used to connect.
+     * Returns TRUE if HTTPS was used to connect.
      */
     private function _isHTTPS() {
         if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ||
                     $_SERVER['SERVER_PORT'] == 443) {
+            return TRUE;
+        }
+        return FALSE;
+    }
+
+    /**
+     * Returns TRUE if SSLOnly is set in config AND HTTPS was NOT used to
+     * connect. (Some diagnostic tests would fail in this case.)
+     */
+    private function _isSSLOnlyAndNotHTTPS() {
+        if (RESTfmConfig::getVar('settings', 'SSLOnly') && ! $this->_isHTTPS()) {
             return TRUE;
         }
         return FALSE;
