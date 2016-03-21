@@ -303,7 +303,7 @@ class Diagnostics {
                     }
                 }
             }
-        } elseif ($this->_isHTTPS && curl_getinfo($ch, CURLINFO_HTTP_CODE) == 404 && $this->_isDarwinFileMaker13()) {
+        } elseif ($this->_isHTTPS() && curl_getinfo($ch, CURLINFO_HTTP_CODE) == 404 && $this->_isDarwinFileMaker13()) {
             $reportItem->status = ReportItem::ERROR;
             $reportItem->details .= htmlspecialchars($this->_darwinFMS13InstallerInstructions());
         } elseif ( $result != Version::getVersion() ) {
