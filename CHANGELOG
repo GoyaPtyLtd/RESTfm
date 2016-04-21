@@ -1,6 +1,10 @@
+### 4.0.2 (Released 2016-04-21) ###
+- Detect and allow for Apache versions with buggy rewrite causing redirection
+  failure during configuration.
+
 ### 4.0.1 (Released 2016-03-22) ###
- - Handle alternate http/https ports and/or port-forwarding scenarios
-   in report page.
+- Handle alternate http/https ports and/or port-forwarding scenarios
+  in report page.
 
 ### 4.0.0 (Released 2016-03-11) ###
 - Handle searching on repetitions where submitted search field contains an
