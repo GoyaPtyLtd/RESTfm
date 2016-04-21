@@ -292,14 +292,26 @@ class Diagnostics {
             }
         } elseif ( strpos($result, 'RESTfm is not configured') ) {
             $reportItem->status = ReportItem::ERROR;
-            $reportItem->details .= 'Redirection not working, index.html was returned instead.' . "\n";
+            $reportItem->details .= "\n* Redirection not working, index.html was returned instead.\n\n";
             if ($this->_isApache()) {
+                $reportItem->details .= "Instructions:\n\n";
                 if ($this->_isDarwin()) {
                     $reportItem->details .= htmlspecialchars($this->_darwinAllowOverrideInstructions());
                 } else {
-                    $reportItem->details .= 'Check the Apache httpd configuration has \'AllowOverride All\' for the RESTfm directory.' . "\n";
+                    if ( version_compare($this->_isApache(), '2.4', '>=') &&
+                         version_compare($this->_isApache(), '2.4.9', '<') ) {
+                        // Apache rewrite bug. See .htaccess DirectoryIndex for details in comments.
+                        $htaccess = @ file_get_contents('.htaccess');
+                        if ($htaccess === FALSE) {
+                            $reportItem->details .= "\n* Unable to read .htaccess to check DirectoryIndex disabled.\n\n";
+                        } elseif (preg_match('/^\s*DirectoryIndex\s+disabled\s*$/m', $htaccess) !== 1) {
+                            $reportItem->details .= '- Edit .htaccess and remove comment (#) from line: DirectoryIndex disabled' . "\n";
+                        }
+                    }
+                    $reportItem->details .= '- Check the Apache rewrite module is enabled.' . "\n";
+                    $reportItem->details .= '- Check the Apache httpd configuration has \'AllowOverride All\' for the RESTfm directory.' . "\n";
                     if ($this->_isHTTPS()) {
-                        $reportItem->details .= 'May also be needed in the VirtualHost section for SSL port (443).' . "\n";
+                        $reportItem->details .= '  May also be needed in the VirtualHost section for SSL port (443).' . "\n";
                     }
                 }
             }

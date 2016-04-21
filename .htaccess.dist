@@ -7,9 +7,11 @@ DirectoryIndex index.html
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Work around an Apache 2.4 < 2.4.9 bug where RewriteRule
-    # is overridden by DirectoryIndex. i.e. index.html will always
-    # be loaded no matter what RewriteRules say!
+    # Workaround for Apache 2.4.0 < 2.4.9 bug where RewriteRule is overridden
+    # by DirectoryIndex. i.e. index.html will always be loaded no matter what
+    # RewriteRules say! Setting DirectoryIndex disabled can cause confusion
+    # where RESTfm redirection is not functioning properly yet. Always check
+    # http://<your_server>/RESTfm/report.php
     #DirectoryIndex disabled
 
     # Uncomment to enforce SSL with redirect.
