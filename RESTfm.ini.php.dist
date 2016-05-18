@@ -41,17 +41,15 @@ $config['settings'] = array (
     'SSLOnly' => FALSE,
 
     // Enforce strict SSL certificate checking when RESTfm is connecting to
-    // FileMaker Server Web Publishing Engine. Disabling this is a security
-    // risk, and should not be used on a production server. It may be useful
-    // to disable this during development on systems using self-signed SSL
-    // certificates or the FMI certificate bundled with FileMaker Server.
+    // FileMaker Server Web Publishing Engine.
+    // Check http://www.restfm.com/restfm-manual/install/ssl-troubleshooting
+    // for further details.
     'strictSSLCertsFMS' => TRUE,
 
     // Enforce strict SSL certificate checking for RESTfm connecting to
     // itself when executing the report page (report.php).
-    // Disabling this may hide the fact that access to RESTfm over SSL is
-    // insecure. It may be useful to disable this during development on systems
-    // using self-signed SSL certificates.
+    // Check http://www.restfm.com/restfm-manual/install/ssl-troubleshooting
+    // for further details.
     'strictSSLCertsReport' => TRUE,
 
     // Respond 403 Forbidden on 401 Unauthorized.
