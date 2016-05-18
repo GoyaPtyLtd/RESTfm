@@ -287,8 +287,16 @@ class Diagnostics {
             $reportItem->status = ReportItem::ERROR;
             $reportItem->details .=  'cURL failed with error: ' . curl_errno($ch) . ': ' . curl_error($ch) . "\n";
             if (curl_errno($ch) == 60) {    // SSL certificate problem: self signed certificate
-                $reportItem->details .= 'On development (not production) systems it is possible to disable this check' ."\n";
-                $reportItem->details .= 'by setting "strictSSLCertsReport" to FALSE in ' . RESTfmConfig::CONFIG_INI ."\n";
+                $reportItem->details .= "\n";
+                $reportItem->details .= 'The host\'s SSL certificate has failed a verification check. This may be' . "\n";
+                $reportItem->details .= 'due to the certificate being invalid, or PHP\'s CA root certificates' . "\n";
+                $reportItem->details .= 'being out of date.' . "\n";
+                $reportItem->details .= "\n";
+                $reportItem->details .= 'Please consult ' .
+                                        '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting">SSL Troubleshooting</a>' .
+                                        ' in the RESTfm manual for further details.' . "\n";
+                $reportItem->details .= "\n";
+                $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsReport" to FALSE in ' . RESTfmConfig::CONFIG_INI ."\n";
             }
         } elseif ( strpos($result, 'RESTfm is not configured') ) {
             $reportItem->status = ReportItem::ERROR;
@@ -344,10 +352,9 @@ class Diagnostics {
         curl_setopt($ch, CURLOPT_HEADER, 0);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        if (RESTfmConfig::getVar('settings', 'strictSSLCertsReport') === FALSE) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
-        }
+        // SSL certificates were checked in an earlier test.
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
         curl_setopt($ch, CURLOPT_FRESH_CONNECT, TRUE);
         curl_setopt($ch, CURLOPT_FORBID_REUSE, TRUE);
         curl_setopt($ch, CURLOPT_USERAGENT, 'RESTfm Diagnostics');
@@ -368,6 +375,7 @@ class Diagnostics {
 
     public function test_filemakerConnect($reportItem) {
         $reportItem->name = 'FileMaker Server connection test';
+        $reportItem->details = '';
 
         if ($this->_isSSLOnlyAndNotHTTPS()) {
             $reportItem->status = ReportItem::WARN;
@@ -377,7 +385,7 @@ class Diagnostics {
 
         if ($this->_report->filemakerAPI->status != ReportItem::OK) {
             $reportItem->status = ReportItem::ERROR;
-            $reportItem->details = 'Cannot test, FileMaker PHP API not found.' . "\n";
+            $reportItem->details .= 'Cannot test, FileMaker PHP API not found.' . "\n";
             return;
         }
 
@@ -406,8 +414,16 @@ class Diagnostics {
             $reportItem->status = ReportItem::ERROR;
             $reportItem->details .=  'cURL failed with error: ' . curl_errno($ch) . ': ' . curl_error($ch) . "\n";
             if (curl_errno($ch) == 60) {    // SSL certificate problem: self signed certificate in certificate chain
-                $reportItem->details .= 'On development (not production) systems it is possible to disable this check' ."\n";
-                $reportItem->details .= 'by setting "strictSSLCertsFMS" to FALSE in ' . RESTfmConfig::CONFIG_INI ."\n";
+                $reportItem->details .= "\n";
+                $reportItem->details .= 'The host\'s SSL certificate has failed a verification check. This may be' . "\n";
+                $reportItem->details .= 'due to the certificate being invalid, or PHP\'s CA root certificates' . "\n";
+                $reportItem->details .= 'being out of date.' . "\n";
+                $reportItem->details .= "\n";
+                $reportItem->details .= 'Please consult ' .
+                                        '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting">SSL Troubleshooting</a>' .
+                                        ' in the RESTfm manual for further details.' . "\n";
+                $reportItem->details .= "\n";
+                $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsFMS" to FALSE in ' . RESTfmConfig::CONFIG_INI ."\n";
             }
         } elseif (stripos($result, 'FileMaker') === FALSE) {
             $reportItem->status = ReportItem::ERROR;
@@ -425,12 +441,11 @@ class Diagnostics {
 
         $FM = new FileMaker();
         $FM->setProperty('hostspec', $hostspec);
-        if (RESTfmConfig::getVar('settings', 'strictSSLCertsFMS') === FALSE) {
-            $FM->setProperty('curlOptions', array(
-                                CURLOPT_SSL_VERIFYPEER => FALSE,
-                                CURLOPT_SSL_VERIFYHOST => FALSE,
-                                ));
-        }
+        // SSL certificates were checked in an earlier test.
+        $FM->setProperty('curlOptions', array(
+                            CURLOPT_SSL_VERIFYPEER => FALSE,
+                            CURLOPT_SSL_VERIFYHOST => FALSE,
+                            ));
 
         $fileMakerResult = $FM->listDatabases();
         $unauthorised = FALSE;

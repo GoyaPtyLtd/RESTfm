@@ -1,3 +1,6 @@
+### 4.0.3 (Released 2016-05-18) ###
+- Improve SSL instructions in report page.
+
 ### 4.0.2 (Released 2016-04-21) ###
 - Detect and allow for Apache versions with buggy rewrite causing redirection
   failure during configuration.
