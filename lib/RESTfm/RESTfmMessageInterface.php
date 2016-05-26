@@ -29,14 +29,28 @@ interface RESTfmMessageRowInterface {
 
     /**
      * @param array $assocArray
-     *  Set/update row data with provided array of key/value pairs.
+     *  Set row data with provided array of key/value pairs.
      */
     public function setData ($assocArray);
 
     /**
-     * @return integer Unique index of this row.
+     * @param string $fieldName
+     *
+     * @return mixed
      */
-    public function getRowIndex ();
+    public function getField ($fieldName);
+
+    /**
+     * @param string $fieldName
+     * @param mixed $fieldValue
+     */
+    public function setField ($fieldName, $fieldValue);
+
+    /**
+     * @param string $fieldName
+     */
+    public function unsetField ($fieldName);
+
 }
 
 /**
@@ -77,9 +91,10 @@ interface RESTfmMessageMultistatusInterface {
     public function getIndex ();
 
     /**
-     * @param integer $index
+     * @param integer $dataRowIndex
+     *  Index of row in request's data section that caused the error.
      */
-    public function setIndex ($index);
+    public function setIndex ($dataRowIndex);
 
     /**
      * @return string
