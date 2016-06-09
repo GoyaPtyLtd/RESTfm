@@ -235,13 +235,21 @@ interface RESTfmMessageInterface {
      */
     public function getRecords ();
 
+    /**
+     * Return a single record identified by $recordId
+     *
+     * @param string $recordId
+     *
+     * @return RESTfmMessageRecordInterface or NULL if $recordId does not exist.
+     */
+    public function getRecordByRecordId ($recordId);
+
 
     // --- Access methods for reading data as sections (export formats) --- //
 
     /**
      * @return array of strings of available section names.
-     *      Section names are: nav, data, meta, metaField, info, multistatus
-     *
+     *      Section names are: meta, data, info, metaField, multistatus, nav
      */
     public function getSectionNames ();
 
@@ -253,7 +261,33 @@ interface RESTfmMessageInterface {
     public function getSection ($name);
 
     /**
-     * Make a human readable string from stored contents.
+     * @return associative array of all sections and data.
+     *  With section(s) in the mixed form(s) of:
+     *    1 dimensional:
+     *    array('sectionNameX' => array('key' => 'val', ...))
+     *    2 dimensional:
+     *    array('sectionNameY' => array(
+     *                              array('key' => 'val', ...)
+     *                              ...
+     *                           ))
+     */
+    public function exportArray ();
+
+    /**
+     * @param associative array $array of section(s) and data.
+     *  With section(s) in the mixed form(s) of:
+     *    1 dimensional:
+     *    array('sectionNameX' => array('key' => 'val', ...))
+     *    2 dimensional:
+     *    array('sectionNameY' => array(
+     *                              array('key' => 'val', ...)
+     *                              ...
+     *                           ))
+     */
+    public function importArray ($array);
+
+    /**
+     * Make a human readable string of all sections and data.
      *
      * @return string
      */

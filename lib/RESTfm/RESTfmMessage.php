@@ -213,25 +213,40 @@ class RESTfmMessageSection implements RESTfmMessageSectionInterface {
     /**
      * RESTfmMessage internal function.
      */
-    public function _setName ($name) {
+    public function __construct ($name, $dimensions) {
         $this->_name = $name;
+        $this->_dimensions = $dimensions;
     }
 
     /**
      * RESTfmMessage internal function.
      */
-    public function _setDimensions ($dimensions) {
-        $this->_dimensions = $dimensions;
+    public function &_getRowsReference () {
+        return $this->_rows;
     }
 }
 
 class RESTfmMessage implements RESTfmMessageInterface {
 
-    protected $_info = array();
-    protected $_metaFields = array();
-    protected $_multistatus = array();
-    protected $_navs = array();
-    protected $_records = array();
+    // -- Sections -- //
+
+    protected $_info = array();         /// @var array 1 dimensional.
+    protected $_metaFields = array();   /// @var array of RESTfmMessageRow
+    protected $_multistatus = array();  /// @var array of RESTfmMessageMultistatus
+    protected $_navs = array();         /// @var array of RESTfmMessageRow
+    protected $_records = array();      /// @var array of RESTfmMessageRecordInterface
+
+    /**
+     * @var array of known section names.
+     */
+    protected $_knownSections = array('meta', 'data', 'info',
+                                      'metaField', 'multistatus', 'nav');
+
+    /**
+     * @var associative array of recordId -> record index
+     *  for identifying $_records[] by recordId.
+     */
+    protected $_recordIdMap = array();
 
     // --- Access methods for inserting/manipulating data --- //
 
@@ -308,6 +323,12 @@ class RESTfmMessage implements RESTfmMessageInterface {
      */
     public function addRecord (RESTfmMessageRecordInterface $record) {
         $this->_records[] = $record;
+
+        $recordId = $record->getRecordId();
+        if ($recordId !== NULL) {
+            $recordIndex = count($this->_records) - 1;
+            $this->_recordIdMap[$recordId] = $recordIndex;
+        }
     }
 
     /**
@@ -317,28 +338,40 @@ class RESTfmMessage implements RESTfmMessageInterface {
         return $this->_records;
     }
 
+    /**
+     * Return a single record identified by $recordId
+     *
+     * @param string $recordId
+     *
+     * @return RESTfmMessageRecordInterface or NULL if $recordId does not exist.
+     */
+    public function getRecordByRecordId ($recordId) {
+        if (isset($this->_recordIdMap[$recordId])) {
+            return $this->_recordIdMap[$recordId];
+        }
+    }
+
 
     // --- Access methods for reading data as sections (export formats) --- //
 
     /**
      * @return array of strings of available section names.
-     *      Section names are: nav, data, meta, metaField, info, multistatus
-     *
+     *      Section names are: meta, data, info, metaField, multistatus, nav
      */
     public function getSectionNames () {
         $availableSections = array();
 
         // Sort as 'meta', 'data', 'info', <any other>.
         if (!empty($this->_records)) {
-            $availableSections['meta'] = TRUE;
-            $availableSections['data'] = TRUE;
+            $availableSections[] = 'meta';
+            $availableSections[] = 'data';
         }
-        if (!empty($this->_info)) { $availableSections['info'] = TRUE; }
-        if (!empty($this->_metaFields)) { $availableSections['metaField'] = TRUE; }
-        if (!empty($this->_multistatus)) { $availableSections['multistatus'] = TRUE; }
-        if (!empty($this->_navs)) { $availableSections['nav'] = TRUE; }
+        if (!empty($this->_info)) { $availableSections[] = 'info'; }
+        if (!empty($this->_metaFields)) { $availableSections[] = 'metaField'; }
+        if (!empty($this->_multistatus)) { $availableSections[] = 'multistatus'; }
+        if (!empty($this->_navs)) { $availableSections[] = 'nav'; }
 
-        return array_keys($availableSections);
+        return $availableSections;
     }
 
     /**
@@ -347,13 +380,11 @@ class RESTfmMessage implements RESTfmMessageInterface {
      * @return RESTfmMessageSectionInterface
      */
     public function getSection ($sectionName) {
-        $section = new RESTfmMessageSection;
-        $section->_setName($sectionName);
-        $sectionRows = $section->getRowsReference();
 
         switch ($sectionName) {
             case 'meta':
-                $section->_setDimensions = 2;
+                $section = new RESTfmMessageSection($sectionName, 2);
+                $sectionRows = &$section->_getRowsReference();
                 foreach ($this->_records as $record) {
                     $sectionRows[] = &$record->_getMetaReference();
                 }
@@ -361,7 +392,8 @@ class RESTfmMessage implements RESTfmMessageInterface {
                 break;
 
             case 'data':
-                $section->_setDimensions = 2;
+                $section = new RESTfmMessageSection($sectionName, 2);
+                $sectionRows = &$section->_getRowsReference();
                 foreach ($this->_records as $record) {
                     $sectionRows[] = &$record->_getDataReference();
                 }
@@ -369,13 +401,15 @@ class RESTfmMessage implements RESTfmMessageInterface {
                 break;
 
             case 'info':
-                $section->_setDimensions = 1;
+                $section = new RESTfmMessageSection($sectionName, 1);
+                $sectionRows = &$section->_getRowsReference();
                 $sectionRows[] = &$this->_info;
                 return $section;
                 break;
 
             case 'metaField':
-                $section->_setDimensions = 2;
+                $section = new RESTfmMessageSection($sectionName, 2);
+                $sectionRows = &$section->_getRowsReference();
                 foreach ($this->_metaFields as $row) {
                     $sectionRows[] = &$row->_getDataReference();
                 }
@@ -383,7 +417,8 @@ class RESTfmMessage implements RESTfmMessageInterface {
                 break;
 
             case 'multistatus':
-                $section->_setDimensions = 2;
+                $section = new RESTfmMessageSection($sectionName, 2);
+                $sectionRows = &$section->_getRowsReference();
                 foreach ($this->_multistatus as $row) {
                     $sectionRows[] = &$row->_getMultistatusReference();
                 }
@@ -391,7 +426,8 @@ class RESTfmMessage implements RESTfmMessageInterface {
                 break;
 
             case 'nav':
-                $section->_setDimensions = 2;
+                $section = new RESTfmMessageSection($sectionName, 2);
+                $sectionRows = &$section->_getRowsReference();
                 foreach ($this->_navs as $row) {
                     $sectionRows[] = &$row->_getDataReference();
                 }
@@ -401,7 +437,52 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
-     * Make a human readable string from stored contents.
+     * @return associative array of all sections and data.
+     *  With section(s) in the mixed form(s) of:
+     *    1 dimensional:
+     *    array('sectionNameX' => array('key' => 'val', ...))
+     *    2 dimensional:
+     *    array('sectionNameY' => array(
+     *                              array('key' => 'val', ...)
+     *                              ...
+     *                           ))
+     */
+    public function exportArray () {
+        $export = array();
+
+        foreach ($this->getSectionNames() as $sectionName) {
+            $sectionData = array();
+            foreach ($this->getSection($sectionName) as $section) {
+                if ($section->getDimensions() == 1) {
+                    $sectionRows = &$section->_getRowsreference();
+                    $sectionData = &$sectionRows[0];
+                } elseif ($section->getDimensions() == 2) {
+                    $sectionData = &$section->_getRowsreference();
+                }
+            }
+            $export[] = array($sectionName => $sectionData);
+        }
+
+        return $export;
+    }
+
+    /**
+     * @param associative array $array of section(s) and data.
+     *  With section(s) in the mixed form(s) of:
+     *    1 dimensional:
+     *    array('sectionNameX' => array('key' => 'val', ...))
+     *    2 dimensional:
+     *    array('sectionNameY' => array(
+     *                              array('key' => 'val', ...)
+     *                              ...
+     *                           ))
+     */
+    public function importArray ($array) {
+
+    }
+
+    /**
+     * Make a human readable string of all sections and data.
      *
      * @return string
      */
