@@ -1,3 +1,7 @@
+### 4.0.4 (Released 2016-06-11) ###
+- FileMaker Server 15 detection.
+- Update Mac OS X installer for FMS 15.
+
 ### 4.0.3 (Released 2016-05-18) ###
 - Improve SSL instructions in report page.
 
