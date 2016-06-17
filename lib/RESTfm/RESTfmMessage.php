@@ -24,7 +24,7 @@ class RESTfmMessageRow implements RESTfmMessageRowInterface {
     protected $_data = array();
 
     /**
-     * @return associative array of key/value pairs.
+     * @return array of key/value pairs.
      */
     public function getData () {
         return $data;
@@ -154,7 +154,7 @@ class RESTfmMessageMultistatus implements RESTfmMessageMultistatusInterface {
      * @param string $reasonMessage
      */
     public function setReason ($reasonMessage) {
-        $this->_multiStatus['Reason'] = $statusCode;
+        $this->_multiStatus['Reason'] = $reasonMessage;
     }
 
     /**
@@ -234,6 +234,23 @@ class RESTfmMessageSection implements RESTfmMessageSectionInterface {
     }
 }
 
+/**
+ * RESTfmMessage
+ *
+ * This message interface provides access to the request/response data sent
+ * between formats (web input/output) and backends (database input/output).
+ *
+ * In general:
+ *   Request: import format -> RESTfmMessage -> backend
+ *   Response: backend -> RESTfmMessage -> export format
+ *
+ * In practice, responses are created from raised exceptions as well.
+ *
+ * Not every request will create a RESTfmMessage as some requests contain
+ * no actual data.
+ *
+ * Every response will contain data and so will create a RESTfmMessage.
+ */
 class RESTfmMessage implements RESTfmMessageInterface {
 
     // -- Sections -- //
@@ -269,7 +286,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
-     * @return associative array of key/value pairs.
+     * @return array of key/value pairs.
      */
     public function getInfo () {
         return $this->_info;
@@ -278,9 +295,9 @@ class RESTfmMessage implements RESTfmMessageInterface {
     /**
      * Add a message row object to 'metaField' section.
      *
-     * @param RESTfmMessageRow $metaField
+     * @param RESTfmMessageRowInterface $metaField
      */
-    public function addMetaField (RESTfmMessageRow $metaField) {
+    public function addMetaField (RESTfmMessageRowInterface $metaField) {
         $this->_metaFields[] = $metaField;
     }
 
@@ -294,9 +311,9 @@ class RESTfmMessage implements RESTfmMessageInterface {
     /**
      * Add a message multistatus object to 'multistatus' section.
      *
-     * @param RESTfmMessageMultistatus $multistatus
+     * @param RESTfmMessageMultistatusInterface $multistatus
      */
-    public function addMultistatus (RESTfmMessageMultistatus $multistatus) {
+    public function addMultistatus (RESTfmMessageMultistatusInterface $multistatus) {
         $this->_multistatus[] = $multistatus;
     }
 
@@ -310,9 +327,9 @@ class RESTfmMessage implements RESTfmMessageInterface {
     /**
      * Add a message row object to 'nav' section.
      *
-     * @param RESTfmMessageRow $nav
+     * @param RESTfmMessageRowInterface $nav
      */
-    public function addNav (RESTfmMessageRow $nav) {
+    public function addNav (RESTfmMessageRowInterface $nav) {
         $this->_navs[] = $nav;
     }
 
@@ -327,9 +344,9 @@ class RESTfmMessage implements RESTfmMessageInterface {
      * Add a message record object that contains data for 'data' and 'meta'
      * sections.
      *
-     * @param RESTfmMessageRecord $record
+     * @param RESTfmMessageRecordInterface $record
      */
-    public function addRecord (RESTfmMessageRecord $record) {
+    public function addRecord (RESTfmMessageRecordInterface $record) {
         $this->_records[] = $record;
 
         $recordId = $record->getRecordId();
@@ -544,7 +561,9 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
-     * @return associative array of all sections and data.
+     * Export all sections as a single associative array.
+     *
+     * @return array of all sections and data.
      *  With section(s) in the mixed form(s) of:
      *    1 dimensional:
      *    array('sectionNameX' => array('key' => 'val', ...))
@@ -566,13 +585,16 @@ class RESTfmMessage implements RESTfmMessageInterface {
             } elseif ($section->getDimensions() == 2) {
                 $sectionData = &$section->_getRowsreference();
             }
-            $export[] = array($sectionName => $sectionData);
+            //$export[] = array($sectionName => $sectionData);
+            $export[$sectionName] = $sectionData;
         }
 
         return $export;
     }
 
     /**
+     * Import sections and associated data from the provided array.
+     *
      * @param associative array $array of section(s) and data.
      *  With section(s) in the mixed form(s) of:
      *    1 dimensional:

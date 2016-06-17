@@ -32,6 +32,8 @@ error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
 // x-debug's html error output makes CLI debugging with cURL a PITA.
 ini_set('html_errors', FALSE);
 
+require_once 'lib/autoload.php';
+
 require_once 'lib/RESTfm/RESTfmConfig.php';
 if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
     ini_set('display_errors', '1');

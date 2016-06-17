@@ -23,7 +23,7 @@
 interface RESTfmMessageRowInterface {
 
     /**
-     * @return associative array of key/value pairs.
+     * @return array of key/value pairs.
      */
     public function getData ();
 
@@ -190,7 +190,7 @@ interface RESTfmMessageInterface {
     public function addInfo ($key, $val);
 
     /**
-     * @return associative array of key/value pairs.
+     * @return array of key/value pairs.
      */
     public function getInfo ();
 
@@ -284,7 +284,9 @@ interface RESTfmMessageInterface {
     public function setSection ($sectionName, $sectionData);
 
     /**
-     * @return associative array of all sections and data.
+     * Export all sections as a single associative array.
+     *
+     * @return array of all sections and data.
      *  With section(s) in the mixed form(s) of:
      *    1 dimensional:
      *    array('sectionNameX' => array('key' => 'val', ...))
@@ -297,6 +299,8 @@ interface RESTfmMessageInterface {
     public function exportArray ();
 
     /**
+     * Import sections and associated data from the provided array.
+     *
      * @param associative array $array of section(s) and data.
      *  With section(s) in the mixed form(s) of:
      *    1 dimensional:
