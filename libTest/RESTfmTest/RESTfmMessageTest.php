@@ -1,8 +1,21 @@
 <?php
-
-//require_once 'PHPUnit/Autoload.php';
-
-//use phpunit\framework\TestCase;
+/**
+ * RESTfm - FileMaker RESTful Web Service
+ *
+ * @copyright
+ *  Copyright (c) 2011-2016 Goya Pty Ltd.
+ *
+ * @license
+ *  Licensed under The MIT License. For full copyright and license information,
+ *  please see the LICENSE file distributed with this package.
+ *  Redistributions of files must retain the above copyright notice.
+ *
+ * @link
+ *  http://restfm.com
+ *
+ * @author
+ *  Gavin Stewart
+ */
 
 class RESTfmMessageTest extends \PHPUnit_Framework_TestCase
 {
@@ -187,10 +200,6 @@ class RESTfmMessageTest extends \PHPUnit_Framework_TestCase
                 RESTfmMessageTest::$importData['multistatus'][1]['Reason'],
                 $export['multistatus'][1]['Reason']
         );
-
-        //var_dump($message);
-        //var_dump($export);
-
     }
 
-}
+};

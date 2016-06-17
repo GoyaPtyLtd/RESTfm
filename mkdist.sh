@@ -2,7 +2,22 @@
 #
 # This bash script builds the RESTfm distribution packages.
 #
-# 20120510 - Gavin Stewart, Goya Pty Ltd.
+# RESTfm - FileMaker RESTful Web Service
+#
+# @copyright
+#  Copyright (c) 2011-2016 Goya Pty Ltd.
+#
+# @license
+#  Licensed under The MIT License. For full copyright and license information,
+#  please see the LICENSE file distributed with this package.
+#  Redistributions of files must retain the above copyright notice.
+#
+# @link
+#  http://restfm.com
+#
+# @author
+#  Gavin Stewart
+#
 
 # Identify precisely where we are.
 ARGV0=`basename $0`
