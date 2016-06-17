@@ -17,149 +17,6 @@
  *  Gavin Stewart
  */
 
- /**
-  * A generic row interface for key/value pairs.
-  */
-interface RESTfmMessageRowInterface {
-
-    /**
-     * @return array of key/value pairs.
-     */
-    public function getData ();
-
-    /**
-     * @param array $assocArray
-     *  Set row data with provided array of key/value pairs.
-     */
-    public function setData ($assocArray);
-
-    /**
-     * @param string $fieldName
-     *
-     * @return mixed
-     */
-    public function getField ($fieldName);
-
-    /**
-     * @param string $fieldName
-     * @param mixed $fieldValue
-     */
-    public function setField ($fieldName, $fieldValue);
-
-    /**
-     * @param string $fieldName
-     */
-    public function unsetField ($fieldName);
-
-}
-
-/**
- * An extension of RESTfmMessageRowInterface with additional record related
- * metadata access methods.
- */
-interface RESTfmMessageRecordInterface extends RESTfmMessageRowInterface {
-
-    /**
-     * @return string
-     */
-    public function getHref ();
-
-    /**
-     * @param string $href
-     */
-    public function setHref ($href);
-
-    /**
-     * @return string
-     */
-    public function getRecordId ();
-
-    /**
-     * @param string $recordId
-     */
-    public function setRecordId ($recordId);
-}
-
-/**
- * Multistatus interface.
- */
-interface RESTfmMessageMultistatusInterface {
-
-    /**
-     * @return integer
-     */
-    public function getIndex ();
-
-    /**
-     * @param integer $dataRowIndex
-     *  Index of row in request's data section that caused the error.
-     */
-    public function setIndex ($dataRowIndex);
-
-    /**
-     * @return string
-     */
-    public function getStatus ();
-
-    /**
-     * @param integer $statusCode
-     */
-    public function setStatus ($statusCode);
-
-    /**
-     * @return string
-     */
-    public function getReason ();
-
-    /**
-     * @param string $reasonMessage
-     */
-    public function setReason ($reasonMessage);
-
-    /**
-     * @return string
-     */
-    public function getRecordId ();
-
-    /**
-     * @param string $recordId
-     */
-    public function setRecordId ($recordId);
-}
-
-/**
- * Section access interface for export formats.
- */
-interface RESTfmMessageSectionInterface {
-
-    /**
-     * @return integer number of dimensions of data for this section.
-     */
-    public function getDimensions ();
-
-    /**
-     * @return string name of this section.
-     */
-    public function getName ();
-
-    /**
-     * Returns an array of one or more rows.
-     *  Note: A section with only one dimension has only one row.
-     *  Note: A section with two dimensions may have more than one row.
-     *
-     * @return array of section data in the form of:
-     *    1 dimensional:
-     *    array('key' => 'val', ...)
-     *   OR
-     *    2 dimensional:
-     *    array(
-     *      array('key' => 'val', ...),
-     *      ...
-     *    ))
-     */
-    public function getRows ();
-}
-
 /**
  * RESTfmMessageInterface
  *
@@ -179,7 +36,7 @@ interface RESTfmMessageSectionInterface {
  */
 interface RESTfmMessageInterface {
 
-    // --- Access methods for inserting/manipulating data --- //
+    // --- Access methods for managing data in rows. --- //
 
     /**
      * Add or update a key/value pair to 'info' section.
@@ -253,7 +110,7 @@ interface RESTfmMessageInterface {
     public function getRecordByRecordId ($recordId);
 
 
-    // --- Access methods for reading data as sections (export formats) --- //
+    // --- Access methods for managing data in sections. --- //
 
     /**
      * @return array of strings of available section names.
@@ -319,4 +176,4 @@ interface RESTfmMessageInterface {
      * @return string
      */
     public function __toString ();
-}
+};

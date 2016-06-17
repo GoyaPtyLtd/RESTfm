@@ -39,7 +39,16 @@
         static $classes = NULL;
         if ($classes === NULL) {
             $classes = array(
-                    'RESTfmMessage' => '/RESTfm/RESTfmMessage.php',
+                    'RESTfmMessage' => '/RESTfm/RESTfmMessage/RESTfmMessage.php',
+                    'RESTfmMessageRecord' => '/RESTfm/RESTfmMessage/RESTfmMessageRecord.php',
+                    'RESTfmMessageRow' => '/RESTfm/RESTfmMessage/RESTfmMessageRow.php',
+                    'RESTfmMessageMultistatus' => '/RESTfm/RESTfmMessage/RESTfmMessageMultistatus.php',
+                    'RESTfmMessageSection' => '/RESTfm/RESTfmMessage/RESTfmMessageSection.php',
+                    'RESTfmMessageInterface' => '/RESTfm/RESTfmMessageInterface/RESTfmMessageInterface.php',
+                    'RESTfmMessageRecordInterface' => '/RESTfm/RESTfmMessageInterface/RESTfmMessageRecordInterface.php',
+                    'RESTfmMessageRowInterface' => '/RESTfm/RESTfmMessageInterface/RESTfmMessageRowInterface.php',
+                    'RESTfmMessageMultistatusInterface' => '/RESTfm/RESTfmMessageInterface/RESTfmMessageMultistatusInterface.php',
+                    'RESTfmMessageSectionInterface' => '/RESTfm/RESTfmMessageInterface/RESTfmMessageSectionInterface.php',
             );
         }
 
