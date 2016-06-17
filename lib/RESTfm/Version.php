@@ -36,7 +36,7 @@ class Version {
     public static function getVersion() {
         $revision = self::$_revision;
         if (strpos($revision, 'REVISION') !== FALSE) {
-            $revision = 'UNKNOWN';
+            $revision = 'GIT';
         }
 
         return self::$_release . '/' . $revision;

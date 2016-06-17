@@ -639,7 +639,7 @@ RESTfm.checkVersion = function(serverVersion) {
     }
 
     if (RESTfm.version.indexOf('VERSION') >= 0 &&
-        serverVersion.indexOf('UNKNOWN') >= 0 ) {
+        serverVersion.indexOf('GIT') >= 0 ) {
         return;
     }
 
