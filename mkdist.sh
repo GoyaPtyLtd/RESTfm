@@ -75,6 +75,7 @@ unitTests() {
         echo "** Error: all unit tests must pass."
         exit 1
     fi
+    echo " ++ Unit tests OK."
 }
 
 if [ $# -le 0 ]; then

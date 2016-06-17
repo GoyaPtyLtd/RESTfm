@@ -17,7 +17,7 @@
  *  Gavin Stewart
  */
 
-class RESTfmMessageTest extends \PHPUnit_Framework_TestCase
+class RESTfmMessageTest extends PHPUnit_Framework_TestCase
 {
     static $importData = array(
         'meta'  => array(

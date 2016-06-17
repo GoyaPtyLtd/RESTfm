@@ -23,7 +23,8 @@
         static $ignore = NULL;
         if ($ignore === NULL) {
             $ignore = array(
-                    '/^Tonic\\\\/',
+                    '/^Tonic\\\/',
+                    '/^Composer\\\/',
             );
         }
 
