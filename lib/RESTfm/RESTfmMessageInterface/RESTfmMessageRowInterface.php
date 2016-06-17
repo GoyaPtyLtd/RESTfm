@@ -23,22 +23,21 @@
 interface RESTfmMessageRowInterface {
 
     /**
-     * Get rows of associative array data.
+     * Get associative array of all fieldName/value pairs.
      *
-     * @return array of fieldName/value pairs.
+     * @return array of data.
      */
     public function getData ();
 
     /**
-     * Set rows from associative array.
+     * Set multiple fieldName/value pairs from associative array.
      *
      * @param array $assocArray
-     *  Set row data with provided array of fieldName/value pairs.
      */
     public function setData ($assocArray);
 
     /**
-     * Get specified fieldName.
+     * Get only specified fieldName.
      *
      * @param string $fieldName
      *
@@ -47,7 +46,7 @@ interface RESTfmMessageRowInterface {
     public function getField ($fieldName);
 
     /**
-     * Set specified fieldName.
+     * Set only specified fieldName.
      *
      * @param string $fieldName
      * @param mixed $fieldValue
