@@ -143,11 +143,19 @@ interface RESTfmMessageSectionInterface {
     public function getName ();
 
     /**
-     * Returns an array of one or more message rows.
+     * Returns an array of one or more rows.
      *  Note: A section with only one dimension has only one row.
      *  Note: A section with two dimensions may have more than one row.
      *
-     * @return array of RESTfmMessageRowInterface.
+     * @return array of section data in the form of:
+     *    1 dimensional:
+     *    array('key' => 'val', ...)
+     *   OR
+     *    2 dimensional:
+     *    array(
+     *      array('key' => 'val', ...),
+     *      ...
+     *    ))
      */
     public function getRows ();
 }
@@ -254,11 +262,26 @@ interface RESTfmMessageInterface {
     public function getSectionNames ();
 
     /**
-     * @param string $name section name.
+     * @param string $sectionName
      *
      * @return RESTfmMessageSectionInterface
      */
-    public function getSection ($name);
+    public function getSection ($sectionName);
+
+    /**
+     * @param string $sectionName section name.
+     * @param array of section data.
+     *  With section data in the form of:
+     *    1 dimensional:
+     *    array('key' => 'val', ...)
+     *   OR
+     *    2 dimensional:
+     *    array(
+     *      array('key' => 'val', ...),
+     *      ...
+     *    ))
+     */
+    public function setSection ($sectionName, $sectionData);
 
     /**
      * @return associative array of all sections and data.
@@ -267,7 +290,7 @@ interface RESTfmMessageInterface {
      *    array('sectionNameX' => array('key' => 'val', ...))
      *    2 dimensional:
      *    array('sectionNameY' => array(
-     *                              array('key' => 'val', ...)
+     *                              array('key' => 'val', ...),
      *                              ...
      *                           ))
      */
@@ -280,7 +303,7 @@ interface RESTfmMessageInterface {
      *    array('sectionNameX' => array('key' => 'val', ...))
      *    2 dimensional:
      *    array('sectionNameY' => array(
-     *                              array('key' => 'val', ...)
+     *                              array('key' => 'val', ...),
      *                              ...
      *                           ))
      */

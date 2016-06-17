@@ -200,11 +200,19 @@ class RESTfmMessageSection implements RESTfmMessageSectionInterface {
     }
 
     /**
-     * Returns an array of one or more message rows.
+     * Returns an array of one or more rows.
      *  Note: A section with only one dimension has only one row.
      *  Note: A section with two dimensions may have more than one row.
      *
-     * @return array of RESTfmMessageRowInterface.
+     * @return array of section data in the form of:
+     *    1 dimensional:
+     *    array('key' => 'val', ...)
+     *   OR
+     *    2 dimensional:
+     *    array(
+     *      array('key' => 'val', ...),
+     *      ...
+     *    ))
      */
     public function getRows () {
         return $this->_rows;
@@ -270,9 +278,9 @@ class RESTfmMessage implements RESTfmMessageInterface {
     /**
      * Add a message row object to 'metaField' section.
      *
-     * @param RESTfmMessageRowInterface $metaField
+     * @param RESTfmMessageRow $metaField
      */
-    public function addMetaField (RESTfmMessageRowInterface $metaField) {
+    public function addMetaField (RESTfmMessageRow $metaField) {
         $this->_metaFields[] = $metaField;
     }
 
@@ -286,9 +294,9 @@ class RESTfmMessage implements RESTfmMessageInterface {
     /**
      * Add a message multistatus object to 'multistatus' section.
      *
-     * @param RESTfmMessageMultistatusInterface $multistatus
+     * @param RESTfmMessageMultistatus $multistatus
      */
-    public function addMultistatus (RESTfmMessageMultistatusInterface $multistatus) {
+    public function addMultistatus (RESTfmMessageMultistatus $multistatus) {
         $this->_multistatus[] = $multistatus;
     }
 
@@ -302,9 +310,9 @@ class RESTfmMessage implements RESTfmMessageInterface {
     /**
      * Add a message row object to 'nav' section.
      *
-     * @param RESTfmMessageRowInterface $nav
+     * @param RESTfmMessageRow $nav
      */
-    public function addNav (RESTfmMessageRowInterface $nav) {
+    public function addNav (RESTfmMessageRow $nav) {
         $this->_navs[] = $nav;
     }
 
@@ -319,9 +327,9 @@ class RESTfmMessage implements RESTfmMessageInterface {
      * Add a message record object that contains data for 'data' and 'meta'
      * sections.
      *
-     * @param RESTfmMessageRecordInterface $record
+     * @param RESTfmMessageRecord $record
      */
-    public function addRecord (RESTfmMessageRecordInterface $record) {
+    public function addRecord (RESTfmMessageRecord $record) {
         $this->_records[] = $record;
 
         $recordId = $record->getRecordId();
@@ -380,7 +388,6 @@ class RESTfmMessage implements RESTfmMessageInterface {
      * @return RESTfmMessageSectionInterface
      */
     public function getSection ($sectionName) {
-
         switch ($sectionName) {
             case 'meta':
                 $section = new RESTfmMessageSection($sectionName, 2);
@@ -437,13 +444,113 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
+     * @param string $sectionName section name.
+     * @param array of section data.
+     *  With section data in the form of:
+     *    1 dimensional:
+     *    array('key' => 'val', ...)
+     *   OR
+     *    2 dimensional:
+     *    array(
+     *      array('key' => 'val', ...),
+     *      ...
+     *    ))
+     */
+    public function setSection ($sectionName, $sectionData) {
+        switch ($sectionName) {
+            case 'meta':
+                $index = 0;
+                foreach ($sectionData as $rowIndex => $row) {
+                    if (isset($this->_records[$index])) {
+                        $record = $this->_records[$index];
+                    } else {
+                        $record = new RESTfmMessageRecord();
+                        $this->addRecord($record);
+                    }
+                    foreach ($row as $key => $val) {
+                        switch ($key) {
+                            case 'href':
+                                $record->setHref($val);
+                                break;
+                            case 'recordID':
+                                $record->setRecordId($val);
+                                $this->_recordIdMap[$val] = $index;
+                                break;
+                        }
+                    }
+                    $index++;
+                }
+                break;
+
+            case 'data':
+                $index = 0;
+                foreach ($sectionData as $rowIndex => $row) {
+                    if (isset($this->_records[$index])) {
+                        $record = $this->_records[$index];
+                    } else {
+                        $record = new RESTfmMessageRecord();
+                        $this->addRecord($record);
+                    }
+                    $record->setData($row);
+                    $index++;
+                }
+                break;
+
+            case 'info':
+                foreach ($sectionData as $key => $val) {
+                    $this->_info[$key] = $val;
+                }
+                break;
+
+            case 'metaField':
+                foreach ($sectionData as $rowIndex => $row) {
+                    $metaField = new RESTfmMessageRow();
+                    $metaField->setData($row);
+                    $this->addMetaField($metaField);
+                }
+                break;
+
+            case 'multistatus':
+                foreach ($sectionData as $rowIndex => $row) {
+                    $multistatus = new RESTfmMessageMultistatus();
+                    foreach ($row as $key => $val) {
+                        switch ($key) {
+                            case 'index':
+                                $multistatus->setIndex($val);
+                                break;
+                            case 'Status':
+                                $multistatus->setStatus($val);
+                                break;
+                            case 'Reason':
+                                $multistatus->setReason($val);
+                                break;
+                            case 'recordID':
+                                $multistatus->setRecordId($val);
+                                break;
+                        }
+                    }
+                    $this->addMultistatus($multistatus);
+                }
+                break;
+
+            case 'nav':
+                foreach ($sectionData as $rowIndex => $row) {
+                    $nav = new RESTfmMessageRow();
+                    $nav->setData($row);
+                    $this->addNav($nav);
+                }
+                break;
+        }
+    }
+
+    /**
      * @return associative array of all sections and data.
      *  With section(s) in the mixed form(s) of:
      *    1 dimensional:
      *    array('sectionNameX' => array('key' => 'val', ...))
      *    2 dimensional:
      *    array('sectionNameY' => array(
-     *                              array('key' => 'val', ...)
+     *                              array('key' => 'val', ...),
      *                              ...
      *                           ))
      */
@@ -452,13 +559,12 @@ class RESTfmMessage implements RESTfmMessageInterface {
 
         foreach ($this->getSectionNames() as $sectionName) {
             $sectionData = array();
-            foreach ($this->getSection($sectionName) as $section) {
-                if ($section->getDimensions() == 1) {
-                    $sectionRows = &$section->_getRowsreference();
-                    $sectionData = &$sectionRows[0];
-                } elseif ($section->getDimensions() == 2) {
-                    $sectionData = &$section->_getRowsreference();
-                }
+            $section = $this->getSection($sectionName);
+            if ($section->getDimensions() == 1) {
+                $sectionRows = &$section->_getRowsreference();
+                $sectionData = &$sectionRows[0];
+            } elseif ($section->getDimensions() == 2) {
+                $sectionData = &$section->_getRowsreference();
             }
             $export[] = array($sectionName => $sectionData);
         }
@@ -473,12 +579,14 @@ class RESTfmMessage implements RESTfmMessageInterface {
      *    array('sectionNameX' => array('key' => 'val', ...))
      *    2 dimensional:
      *    array('sectionNameY' => array(
-     *                              array('key' => 'val', ...)
+     *                              array('key' => 'val', ...),
      *                              ...
      *                           ))
      */
     public function importArray ($array) {
-
+        foreach ($array as $sectionName => $sectionData) {
+            $this->setSection($sectionName, $sectionData);
+        }
     }
 
     /**
@@ -487,6 +595,32 @@ class RESTfmMessage implements RESTfmMessageInterface {
      * @return string
      */
     public function __toString () {
+        $s = '';
+        foreach ($this->getSectionNames() as $sectionName) {
+            $s .= $sectionName . ":\n";
 
+            $section = $this->getSection($sectionName);
+            if ($section->getDimensions() == 1) {
+                $sectionRows = &$section->_getRowsreference();
+                $sectionData = &$sectionRows[0];
+                foreach ($sectionData as $key => $value) {
+                    $s .= '  ' . $key . '="' . addslashes($value) . '"' . "\n";
+                }
+            } elseif ($section->getDimensions() == 2) {
+                $sectionData = &$section->_getRowsreference();
+                foreach ($sectionData as $index => $row) {
+                    $s .= '  ' . $index . ":\n";
+                    foreach ($row as $key => $value) {
+                        $s .= '    ' . $key . '="' . addslashes($value) . '"' . "\n";
+                    }
+                }
+            } else {
+                $s .= '  ** Unknown format **.' . "\n";
+            }
+
+            $s .= "\n";
+        }
+        return $s;
     }
-}
+
+};
