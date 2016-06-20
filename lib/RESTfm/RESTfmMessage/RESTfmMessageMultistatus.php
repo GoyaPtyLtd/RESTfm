@@ -22,6 +22,11 @@
  */
 class RESTfmMessageMultistatus implements RESTfmMessageMultistatusInterface {
 
+    /**
+     * A multistatus row object for RESTfmMessage.
+     */
+    public function __construct () {}
+
     protected $_multiStatus = array();
 
     /**

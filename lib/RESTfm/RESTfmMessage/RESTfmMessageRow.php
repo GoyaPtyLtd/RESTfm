@@ -22,6 +22,19 @@
   */
 class RESTfmMessageRow implements RESTfmMessageRowInterface {
 
+    /**
+     * A row object for containing fieldName/value pairs in RESTfmMessage.
+     *
+     * @param array $assocArray
+     *  Optional array to initalise row data.
+     */
+    public function __construct ($assocArray = NULL) {
+        if ($assocArray !== NULL) { $this->_data = $assocArray; }
+    }
+
+    /**
+     * @var array of fieldName/value pairs.
+     */
     protected $_data = array();
 
     /**

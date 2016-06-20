@@ -36,6 +36,12 @@
  */
 class RESTfmMessage implements RESTfmMessageInterface {
 
+    /**
+     * A message object for passing request/response data between formats
+     *  (web input/output) and backends (database input/output).
+     */
+    public function __construct () {}
+
     // -- Sections -- //
 
     protected $_info = array();         /// @var array 1 dimensional.
