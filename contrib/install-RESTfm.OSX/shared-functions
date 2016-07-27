@@ -157,8 +157,7 @@ check_FMSVersion() {
     local MSGPREFIX='Check FMS version: '
 
     local FMSADMIN_EXE='/Library/FileMaker Server/Database Server/bin/fmsadmin'
-    local FMSVERSION_JAR='/Library/FileMaker Server/Admin/admin-server/WEB-INF/lib/fmversion.jar'
-    local FMS_SERVER_CONFIG='/Library/FileMaker Server/Admin/conf/server_config.xml'
+    local FMSVERSION_JAR='/Library/FileMaker Server/Admin/admin-helper/WEB-INF/lib/fmversion.jar'
 
     # Ensure that FMS is installed on this system.
     if [ ! -r "$FMSADMIN_EXE" ]; then
@@ -197,6 +196,7 @@ check_FMS_WPE_PHP() {
     local MSGPREFIX='Check FMS WPE and PHP: '
 
     # Ensure that both WPE and PHP are enabled (only works on FMS14)
+    #local FMS_SERVER_CONFIG='/Library/FileMaker Server/Admin/conf/server_config.xml'
     #local FMSWPEPHP=''
     #FMSWPEPHP=`xpath "$FMS_SERVER_CONFIG" '//component[@name="WPE"]//technology[@name="PHP"]//parameter[@name="enabled"]/text()' 2>/dev/null`
     #if [ "X${FMSWPEPHP}" != 'Xtrue' ]; then
