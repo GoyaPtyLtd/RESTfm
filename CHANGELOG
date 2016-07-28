@@ -1,3 +1,7 @@
+### 4.0.6 (Released 2016-07-28) ###
+- Update Mac OS X installer FMS version detection routine to resolve rejection 
+  of FMS 13 where patch level is greater than minimum required.
+
 ### 4.0.5 (Released 2016-07-27) ###
 - Update Mac OS X installer for installation on worker machine of a two
   machine deployment.
