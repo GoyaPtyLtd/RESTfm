@@ -286,7 +286,8 @@ class Diagnostics {
         if (curl_errno($ch)) {
             $reportItem->status = ReportItem::ERROR;
             $reportItem->details .=  'cURL failed with error: ' . curl_errno($ch) . ': ' . curl_error($ch) . "\n";
-            if (curl_errno($ch) == 60) {    // SSL certificate problem: self signed certificate
+            if (curl_errno($ch) == 60 ||        // SSL certificate problem: self signed certificate
+                    curl_errno($ch) == 51) {    // OSX 'certificate verification failed (result: 5)'
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'The host\'s SSL certificate has failed a verification check. This may be' . "\n";
                 $reportItem->details .= 'due to the certificate being invalid, or PHP\'s CA root certificates' . "\n";
@@ -297,6 +298,16 @@ class Diagnostics {
                                         ' in the RESTfm manual for further details.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsReport" to FALSE in ' . RESTfmConfig::CONFIG_INI ."\n";
+            } elseif (curl_errno($ch) == 35 && strpos(curl_error($ch), 'CA certificate set, but certificate verification is disabled') !== FALSE) {
+                // OSX Secure Transport bug.
+                $reportItem->details .= "\n";
+                $reportItem->details .= 'Unable to disable strict SSL certificate checking in ' . RESTfmConfig::CONFIG_INI . ' (\'strictSSLCertsReport\' => FALSE)' ."\n";
+                $reportItem->details .= 'while curl.cainfo is set in php.ini due to a compatibility bug in Apple\'s OS X Secure Transport library.' . "\n";
+                $reportItem->details .= "\n";
+                $reportItem->details .= 'Please consult ' .
+                                        '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting-os-x-secure-transport-bug">SSL Troubleshooting - OS X Secure Transport Bug</a>' .
+                                        ' in the RESTfm manual for a workaround.' . "\n";
+                $reportItem->details .= "\n";
             }
         } elseif ( strpos($result, 'RESTfm is not configured') ) {
             $reportItem->status = ReportItem::ERROR;
@@ -352,9 +363,10 @@ class Diagnostics {
         curl_setopt($ch, CURLOPT_HEADER, 0);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        // SSL certificates were checked in an earlier test.
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
+        if (RESTfmConfig::getVar('settings', 'strictSSLCertsReport') === FALSE) {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
+        }
         curl_setopt($ch, CURLOPT_FRESH_CONNECT, TRUE);
         curl_setopt($ch, CURLOPT_FORBID_REUSE, TRUE);
         curl_setopt($ch, CURLOPT_USERAGENT, 'RESTfm Diagnostics');
@@ -413,7 +425,8 @@ class Diagnostics {
         if (curl_errno($ch)) {
             $reportItem->status = ReportItem::ERROR;
             $reportItem->details .=  'cURL failed with error: ' . curl_errno($ch) . ': ' . curl_error($ch) . "\n";
-            if (curl_errno($ch) == 60) {    // SSL certificate problem: self signed certificate in certificate chain
+            if (curl_errno($ch) == 60 ||        // SSL certificate problem: self signed certificate in certificate chain
+                    curl_errno($ch) == 51) {    // OSX 'certificate verification failed (result: 5)'
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'The host\'s SSL certificate has failed a verification check. This may be' . "\n";
                 $reportItem->details .= 'due to the certificate being invalid, or PHP\'s CA root certificates' . "\n";
@@ -424,6 +437,16 @@ class Diagnostics {
                                         ' in the RESTfm manual for further details.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsFMS" to FALSE in ' . RESTfmConfig::CONFIG_INI ."\n";
+            } elseif (curl_errno($ch) == 35 && strpos(curl_error($ch), 'CA certificate set, but certificate verification is disabled') !== FALSE) {
+                // OSX Secure Transport bug.
+                $reportItem->details .= "\n";
+                $reportItem->details .= 'Unable to disable strict SSL certificate checking in ' . RESTfmConfig::CONFIG_INI . ' (\'strictSSLCertsFMS\' => FALSE)' ."\n";
+                $reportItem->details .= 'while curl.cainfo is set in php.ini due to a compatibility bug in Apple\'s OS X Secure Transport library.' . "\n";
+                $reportItem->details .= "\n";
+                $reportItem->details .= 'Please consult ' .
+                                        '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting-os-x-secure-transport-bug">SSL Troubleshooting - OS X Secure Transport Bug</a>' .
+                                        ' in the RESTfm manual for a workaround.' . "\n";
+                $reportItem->details .= "\n";
             }
         } elseif (stripos($result, 'FileMaker') === FALSE) {
             $reportItem->status = ReportItem::ERROR;
@@ -441,11 +464,12 @@ class Diagnostics {
 
         $FM = new FileMaker();
         $FM->setProperty('hostspec', $hostspec);
-        // SSL certificates were checked in an earlier test.
-        $FM->setProperty('curlOptions', array(
-                            CURLOPT_SSL_VERIFYPEER => FALSE,
-                            CURLOPT_SSL_VERIFYHOST => FALSE,
-                            ));
+        if (RESTfmConfig::getVar('settings', 'strictSSLCertsFMS') === FALSE) {
+            $FM->setProperty('curlOptions', array(
+                                CURLOPT_SSL_VERIFYPEER => FALSE,
+                                CURLOPT_SSL_VERIFYHOST => FALSE,
+                                ));
+        }
 
         $fileMakerResult = $FM->listDatabases();
         $unauthorised = FALSE;
