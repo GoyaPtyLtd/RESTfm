@@ -1,5 +1,9 @@
+### 4.0.7 (Released 2016-08-31) ###
+- Update diagnostic report page to handle OS X Secure Transport incompatibility
+  bug exposed by FileMaker Sever 15 setting curl.cainfo in php.ini by default.
+
 ### 4.0.6 (Released 2016-07-28) ###
-- Update Mac OS X installer FMS version detection routine to resolve rejection 
+- Update Mac OS X installer FMS version detection routine to resolve rejection
   of FMS 13 where patch level is greater than minimum required.
 
 ### 4.0.5 (Released 2016-07-27) ###
