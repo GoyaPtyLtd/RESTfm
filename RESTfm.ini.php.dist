@@ -41,13 +41,16 @@ $config['settings'] = array (
     'SSLOnly' => FALSE,
 
     // Enforce strict SSL certificate checking when RESTfm is connecting to
-    // FileMaker Server Web Publishing Engine.
+    // the FileMaker Server Web Publishing Engine back-end. This setting is
+    // relevant only when the database hostspec is using https.
     // Check http://www.restfm.com/restfm-manual/install/ssl-troubleshooting
     // for further details.
     'strictSSLCertsFMS' => TRUE,
 
     // Enforce strict SSL certificate checking for RESTfm connecting to
-    // itself when executing the report page (report.php).
+    // itself when executing the diagnostics report page (report.php). This
+    // setting is used only in determining if clients are able to connect to
+    // the RESTfm front-end.
     // Check http://www.restfm.com/restfm-manual/install/ssl-troubleshooting
     // for further details.
     'strictSSLCertsReport' => TRUE,
@@ -77,6 +80,7 @@ $config['database'] = array (
     // If server is localhost, hostspec should be http://127.0.0.1
     // not http://localhost for speed reasons according to
     // FileMaker/conf/filemaker-api.php
+    // It is not necessary to use https with 127.0.0.1
     //'hostspec' => 'http://example.com',
     //'hostspec' => 'https://example.com',
     //'hostspec' => 'http://example.com:8081',
