@@ -26,6 +26,22 @@ class RESTfmMessageRecord extends RESTfmMessageRow implements RESTfmMessageRecor
     protected $_meta = array();
 
     /**
+     * A record object containing recordID, href, and fieldName/value pairs in RESTfmMessage.
+     *
+     * @param string $recordId
+     *  Optional recordID.
+     * @param string $href
+     *  Optional href.
+     * @param array $assocArray
+     *  Optional array to initalise record data.
+     */
+    public function __construct ($recordId = NULL, $href = NULL, $assocArray = NULL) {
+        if ($recordId !== NULL) { $this->_meta['recordID'] = $recordId; }
+        if ($href !== NULL) { $this->_meta['href'] = $href; }
+        if ($assocArray !== NULL) { parent::__construct($assocArray); }
+    }
+
+    /**
      * Return href metadata for record.
      *
      * @return string
@@ -57,8 +73,8 @@ class RESTfmMessageRecord extends RESTfmMessageRow implements RESTfmMessageRecor
      *
      * @param string $recordId
      */
-    public function setRecordId ($recordID) {
-        $this->_meta['recordID'] = $recordID;
+    public function setRecordId ($recordId) {
+        $this->_meta['recordID'] = $recordId;
     }
 
     /**

@@ -23,22 +23,6 @@
 interface RESTfmMessageMultistatusInterface {
 
     /**
-     * Get index of record in 'data' that this multistatus applies to.
-     *
-     * @return integer
-     */
-    public function getIndex ();
-
-    /**
-     * Set index of record in request 'data' that this multistatus applies to.
-     * Used by POST/CREATE operations where no recordID exists yet.
-     *
-     * @param integer $dataRowIndex
-     *  Index of row in request's data section that caused the error.
-     */
-    public function setIndex ($dataRowIndex);
-
-    /**
      * Get status code.
      *
      * @return string
@@ -75,8 +59,13 @@ interface RESTfmMessageMultistatusInterface {
     public function getRecordId ();
 
     /**
+     * GET/READ, PUT/UPDATE, DELETE Operations:
      * Set recordID of record in request 'data' that this multistatus applies
-     * to. Used by GET/READ, PUT/UPDATE and DELETE operations.
+     * to.
+     *
+     * POST/CREATE Operations:
+     * Set index of record in request 'data' that this multistatus applies to,
+     * since no recordID exists yet.
      *
      * @param string $recordId
      */

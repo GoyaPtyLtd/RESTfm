@@ -66,13 +66,11 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
         ),
         'multistatus'   => array(
             0   => array(
-                'index'     =>  1,
                 'recordID'  =>  '002',
                 'Status'    =>  '101',
                 'Reason'    =>  'reason string 1',
             ),
             1   => array(
-                'index'     =>  0,
                 'recordID'  =>  '001',
                 'Status'    =>  '102',
                 'Reason'    =>  'reason string 2',
@@ -80,7 +78,133 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
         )
     );
 
-    public function testImportAndExport() {
+    public function testAddAndGetInfo () {
+        $message = new RESTfmMessage();
+
+        $message->addInfo('addField1', 'addValue1');
+        $message->addInfo('addField2', 'addValue2');
+
+        $getInfo = $message->getInfo();
+
+        $this->assertEquals(
+                $getInfo['addField1'],
+                'addValue1'
+        );
+
+        $this->assertEquals(
+                $getInfo['addField2'],
+                'addValue2'
+        );
+    }
+
+    public function testAddAndGetMetaFields () {
+        $message = new RESTfmMessage();
+
+        $rowData1 = array(
+                        'rowField1' =>  'rowValue1',
+                        'rowField2' =>  'rowValue2',
+        );
+        $rowData2 = array(
+                        'rowField1' =>  'rowValue3',
+                        'rowField2' =>  'rowValue4',
+        );
+
+        $message->addMetaField(new RESTfmMessageRow($rowData1));
+        $message->addMetaField(new RESTfmMessageRow($rowData2));
+
+        $metaFields = $message->getMetaFields();
+
+        $arrayDiff1 = array_diff($rowData1, $metaFields[0]->getData());
+        $this->assertEmpty($arrayDiff1);
+
+        $arrayDiff2 = array_diff($rowData2, $metaFields[1]->getData());
+        $this->assertEmpty($arrayDiff2);
+    }
+
+    public function testAddAndGetMultistatus () {
+        $message = new RESTfmMessage();
+
+        $message->addMultistatus(new RESTfmMessageMultistatus('1234', 'reason1', 'recordId1'));
+        $message->addMultistatus(new RESTfmMessageMultistatus(9999, 'reason2', 'recordId2'));
+
+        $multistatus = $message->getMultistatus();
+
+        $this->assertEquals($multistatus[0]->getStatus(), '1234');
+        $this->assertEquals($multistatus[1]->getStatus(), 9999);
+    }
+
+    public function testAddAndGetNavs () {
+        $message = new RESTfmMessage();
+
+        $rowData1 = array(
+                        'rowField1' =>  'rowValue1',
+                        'rowField2' =>  'rowValue2',
+        );
+        $rowData2 = array(
+                        'rowField1' =>  'rowValue3',
+                        'rowField2' =>  'rowValue4',
+        );
+
+        $message->addNav(new RESTfmMessageRow($rowData1));
+        $message->addNav(new RESTfmMessageRow($rowData2));
+
+        $metaFields = $message->getNavs();
+
+        $arrayDiff1 = array_diff($rowData1, $metaFields[0]->getData());
+        $this->assertEmpty($arrayDiff1);
+
+        $arrayDiff2 = array_diff($rowData2, $metaFields[1]->getData());
+        $this->assertEmpty($arrayDiff2);
+    }
+
+    public function testAddAndGetRecords () {
+        $message = new RESTfmMessage();
+
+        $rowData1 = array(
+                        'rowField1' =>  'rowValue1',
+                        'rowField2' =>  'rowValue2',
+        );
+        $rowData2 = array(
+                        'rowField1' =>  'rowValue3',
+                        'rowField2' =>  'rowValue4',
+        );
+
+        $message->addRecord(new RESTfmMessageRecord('001', 'href1', $rowData1));
+        $message->addRecord(new RESTfmMessageRecord('002', 'href2', $rowData2));
+
+        $records = $message->getRecords();
+
+        $this->assertEquals($records[0]->getRecordId(), '001');
+        $this->assertEquals($records[1]->getRecordId(), '002');
+
+        $arrayDiff1 = array_diff($rowData1, $records[0]->getData());
+        $this->assertEmpty($arrayDiff1);
+
+        $arrayDiff2 = array_diff($rowData2, $records[1]->getData());
+        $this->assertEmpty($arrayDiff2);
+    }
+
+    public function testAddAndGetRecordByRecordId () {
+        $message = new RESTfmMessage();
+
+        $rowData1 = array(
+                        'rowField1' =>  'rowValue1',
+                        'rowField2' =>  'rowValue2',
+        );
+        $rowData2 = array(
+                        'rowField1' =>  'rowValue3',
+                        'rowField2' =>  'rowValue4',
+        );
+
+        $message->addRecord(new RESTfmMessageRecord('001', 'href1', $rowData1));
+        $message->addRecord(new RESTfmMessageRecord('002', 'href2', $rowData2));
+
+        $record = $message->getRecordByRecordId('001');
+
+        $this->assertEquals($record->getRecordId(), '001');
+    }
+
+    public function testImportAndExport () {
         $message = new RESTfmMessage();
 
         $message->importArray(RESTfmMessageTest::$importData);
@@ -167,10 +291,6 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
 
         // multistatus 0
         $this->assertEquals(
-                RESTfmMessageTest::$importData['multistatus'][0]['index'],
-                $export['multistatus'][0]['index']
-        );
-        $this->assertEquals(
                 RESTfmMessageTest::$importData['multistatus'][0]['recordID'],
                 $export['multistatus'][0]['recordID']
         );
@@ -185,10 +305,6 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
 
         // multistatus 1
         $this->assertEquals(
-                RESTfmMessageTest::$importData['multistatus'][1]['index'],
-                $export['multistatus'][1]['index']
-        );
-        $this->assertEquals(
                 RESTfmMessageTest::$importData['multistatus'][1]['recordID'],
                 $export['multistatus'][1]['recordID']
         );
@@ -202,56 +318,5 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    public function testAddAndGetInfo () {
-        $message = new RESTfmMessage();
-
-        $message->addInfo('addField1', 'addValue1');
-        $message->addInfo('addField2', 'addValue2');
-
-        $getInfo = $message->getInfo();
-
-        $this->assertEquals(
-                $getInfo['addField1'],
-                'addValue1'
-        );
-
-        $this->assertEquals(
-                $getInfo['addField2'],
-                'addValue2'
-        );
-    }
-
-    public function testAddAndGetMetaFields () {
-        $rowData1 = array(
-                        'rowField1' =>  'rowValue1',
-                        'rowField2' =>  'rowValue2',
-        );
-        $rowData2 = array(
-                        'rowField1' =>  'rowValue3',
-                        'rowField2' =>  'rowValue4',
-        );
-
-        $message = new RESTfmMessage();
-
-        $row1 = new RESTfmMessageRow($rowData1);
-        $message->addMetaField($row1);
-
-        $row2 = new RESTfmMessageRow($rowData2);
-        $message->addMetaField($row2);
-
-        $getMetaFields = $message->getMetaFields();
-
-        $arrayDiff1 = array_diff($rowData1, $getMetaFields[0]->getData());
-        $this->assertEmpty($arrayDiff1);
-
-        $arrayDiff2 = array_diff($rowData2, $getMetaFields[1]->getData());
-        $this->assertEmpty($arrayDiff2);
-    }
-
-    public function testAddAndGetMultistatus () {
-        $message = new RESTfmMessage();
-
-
-    }
 
 };

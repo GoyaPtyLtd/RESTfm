@@ -23,7 +23,7 @@
 class RESTfmMessageRow implements RESTfmMessageRowInterface {
 
     /**
-     * A row object for containing fieldName/value pairs in RESTfmMessage.
+     * A row object containing fieldName/value pairs in RESTfmMessage.
      *
      * @param array $assocArray
      *  Optional array to initalise row data.

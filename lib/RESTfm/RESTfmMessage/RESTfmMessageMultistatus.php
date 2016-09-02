@@ -22,31 +22,22 @@
  */
 class RESTfmMessageMultistatus implements RESTfmMessageMultistatusInterface {
 
-    /**
-     * A multistatus row object for RESTfmMessage.
-     */
-    public function __construct () {}
-
     protected $_multiStatus = array();
 
     /**
-     * Get index of record in 'data' that this multistatus applies to.
+     * A multistatus row object for RESTfmMessage.
      *
-     * @return integer
+     * Must set all parameters or none.
+     * @param integer $statusCode
+     * @param string $reasonMessage
+     * @param string $recordId
      */
-    public function getIndex () {
-        if (isset($this->_multiStatus['index'])) return $this->_multiStatus['index'];
-    }
-
-    /**
-     * Set index of record in request 'data' that this multistatus applies to.
-     * Used by POST/CREATE operations where no recordID exists yet.
-     *
-     * @param integer $dataRowIndex
-     *  Index of row in request's data section that caused the error.
-     */
-    public function setIndex ($dataRowIndex) {
-        $this->_multiStatus['index'] = $dataRowIndex;
+    public function __construct ($statusCode = NULL, $reasonMessage = NULL, $recordId = NULL) {
+        if ($statusCode !== NULL && $reasonMessage !== NULL && $recordId !== NULL) {
+            $this->_multiStatus['Status'] = $statusCode;
+            $this->_multiStatus['Reason'] = $reasonMessage;
+            $this->_multiStatus['recordID'] = $recordId;
+        }
     }
 
     /**
@@ -96,8 +87,13 @@ class RESTfmMessageMultistatus implements RESTfmMessageMultistatusInterface {
     }
 
     /**
+     * GET/READ, PUT/UPDATE, DELETE Operations:
      * Set recordID of record in request 'data' that this multistatus applies
-     * to. Used by GET/READ, PUT/UPDATE and DELETE operations.
+     * to.
+     *
+     * POST/CREATE Operations:
+     * Set index of record in request 'data' that this multistatus applies to,
+     * since no recordID exists yet.
      *
      * @param string $recordId
      */

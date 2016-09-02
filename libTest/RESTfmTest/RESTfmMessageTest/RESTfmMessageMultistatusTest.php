@@ -18,17 +18,9 @@
  */
 
 class RESTfmMessageMultistatusTest extends PHPUnit_Framework_TestCase {
-   
-    public function testSetAndGetIndex() {
-        $multistatus  = new RESTfmMessageMultistatus();
-
-        $multistatus->setIndex(5);
-
-        $this->assertEquals($multistatus->getIndex(), 5);
-    }
 
     public function testSetAndGetStatus() {
-        $multistatus  = new RESTfmMessageMultistatus();
+        $multistatus = new RESTfmMessageMultistatus();
 
         $multistatus->setStatus(1234);
 
@@ -36,7 +28,7 @@ class RESTfmMessageMultistatusTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testSetAndGetReason() {
-        $multistatus  = new RESTfmMessageMultistatus();
+        $multistatus = new RESTfmMessageMultistatus();
 
         $multistatus->setReason('test reason');
 
@@ -44,11 +36,18 @@ class RESTfmMessageMultistatusTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testSetAndGetRecordId() {
-        $multistatus  = new RESTfmMessageMultistatus();
+        $multistatus = new RESTfmMessageMultistatus();
 
         $multistatus->setRecordId('someRecordId');
 
         $this->assertEquals($multistatus->getRecordId(), 'someRecordId');
     }
 
+    public function testConstructorSetAndGet() {
+        $multistatus = new RESTfmMessageMultistatus('9999', 'test again', 'someOtherRecordId');
+
+        $this->assertEquals($multistatus->getStatus(), '9999');
+        $this->assertEquals($multistatus->getReason(), 'test again');
+        $this->assertEquals($multistatus->getRecordId(), 'someOtherRecordId');
+    }
 };

@@ -44,10 +44,10 @@ class RESTfmMessage implements RESTfmMessageInterface {
 
     // -- Sections -- //
 
-    protected $_info = array();         /// @var array 1 dimensional.
-    protected $_metaFields = array();   /// @var array of RESTfmMessageRow
-    protected $_multistatus = array();  /// @var array of RESTfmMessageMultistatus
-    protected $_navs = array();         /// @var array of RESTfmMessageRow
+    protected $_info = array();         /// @var array of key/value pairs.
+    protected $_metaFields = array();   /// @var array of RESTfmMessageRowInterface
+    protected $_multistatus = array();  /// @var array of RESTfmMessageMultistatusInterface
+    protected $_navs = array();         /// @var array of RESTfmMessageRowInterface
     protected $_records = array();      /// @var array of RESTfmMessageRecordInterface
 
     /**
@@ -140,6 +140,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
 
         $recordId = $record->getRecordId();
         if ($recordId !== NULL) {
+            // TODO profile this operation
             $recordIndex = count($this->_records) - 1;
             $this->_recordIdMap[$recordId] = $recordIndex;
         }
@@ -161,7 +162,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
      */
     public function getRecordByRecordId ($recordId) {
         if (isset($this->_recordIdMap[$recordId])) {
-            return $this->_recordIdMap[$recordId];
+            return $this->_records[$this->_recordIdMap[$recordId]];
         }
     }
 

@@ -24,6 +24,16 @@ class RESTfmMessageRowTest extends PHPUnit_Framework_TestCase {
         'Field2' => 'Value2',
     );
 
+    public function testConstructorSetandGet() {
+        $row = new RESTfmMessageRow(array(
+                    'Field98'    => 'Value98',
+                    'Field99'    => 'Value99',
+                ));
+
+        $this->assertEquals($row->getField('Field99'), 'Value99');
+        $this->assertEquals($row->getField('Field98'), 'Value98');
+    }
+
     public function testSetAndGetData() {
         $row = new RESTfmMessageRow();
 
@@ -73,5 +83,4 @@ class RESTfmMessageRowTest extends PHPUnit_Framework_TestCase {
 
         $this->assertEquals($arrayRef['Field3'], 'Value3');
     }
-
 };
