@@ -81,85 +81,91 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
     public function testAddAndGetInfo () {
         $message = new RESTfmMessage();
 
+        $message->addInfo('addField0', 'addValue0');
         $message->addInfo('addField1', 'addValue1');
-        $message->addInfo('addField2', 'addValue2');
 
         $getInfo = $message->getInfo();
 
         $this->assertEquals(
-                $getInfo['addField1'],
-                'addValue1'
+                $getInfo['addField0'],
+                'addValue0'
         );
 
         $this->assertEquals(
-                $getInfo['addField2'],
-                'addValue2'
+                $getInfo['addField1'],
+                'addValue1'
         );
     }
 
     public function testAddAndGetMetaFields () {
         $message = new RESTfmMessage();
 
-        $rowData1 = array(
-                        'rowField1' =>  'rowValue1',
-                        'rowField2' =>  'rowValue2',
-        );
-        $rowData2 = array(
-                        'rowField1' =>  'rowValue3',
-                        'rowField2' =>  'rowValue4',
-        );
+        // We only need to identify objects here, not the object's data.
+        // The object's own test files are the only place data is tested.
 
-        $message->addMetaField(new RESTfmMessageRow($rowData1));
-        $message->addMetaField(new RESTfmMessageRow($rowData2));
+        $messageRow0 = new RESTfmMessageRow();
+        $messageRow1 = new RESTfmMessageRow();
+
+        $message->addMetaField($messageRow0);
+        $message->addMetaField($messageRow1);
 
         $metaFields = $message->getMetaFields();
 
-        $arrayDiff1 = array_diff($rowData1, $metaFields[0]->getData());
-        $this->assertEmpty($arrayDiff1);
+        $this->assertEquals( spl_object_hash($metaFields[0]),
+                             spl_object_hash($messageRow0) );
 
-        $arrayDiff2 = array_diff($rowData2, $metaFields[1]->getData());
-        $this->assertEmpty($arrayDiff2);
+        $this->assertEquals( spl_object_hash($metaFields[1]),
+                             spl_object_hash($messageRow1) );
     }
 
     public function testAddAndGetMultistatus () {
         $message = new RESTfmMessage();
 
-        $message->addMultistatus(new RESTfmMessageMultistatus('1234', 'reason1', 'recordId1'));
-        $message->addMultistatus(new RESTfmMessageMultistatus(9999, 'reason2', 'recordId2'));
+        // We only need to identify objects here, not the object's data.
+        // The object's own test files are the only place data is tested.
+
+        $messageMultistatus0 = new RESTfmMessageMultistatus();
+        $messageMultistatus1 = new RESTfmMessageMultistatus();
+
+        $message->addMultistatus($messageMultistatus0);
+        $message->addMultistatus($messageMultistatus1);
 
         $multistatus = $message->getMultistatus();
 
-        $this->assertEquals($multistatus[0]->getStatus(), '1234');
-        $this->assertEquals($multistatus[1]->getStatus(), 9999);
+        $this->assertEquals( spl_object_hash($multistatus[0]),
+                             spl_object_hash($messageMultistatus0) );
+
+        $this->assertEquals( spl_object_hash($multistatus[1]),
+                             spl_object_hash($messageMultistatus1) );
     }
 
     public function testAddAndGetNavs () {
         $message = new RESTfmMessage();
 
-        $rowData1 = array(
-                        'rowField1' =>  'rowValue1',
-                        'rowField2' =>  'rowValue2',
-        );
-        $rowData2 = array(
-                        'rowField1' =>  'rowValue3',
-                        'rowField2' =>  'rowValue4',
-        );
+        // We only need to identify objects here, not the object's data.
+        // The object's own test files are the only place data is tested.
 
-        $message->addNav(new RESTfmMessageRow($rowData1));
-        $message->addNav(new RESTfmMessageRow($rowData2));
+        $messageRow0 = new RESTfmMessageRow();
+        $messageRow1 = new RESTfmMessageRow();
 
-        $metaFields = $message->getNavs();
+        $message->addNav($messageRow0);
+        $message->addNav($messageRow1);
 
-        $arrayDiff1 = array_diff($rowData1, $metaFields[0]->getData());
-        $this->assertEmpty($arrayDiff1);
+        $navs = $message->getNavs();
 
-        $arrayDiff2 = array_diff($rowData2, $metaFields[1]->getData());
-        $this->assertEmpty($arrayDiff2);
+        $this->assertEquals( spl_object_hash($navs[0]),
+                             spl_object_hash($messageRow0) );
+
+        $this->assertEquals( spl_object_hash($navs[1]),
+                             spl_object_hash($messageRow1) );
     }
 
     public function testAddAndGetRecords () {
         $message = new RESTfmMessage();
 
+        // We only need to identify objects here, not the object's data.
+        // The object's own test files are the only place data is tested.
+
         $rowData1 = array(
                         'rowField1' =>  'rowValue1',
                         'rowField2' =>  'rowValue2',
@@ -169,39 +175,37 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
                         'rowField2' =>  'rowValue4',
         );
 
-        $message->addRecord(new RESTfmMessageRecord('001', 'href1', $rowData1));
-        $message->addRecord(new RESTfmMessageRecord('002', 'href2', $rowData2));
+        $messageRecord0 = new RESTfmMessageRecord();
+        $messageRecord1 = new RESTfmMessageRecord();
+
+        $message->addRecord($messageRecord0);
+        $message->addRecord($messageRecord1);
 
         $records = $message->getRecords();
 
-        $this->assertEquals($records[0]->getRecordId(), '001');
-        $this->assertEquals($records[1]->getRecordId(), '002');
+        $this->assertEquals( spl_object_hash($records[0]),
+                             spl_object_hash($messageRecord0) );
 
-        $arrayDiff1 = array_diff($rowData1, $records[0]->getData());
-        $this->assertEmpty($arrayDiff1);
-
-        $arrayDiff2 = array_diff($rowData2, $records[1]->getData());
-        $this->assertEmpty($arrayDiff2);
+        $this->assertEquals( spl_object_hash($records[1]),
+                             spl_object_hash($messageRecord1) );
     }
 
     public function testAddAndGetRecordByRecordId () {
         $message = new RESTfmMessage();
+       
+        // We only need to identify objects here, not the object's data.
+        // The object's own test files are the only place data is tested.
 
-        $rowData1 = array(
-                        'rowField1' =>  'rowValue1',
-                        'rowField2' =>  'rowValue2',
-        );
-        $rowData2 = array(
-                        'rowField1' =>  'rowValue3',
-                        'rowField2' =>  'rowValue4',
-        );
+        $messageRecord001 = new RESTfmMessageRecord('001');
+        $messageRecord002 = new RESTfmMessageRecord('002');
 
-        $message->addRecord(new RESTfmMessageRecord('001', 'href1', $rowData1));
-        $message->addRecord(new RESTfmMessageRecord('002', 'href2', $rowData2));
+        $message->addRecord($messageRecord001);
+        $message->addRecord($messageRecord002);
 
         $record = $message->getRecordByRecordId('001');
 
-        $this->assertEquals($record->getRecordId(), '001');
+        $this->assertEquals( spl_object_hash($record),
+                             spl_object_hash($messageRecord001) );
     }
 
     public function testImportAndExport () {
