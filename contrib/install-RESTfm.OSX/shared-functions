@@ -102,6 +102,7 @@ setup_Traps () {
 ##
 # Check:
 #   - that we are running on Mac OS X.
+#     - Note: Officially now macOS, but sw_vers still returns "Mac OS X"
 #   - that we are on a supported version of Mac OS X.
 #   - that we are not running on Mac OS X Server Edition.
 check_OSXVersion() {
@@ -120,6 +121,9 @@ check_OSXVersion() {
     # Trim off any patch version, e.g. 10.10.1 -> 10.10
     OSXVERSION=`echo "${OSXVERSION}" | grep -Eo '^[0-9]+\.[0-9]+'`
     case "$OSXVERSION" in
+        "10.12")
+            log_success_msg "$MSGPREFIX $OSXVERSION Sierra"
+            ;;
         "10.11")
             log_success_msg "$MSGPREFIX $OSXVERSION El Capitan"
             ;;
