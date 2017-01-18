@@ -1,3 +1,9 @@
+### 4.0.9 (Released 2017-01-05) ###
+- Update Mac OS X installer to identify OS version 10.12 (a.k.a macOS Sierra)
+
+### 4.0.8 (Released 2016-11-07) ###
+- Update Mac OS X installer to handle alternate web ports.
+
 ### 4.0.7 (Released 2016-08-31) ###
 - Update diagnostic report page to handle OS X Secure Transport incompatibility
   bug exposed by FileMaker Sever 15 setting curl.cainfo in php.ini by default.

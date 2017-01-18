@@ -102,6 +102,7 @@ setup_Traps () {
 ##
 # Check:
 #   - that we are running on Mac OS X.
+#     - Note: Officially now macOS, but sw_vers still returns "Mac OS X"
 #   - that we are on a supported version of Mac OS X.
 #   - that we are not running on Mac OS X Server Edition.
 check_OSXVersion() {
@@ -120,6 +121,9 @@ check_OSXVersion() {
     # Trim off any patch version, e.g. 10.10.1 -> 10.10
     OSXVERSION=`echo "${OSXVERSION}" | grep -Eo '^[0-9]+\.[0-9]+'`
     case "$OSXVERSION" in
+        "10.12")
+            log_success_msg "$MSGPREFIX $OSXVERSION Sierra"
+            ;;
         "10.11")
             log_success_msg "$MSGPREFIX $OSXVERSION El Capitan"
             ;;
@@ -190,6 +194,36 @@ check_FMSVersion() {
 
 ##
 # Check:
+#   - that the Apache version is supported.
+#
+# Initialises global variables:
+#   APACHE_VERSION - x.y Apache version.
+#   APACHE_CONF - Full path to Apache conf file with version suffix for FMS13+.
+#   APACHE_LISTEN - Port that Apache is listening on.
+#
+function check_ApacheVersion() {
+    local MSGPREFIX='Check Apache version: '
+
+    # Match usage in FMS /Library/FileMaker Server/HTTPServer/bin/httpdctl
+    APACHE_VERSION=$(/usr/sbin/httpd -version | head -1 | cut -d "/" -f 2 | cut -d "." -f 1,2)
+
+    APACHE_CONF="/Library/FileMaker Server/HTTPServer/conf/httpd.conf.${APACHE_VERSION}"
+
+    APACHE_LISTEN=$(grep '^Listen' "${APACHE_CONF}" | head -1 | sed -E 's/Listen[[:space:]]+([0-9]+)/\1/')
+
+    case "$APACHE_VERSION" in
+        '2.2'|'2.4')
+            log_success_msg "$MSGPREFIX $APACHE_VERSION (Listen port: ${APACHE_LISTEN})"
+            ;;
+        *)
+            log_failure_msg "$MSGPREFIX $APACHE_VERSION, unsupported"
+            exit 1
+            ;;
+    esac
+}
+
+##
+# Check:
 #   - that FMS has both WPE and PHP enabled.
 #
 check_FMS_WPE_PHP() {
@@ -205,13 +239,13 @@ check_FMS_WPE_PHP() {
     #fi
 
     # Check PHP technology test:
-    curl -s "http://localhost/fmi-test/phptest.php?lang=en" | grep -q "PHP connection to the FMServer_Sample database appears successful"
+    curl -s "http://localhost:${APACHE_LISTEN}/fmi-test/phptest.php?lang=en" | grep -q "PHP connection to the FMServer_Sample database appears successful"
     local RET=$?
 
     if [ $RET != 0 ]; then
         # Second chance, WPE and PHP might be up but the sample DB is closed,
         # which is good enough for this test.
-        curl -s "http://localhost/fmi-test/phptest.php?lang=en" | grep -q "FMServer_Sample database is not open"
+        curl -s "http://localhost:${APACHE_LISTEN}/fmi-test/phptest.php?lang=en" | grep -q "FMServer_Sample database is not open"
         RET=$?
     fi
 
@@ -225,34 +259,6 @@ check_FMS_WPE_PHP() {
 
     log_success_msg "$MSGPREFIX success"
 }
-
-##
-# Check:
-#   - that the Apache version is supported.
-#
-# Initialises global variables:
-#   APACHE_VERSION - x.y Apache version.
-#   APACHE_CONF - Full path to Apache conf file with version suffix for FMS13+.
-#
-function check_ApacheVersion() {
-    local MSGPREFIX='Check Apache version: '
-
-    # Match usage in FMS /Library/FileMaker Server/HTTPServer/bin/httpdctl
-    APACHE_VERSION=$(/usr/sbin/httpd -version | head -1 | cut -d "/" -f 2 | cut -d "." -f 1,2)
-
-    case "$APACHE_VERSION" in
-        '2.2'|'2.4')
-            log_success_msg "$MSGPREFIX $APACHE_VERSION"
-            ;;
-        *)
-            log_failure_msg "$MSGPREFIX $APACHE_VERSION, unsupported"
-            exit 1
-            ;;
-    esac
-
-    APACHE_CONF="/Library/FileMaker Server/HTTPServer/conf/httpd.conf.${APACHE_VERSION}"
-}
-
 
 ##
 # Check that we are in the correct location. i.e. in an immediate subdirectory
@@ -387,7 +393,7 @@ check_RESTfmReport() {
     local MSGPREFIX='Check RESTfm report'
     log_daemon_msg "${MSGPREFIX}"
 
-    local URL="http://localhost/${RESTFM_BASENAME_URLENCODED}/report.php"
+    local URL="http://localhost:${APACHE_LISTEN}/${RESTFM_BASENAME_URLENCODED}/report.php"
     log_progress_msg "${URL}"
 
     curl -s -L "${URL}" | grep -q "RESTfm is working"
@@ -588,7 +594,7 @@ restart_FMS() {
     while [ $RET -eq 1 ]; do
         sleep 2
         log_progress_msg "."
-        curl -s --connect-timeout 2 --max-time 4 "http://localhost/fmi/xml/fmresultset.xml" | grep -q "FileMaker"
+        curl -s --connect-timeout 2 --max-time 4 "http://localhost:${APACHE_LISTEN}/fmi/xml/fmresultset.xml" | grep -q "FileMaker"
         RET=$?
         if [ $RET -eq 1 ]; then
             # Check that Apache httpd is actually in process list, as
@@ -659,22 +665,40 @@ update_RESTfmHtaccess() {
 }
 
 ##
-# Update RESTfm.ini.php to set baseURI.
+# Update RESTfm.ini.php
+#   - set baseURI.
+#   - set hostspec.
 #
 update_RESTfmIni() {
-    local MSGPREFIX="Update RESTfm.ini.php:"
+    local MSGPREFIX="Update RESTfm.ini.php"
     local RESTFMINI="${RESTFM_DIRNAME}/${RESTFM_BASENAME}/RESTfm.ini.php"
 
+    log_daemon_msg "${MSGPREFIX}"
+
     # Use sed to update baseURI.
+    log_progress_msg "baseURI,"
     sed -i.bak -E "s/^([[:space:]]*\'baseURI\'[[:space:]]*\=\>[[:space:]]*\')(.*)(\'[,[:space:]]*)/\1\/${RESTFM_BASENAME_URLENCODED}\3/" "${RESTFMINI}"
     local RET=$?
 
     if [ "$RET" != "0" ]; then
-        log_failure_msg "${MSGPREFIX} error updating baseURI"
+        # fail
+        log_end_msg 1
         exit 1
     fi
 
-    log_success_msg "${MSGPREFIX} success"
+    # Use sed to update hostspec.
+    log_progress_msg "hostspec"
+    sed -i.bak -E "s/^([[:space:]]*\'hostspec\'[[:space:]]*\=\>[[:space:]]*\')(.*)(\'[,[:space:]]*)/\1http:\/\/127.0.0.1:${APACHE_LISTEN}\3/" "${RESTFMINI}"
+    local RET=$?
+
+    if [ "$RET" != "0" ]; then
+        # fail
+        log_end_msg 1
+        exit 1
+    fi
+
+    # OK
+    log_end_msg 0
 
 }
 
