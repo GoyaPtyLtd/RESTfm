@@ -17,14 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfmConfig.php';
-require_once 'RESTfmData.php';
-require_once 'RESTfmParameters.php';
-require_once 'RESTfmQueryString.php';
-require_once 'RESTfmUrl.php';
-require_once 'RESTfmCredentials.php';
-require_once 'RFMfixFM02.php';
-
 /**
  * RESTfmRequest class.
  *
@@ -33,10 +25,10 @@ require_once 'RFMfixFM02.php';
 class RESTfmRequest extends Request {
 
     /**
-     * @var RESTfmDataAbstract
+     * @var RESTfmMessage
      *  Parsed HTTP request data.
      */
-    protected $_RESTfmData = NULL;
+    protected $_RESTfmMessage = NULL;
 
     /*
      * @var RESTfmParameters
@@ -148,7 +140,7 @@ class RESTfmRequest extends Request {
      */
     public function parse () {
 
-        $this->_RESTfmData = new RESTfmData();
+        $this->_RESTfmMessage = new RESTfmMessage();
 
         $this->_RESTfmParameters = new RESTfmParameters();
 
@@ -189,12 +181,12 @@ class RESTfmRequest extends Request {
     }
 
     /**
-     * Returns the RESTfmData object populated from the HTTP request data.
+     * Returns the RESTfmMessage object populated from the HTTP request data.
      *
-     * @return RESTfmDataAbstract
+     * @return RESTfmMessage
      */
-    public function getRESTfmData () {
-        return $this->_RESTfmData;
+    public function getRESTfmMessage () {
+        return $this->_RESTfmMessage;
     }
 
     /**
@@ -252,11 +244,10 @@ class RESTfmRequest extends Request {
             unset($this->_parametersQueryString['RFMdata']);
         } else {
             // All submitted data is in query string, we will populate
-            // RESTfmData ourselves.
+            // RESTfmMessage ourselves.
             $getData = $queryString->getRegex('/^(?!RFM).+/'); // NOT RFM*
             if (count($getData) > 0) {
-                $this->_RESTfmData->addSection('data', 2);
-                $this->_RESTfmData->setSectionData('data', NULL, $getData);
+                $this->_RESTfmMessage->addRecord(new RESTfmMessageRecord(NULL, NULL, $getData));
             }
         }
     }
@@ -331,9 +322,8 @@ class RESTfmRequest extends Request {
             $this->data = $postData['RFMdata'];
         } else {
             // All submitted data is in array, we will populate
-            // RESTfmData ourselves.
-            $this->_RESTfmData->addSection('data', 2);
-            $this->_RESTfmData->setSectionData('data', NULL, $postData);
+            // RESTfmMessage ourselves.
+            $this->_RESTfmMessage->addRecord(new RESTfmMessageRecord(NULL, NULL, $postData));
             unset($this->data);
         }
     }

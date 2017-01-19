@@ -44,11 +44,20 @@ class RESTfmMessage implements RESTfmMessageInterface {
 
     // -- Sections -- //
 
-    protected $_info = array();         /// @var array of key/value pairs.
-    protected $_metaFields = array();   /// @var array of RESTfmMessageRowInterface
-    protected $_multistatus = array();  /// @var array of RESTfmMessageMultistatusInterface
-    protected $_navs = array();         /// @var array of RESTfmMessageRowInterface
-    protected $_records = array();      /// @var array of RESTfmMessageRecordInterface
+    // @var array of key/value pairs.
+    protected $_info = array();
+
+    // @var array of RESTfmMessageRow
+    protected $_metaFields = array();
+
+    // @var array of RESTfmMessageMultistatus
+    protected $_multistatus = array();
+
+    // @var array of RESTfmMessageRow
+    protected $_navs = array();
+
+    // @var array of RESTfmMessageRecord
+    protected $_records = array();
 
     /**
      * @var array of known section names.
@@ -84,14 +93,14 @@ class RESTfmMessage implements RESTfmMessageInterface {
     /**
      * Add a message row object to 'metaField' section.
      *
-     * @param RESTfmMessageRowInterface $metaField
+     * @param RESTfmMessageRow $metaField
      */
     public function addMetaField (RESTfmMessageRowInterface $metaField) {
         $this->_metaFields[] = $metaField;
     }
 
     /**
-     * @return array of RESTfmMessageRowInterface.
+     * @return array of RESTfmMessageRow
      */
     public function getMetaFields () {
         return $this->_metaFields;
@@ -100,14 +109,14 @@ class RESTfmMessage implements RESTfmMessageInterface {
     /**
      * Add a message multistatus object to 'multistatus' section.
      *
-     * @param RESTfmMessageMultistatusInterface $multistatus
+     * @param RESTfmMessageMultistatus $multistatus
      */
     public function addMultistatus (RESTfmMessageMultistatusInterface $multistatus) {
         $this->_multistatus[] = $multistatus;
     }
 
     /**
-     * @return array of RESTfmMessageMultistatusInterface.
+     * @return array of RESTfmMessageMultistatus
      */
     public function getMultistatus () {
         return $this->_multistatus;
@@ -116,14 +125,14 @@ class RESTfmMessage implements RESTfmMessageInterface {
     /**
      * Add a message row object to 'nav' section.
      *
-     * @param RESTfmMessageRowInterface $nav
+     * @param RESTfmMessageRow $nav
      */
     public function addNav (RESTfmMessageRowInterface $nav) {
         $this->_navs[] = $nav;
     }
 
     /**
-     * @return array of RESTfmMessageRowInterface.
+     * @return array of RESTfmMessageRow
      */
     public function getNavs () {
         return $this->_navs;
@@ -133,7 +142,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
      * Add a message record object that contains data for 'data' and 'meta'
      * sections.
      *
-     * @param RESTfmMessageRecordInterface $record
+     * @param RESTfmMessageRecord $record
      */
     public function addRecord (RESTfmMessageRecordInterface $record) {
         $this->_records[] = $record;
@@ -147,7 +156,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
-     * @return array of RESTfmMessageRecordInterface.
+     * @return array of RESTfmMessageRecord
      */
     public function getRecords () {
         return $this->_records;
@@ -158,7 +167,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
      *
      * @param string $recordId
      *
-     * @return RESTfmMessageRecordInterface or NULL if $recordId does not exist.
+     * @return RESTfmMessageRecord or NULL if $recordId does not exist.
      */
     public function getRecordByRecordId ($recordId) {
         if (isset($this->_recordIdMap[$recordId])) {
@@ -191,7 +200,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
     /**
      * @param string $sectionName
      *
-     * @return RESTfmMessageSectionInterface
+     * @return RESTfmMessageSection
      */
     public function getSection ($sectionName) {
         switch ($sectionName) {

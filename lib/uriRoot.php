@@ -17,10 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfm/RESTfmResource.php';
-require_once 'RESTfm/RESTfmResponse.php';
-require_once 'RESTfm/QueryString.php';
-
 /**
  * RESTfm database collection (Root URI) handler for Tonic.
  *
@@ -46,7 +42,7 @@ class uriRoot extends RESTfmResource {
     function get($request) {
         $backend = BackendFactory::make($request);
         $opsDatabase = $backend->makeOpsDatabase();
-        $restfmData = $opsDatabase->readDatabases();
+        $restfmMessage = $opsDatabase->readDatabases();
 
         $queryString = new RESTfmQueryString(TRUE);
 
@@ -65,15 +61,17 @@ class uriRoot extends RESTfmResource {
         if (RESTfmConfig::checkVar('databasePDOMap')) {
             $pdos = RESTfmConfig::getVar('databasePDOMap');
             foreach ($pdos as $dbMapName => $dsn) {
-                $restfmData->pushDataRow( array('database' => $dbMapName), NULL, NULL );
+                $restfmMessage->addRecord(new RESTfmMessageRecord(
+                    NULL, NULL, array('database' => $dbMapName)
+                ));
             }
         }
 
-        // Iterate 'data' section rows and insert navigation hrefs into
-        // matching 'meta' section row.
-        $restfmData->setIteratorSection('data');
-        foreach($restfmData as $index => $row) {
-            $database = $row['database'];
+        // Iterate records and set navigation hrefs.
+        $restfmMessageRecords = $restfmMessage->getRecords();
+        $record = NULL;         // @var RESTfmMessageRecord
+        foreach($restfmMessageRecords as $record) {
+            $database = $record->getField('database');
             $href = $request->baseUri.'/'.RESTfmUrl::encode($database).'.'.$format.$queryString->build();
             if (isset($RFMlink)) {
                 if ($RFMlink == 'layout') {
@@ -82,12 +80,11 @@ class uriRoot extends RESTfmResource {
                     $href = $request->baseUri.'/'.RESTfmUrl::encode($database).'/script.'.$format.$queryString->build();
                 }
             }
-
-            $restfmData->setSectionData2nd('meta', $index, 'href', $href);
+            $record->setHref($href);
         }
 
         $response->setStatus(Response::OK);
-        $response->setData($restfmData);
+        $response->setRestfmMessage($restfmMessage);
         return $response;
     }
 

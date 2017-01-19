@@ -17,8 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once 'FileMakerResponseException.php';
-
 /**
  * FileMakerOpsDatabase
  *
@@ -42,8 +40,7 @@ class FileMakerOpsDatabase extends OpsDatabaseAbstract {
      * @throws FileMakerResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
-     *  - 'data', 'meta' sections.
+     * @return RESTfmMessage
      */
     public function readDatabases () {
         $FM = $this->_backend->getFileMaker();
@@ -53,12 +50,14 @@ class FileMakerOpsDatabase extends OpsDatabaseAbstract {
         }
         natsort($result);
 
-        $restfmData = new RESTfmDataSimple();
+        $restfmMessage = new RESTfmMessage();
         foreach($result as $database) {
-            $restfmData->pushDataRow( array('database' => $database), NULL, NULL );
+            $restfmMessage->addRecord(new RESTfmMessageRecord(
+                NULL, NULL, array('database' => $database)
+            ));
         }
 
-        return $restfmData;
+        return $restfmMessage;
     }
 
     /**
@@ -67,8 +66,7 @@ class FileMakerOpsDatabase extends OpsDatabaseAbstract {
      * @throws RESTfmResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
-     *  - 'data', 'meta' sections.
+     * @return RESTfmMessage
      */
     public function readLayouts () {
         $FM = $this->_backend->getFileMaker();
@@ -78,13 +76,15 @@ class FileMakerOpsDatabase extends OpsDatabaseAbstract {
         }
         natsort($result);
 
-        $restfmData = new RESTfmDataSimple();
+        $restfmMessage = new RESTfmMessage();
         foreach($result as $layout) {
             if (empty($layout)) continue;
-            $restfmData->pushDataRow( array('layout' => $layout), NULL, NULL );
+            $restfmMessage->addRecord(new RESTfmMessageRecord(
+                NULL, NULL, array('layout' => $layout)
+            ));
         }
 
-        return $restfmData;
+        return $restfmMessage;
     }
 
     /**
@@ -93,8 +93,7 @@ class FileMakerOpsDatabase extends OpsDatabaseAbstract {
      * @throws RESTfmResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
-     *  - 'data', 'meta' sections.
+     * @return RESTfmMessage
      */
     public function readScripts () {
         $FM = $this->_backend->getFileMaker();
@@ -104,12 +103,14 @@ class FileMakerOpsDatabase extends OpsDatabaseAbstract {
         }
         natsort($result);
 
-        $restfmData = new RESTfmDataSimple();
+        $restfmMessage = new RESTfmMessage();
         foreach($result as $script) {
-            $restfmData->pushDataRow( array('script' => $script), NULL, NULL );
+            $restfmMessage->addRecord(new RESTfmMessageRecord(
+                NULL, NULL, array('script' => $script)
+            ));
         }
 
-        return $restfmData;
+        return $restfmMessage;
     }
 
     // --- Protected ---

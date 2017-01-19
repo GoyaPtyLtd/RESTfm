@@ -17,10 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once 'BackendAbstract.php';
-require_once 'RESTfmResponseException.php';
-require_once 'RESTfmDataAbstract.php';
-
 /**
  * OpsRecordAbstract
  *

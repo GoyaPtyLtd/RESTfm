@@ -21,18 +21,18 @@ class FormatHtml extends FormatAbstract {
 
     // --- Interface Implementation --- //
 
-    public function parse (RESTfmDataAbstract $restfmData, $data) {
+    public function parse (RESTfmMessage $restfmMessage, $data) {
         // $data is URL encoded key => value pairs as in a HTTP POST body or
         // HTTP GET query string.
         $a = array();
         $this->_parse_str($data, $a);
 
-        $restfmData->addSection('data', 2);
-        $restfmData->setSectionData('data', NULL, $a);
+        $restfmMessage->addRecord(new RESTfmMessageRecord(
+            NULL, NULL, $a
+        ));
     }
 
-    public function write (RESTfmDataAbstract $restfmData) {
-        $sections = $this->_collate($restfmData);
+    public function write (RESTfmMessage $restfmMessage) {
 
         //$str = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">' . "\n";
         $str = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">' . "\n";
@@ -56,10 +56,10 @@ class FormatHtml extends FormatAbstract {
                     '[ <a href="' . RESTfmConfig::getVar('settings', 'baseURI') . '?RFMreauth=' . rawurlencode($this->_username) . '">change user</a> ]'.
                 '</div>';
 
-        $sectionNames = array_keys($sections);
+        $sectionNames = $restfmMessage->getSectionNames();
 
         // Prioritise some sections above others.
-        $sectionPriority = function ($a, $b) {
+        $sectionPriorityFunction = function ($a, $b) {
             // Sort as 'nav', 'data', 'info', <any other>.
             if ($a == 'nav' ) { return -1; }
             if ($b == 'nav' ) { return  1; }
@@ -69,34 +69,40 @@ class FormatHtml extends FormatAbstract {
             if ($b == 'info') { return  1; }
             return 0;
         };
-        usort($sectionNames, $sectionPriority);
+        usort($sectionNames, $sectionPriorityFunction);
 
         foreach($sectionNames as $sectionName) {
+            $section = $restfmMessage->getSection($sectionName);
+
             $str .= '<h3>'.$sectionName.'</h3>'."\n";
             $str .= '<div id="'.$sectionName.'">'."\n";
-            if (count($sections[$sectionName]) <= 0) {
+            if (count($section) <= 0) {
                 $str .= '<div class="warn">Warning: no records found.</div>'."\n";
             }
             $str .= "<table>\n";
-            if ($this->_is_assoc($sections[$sectionName])) {
-                // This is an assoc array, render as field per row.
-                $str .= $this->_record2htmlFieldRow($sections[$sectionName]);
+            if ($section->getDimensions() == 1) {
+                // This is a single record, render as field per row.
+                $str .= $this->_record2htmlFieldRow($section->getRows());
             } else {
-                // !_is_assoc($sections[$sectionName])
-                // This is an array of records, render record per row.
+                // $section->getDimensions() == 2
+                // This is multiple records, render as record per row.
                 $str .= '<tr>';
                 if ($sectionName == 'data' || $sectionName == 'nav') {
                     $str .= '<th></th>'; // No heading for link column.
                 } else {
                     // No link column
                 }
+                $sectionRows = $section->getRows();
                 // Pull the field names from the first record for the heading row.
-                foreach($sections[$sectionName][0] as $fieldName => $val) {
+                foreach($sectionRows[0] as $fieldName => $val) {
                     $str .= '<th>'.htmlspecialchars($fieldName).'</th>';
                 }
                 $str .= "</tr>\n";
+                if ($sectionName == 'data') {
+                    $sectionMetaRows = $restfmMessage->getSection('meta')->getRows();
+                }
                 $row_num = 0;
-                foreach($sections[$sectionName] as $row) {
+                foreach($sectionRows as $row) {
                     // Set row id and class.
                     $str .= '<tr id="'.$sectionName.'_'.$row_num.'"';
                     if ($row_num % 2 == 0) {
@@ -104,9 +110,9 @@ class FormatHtml extends FormatAbstract {
                     }
                     $str .= '>'."\n";
 
-                    if ($sectionName == 'data' && isset($sections['meta'][$row_num]['href'])) {
+                    if ($sectionName == 'data' && isset($sectionMetaRows[$row_num]['href'])) {
                         // Inject meta data href as link in first column of record.
-                        $str .= '<td>[ <a href="'.$sections['meta'][$row_num]['href'].'">link</a> ]</td>'."\n";
+                        $str .= '<td>[ <a href="'.$sectionMetaRows[$row_num]['href'].'">link</a> ]</td>'."\n";
                     } elseif ($sectionName == 'data') {
                         // Data section with empty link column.
                         $str .= '<td></td>'."\n";
@@ -179,16 +185,16 @@ class FormatHtml extends FormatAbstract {
     }
 
     /**
-     * Convert an associative array (a single record) into a HTML
-     * string. Rendered as field per row.
+     * Convert a single record (first row) into a HTML string.
+     * Rendered as field per row.
      *
-     * @param[in] array $assoc
-     *   Associative array to convert.
+     * @param array $rows
      */
-    protected function _record2htmlFieldRow(array $assoc) {
+    protected function _record2htmlFieldRow(array $rows) {
+        $record = $rows[0];
         $str = '';
         $row_num = 0;
-        foreach($assoc as $fieldName => $val) {
+        foreach($record as $fieldName => $val) {
             $str .= '<tr><th>'.htmlspecialchars($fieldName).'</th>';
             $alt_colour = '';
             if ($row_num %2 == 0) {
@@ -219,8 +225,8 @@ class FormatHtml extends FormatAbstract {
     }
 
     /**
-     * Convert an array into a HTML
-     * string. Rendered as item per row.
+     * Convert an array into a HTML string.
+     * Rendered as item per row.
      *
      * @param[in] array $a
      *   Array to convert.

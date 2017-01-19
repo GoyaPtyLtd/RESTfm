@@ -17,12 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfm/RESTfmResource.php';
-require_once 'RESTfm/RESTfmResponse.php';
-require_once 'RESTfm/RESTfmParameters.php';
-require_once 'RESTfm/RESTfmData.php';
-require_once 'RESTfm/BackendFactory.php';
-
 /**
  * Bulk record CRUD operations resource class.
  *

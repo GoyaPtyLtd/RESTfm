@@ -17,10 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once 'BackendAbstract.php';
-require_once 'RESTfmResponseException.php';
-require_once 'RESTfmDataAbstract.php';
-
 /**
  * OpsDatabaseAbstract
  *
@@ -28,7 +24,7 @@ require_once 'RESTfmDataAbstract.php';
  * queries that do not operate at the record level, such as listing
  * databases, layouts, etc.
  *
- * All data I/O is encapsulated in a RESTfmData object.
+ * All data I/O is encapsulated in a RESTfmMessage object.
  */
 abstract class OpsDatabaseAbstract {
 
@@ -55,8 +51,7 @@ abstract class OpsDatabaseAbstract {
      * @throws RESTfmResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
-     *  - 'data', 'meta' sections.
+     * @return RESTfmMessage
      */
     abstract public function readDatabases ();
 
@@ -66,8 +61,7 @@ abstract class OpsDatabaseAbstract {
      * @throws RESTfmResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
-     *  - 'data', 'meta' sections.
+     * @return RESTfmMessage
      */
     abstract public function readLayouts ();
 
@@ -77,8 +71,7 @@ abstract class OpsDatabaseAbstract {
      * @throws RESTfmResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
-     *  - 'data', 'meta' sections.
+     * @return RESTfmMessage
      */
     abstract public function readScripts ();
 

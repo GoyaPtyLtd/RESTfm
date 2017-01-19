@@ -17,29 +17,27 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfmDataAbstract.php';
-
 abstract class FormatAbstract {
 
     // *** Virtual methods. *** //
 
     /**
-     * Parse the provided data string into the provided RESTfmDataAbstract
+     * Parse the provided data string into the provided RESTfmMessage
      * implementation object.
      *
-     * @param RESTfmDataAbstract $restfmData
+     * @param RESTfmMessage $restfmMessage
      * @param string $data
      */
-    abstract public function parse (RESTfmDataAbstract $restfmData, $data);
+    abstract public function parse (RESTfmMessage $restfmMessage, $data);
 
     /**
-     * Write the provided RESTfmData object into a formatted string.
+     * Write the provided RESTfmMessage object into a formatted string.
      *
-     * @param RESTfmDataAbstract $restfmData
+     * @param RESTfmMessage $restfmMessage
      *
      * @return string
      */
-    abstract public function write (RESTfmDataAbstract $restfmData);
+    abstract public function write (RESTfmMessage $restfmMessage);
 
     // *** Static data. *** //
 
@@ -71,18 +69,18 @@ abstract class FormatAbstract {
      * associative arrays are converted to indexed (the keys are dropped
      * from the first dimension).
      *
-     * @param RESTfmDataAbstract $restfmData
+     * @param RESTfmMessage $restfmMessage
      *  Input data.
      *
      * @return array
-     *  Collated array of all sections in $restfmData.
+     *  Collated array of all sections in $restfmMessage.
      */
-    protected function _collate (RESTfmDataAbstract $restfmData) {
+    protected function _collate (RESTfmMessage $restfmMessage) {
         $a = array();
 
-        foreach ($restfmData->getSectionNames() as $sectionName) {
-            $section = $restfmData->getSection($sectionName);
-            if ($restfmData->getSectionDimensions($sectionName) == 2) {
+        foreach ($restfmMessage->getSectionNames() as $sectionName) {
+            $section = $restfmMessage->getSection($sectionName);
+            if ($restfmMessage->getSectionDimensions($sectionName) == 2) {
                 $a[$sectionName] = array_values($section);
             } else  {
                 $a[$sectionName] = $section;

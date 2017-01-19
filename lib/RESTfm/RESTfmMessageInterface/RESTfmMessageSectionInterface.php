@@ -50,6 +50,8 @@ interface RESTfmMessageSectionInterface {
      *      array('key' => 'val', ...),
      *      ...
      *    ))
+     *
+     * @return array of assoc OR array of array of assoc.
      */
     public function getRows ();
 };

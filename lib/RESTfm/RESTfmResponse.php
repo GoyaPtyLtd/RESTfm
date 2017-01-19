@@ -17,11 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfmConfig.php';
-require_once 'RESTfmQueryString.php';
-require_once 'FormatFactory.php';
-require_once 'RESTfmDataSimple.php';
-
 /**
  * RESTfmResponse class.
  */
@@ -154,20 +149,20 @@ class RESTfmResponse extends Response {
         }
 
         // Ensure we have response data!
-        if ($this->_restfmData == NULL) {
-            $this->_restfmData = new RESTfmData();
+        if ($this->_restfmMessage == NULL) {
+            $this->_restfmMessage = new RESTfmMessage();
         }
 
         // Inject X-RESTfm headers into 'info' section.
         foreach ($this->headers as $header => $value) {
             if (preg_match('/^X-RESTfm-/i', $header)) {
-                $this->_restfmData->setSectionData('info', $header, $value);
+                $this->_restfmMessage->addInfo($header, $value);
             }
         }
 
         // Inject additional info into 'info' section.
         foreach ($this->_info as $name => $value) {
-            $this->_restfmData->setSectionData('info', $name, $value);
+            $this->_restfmMessage->addInfo($name, $value);
         }
 
         // Build the message body of this response.
@@ -194,10 +189,10 @@ class RESTfmResponse extends Response {
     /**
      * Store response data.
      *
-     * @param RESTfmDataAbstract $restfmData
+     * @param RESTfmMessage $restfmMessage
      */
-    public function setData(RESTfmDataAbstract $restfmData) {
-        $this->_restfmData = $restfmData;
+    public function setRestfmMessage(RESTfmMessage $restfmMessage) {
+        $this->_restfmMessage = $restfmMessage;
     }
 
     /**
@@ -237,10 +232,10 @@ class RESTfmResponse extends Response {
     protected $reason = '';
 
     /**
-     * @var RESTfmDataAbstract
+     * @var RESTfmMessage
      *  The data associated with this response.
      */
-    protected $_restfmData = NULL;
+    protected $_restfmMessage = NULL;
 
     /**
      * @var array
@@ -289,7 +284,7 @@ class RESTfmResponse extends Response {
         }
 
         $this->addHeader('Content-type', $this->contentType($formatAs));
-        $this->body = $formatter->write($this->_restfmData);
+        $this->body = $formatter->write($this->_restfmMessage);
 
         // Use XSLT to produce final format.
         if (isset($useXSLT)) {

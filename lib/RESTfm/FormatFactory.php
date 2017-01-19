@@ -17,8 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once 'FormatAbstract.php';
-
 /**
  * Format/Format* object factory static class.
  */

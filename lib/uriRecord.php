@@ -17,11 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfm/RESTfmResource.php';
-require_once 'RESTfm/RESTfmResponse.php';
-require_once 'RESTfm/RESTfmQueryString.php';
-require_once 'RESTfm/RESTfmData.php';
-
 /**
  * RESTfm Record handler for Tonic
  *

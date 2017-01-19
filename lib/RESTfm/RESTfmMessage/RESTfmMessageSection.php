@@ -22,8 +22,13 @@
  */
 class RESTfmMessageSection implements RESTfmMessageSectionInterface {
 
+    // @var integer number of dimensions.
     protected $_dimensions = 0;
+
+    // @var string section name.
     protected $_name = "";
+
+    // @var array of assoc OR array of array of assoc.
     protected $_rows = array();
 
     /**
@@ -58,6 +63,8 @@ class RESTfmMessageSection implements RESTfmMessageSectionInterface {
      *      array('key' => 'val', ...),
      *      ...
      *    ))
+     *
+     * @var array of assoc OR array of array of assoc.
      */
     public function getRows () {
         return $this->_rows;
