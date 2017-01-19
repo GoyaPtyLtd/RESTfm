@@ -35,6 +35,8 @@ class RESTfmMessageRecordTest extends PHPUnit_Framework_TestCase {
     public function testSetAndGetHref() {
         $record = new RESTfmMessageRecord();
 
+        $this->assertNull($record->getHref());
+
         $record->setHref('test');
 
         $this->assertEquals($record->getHref(), 'test');
@@ -43,8 +45,19 @@ class RESTfmMessageRecordTest extends PHPUnit_Framework_TestCase {
     public function testSetAndGetRecordId() {
         $record = new RESTfmMessageRecord();
 
+        $this->assertNull($record->getRecordId());
+
         $record->setRecordId('test2');
 
         $this->assertEquals($record->getRecordId(), 'test2');
+    }
+
+    public function testGetMetaReference() {
+        $record = new RESTfmMessageRecord('recordIdTest', 'hrefTest');
+        $recordMeta = &$record->_getMetaReference();
+
+        $this->assertEquals($recordMeta['recordID'], 'recordIdTest');
+
+        $this->assertEquals($recordMeta['href'], 'hrefTest');
     }
 };

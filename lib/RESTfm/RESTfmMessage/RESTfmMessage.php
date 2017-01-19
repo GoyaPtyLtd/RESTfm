@@ -321,9 +321,11 @@ class RESTfmMessage implements RESTfmMessageInterface {
                     $multistatus = new RESTfmMessageMultistatus();
                     foreach ($row as $key => $val) {
                         switch ($key) {
-                            case 'index':
-                                $multistatus->setIndex($val);
-                                break;
+                            // 'index' is depricated for 'recordID' for
+                            // consistency on bulk POST/CREATE operations.
+                            //case 'index':
+                            //    $multistatus->setIndex($val);
+                            //    break;
                             case 'Status':
                                 $multistatus->setStatus($val);
                                 break;
@@ -425,8 +427,6 @@ class RESTfmMessage implements RESTfmMessageInterface {
                         $s .= '    ' . $key . '="' . addslashes($value) . '"' . "\n";
                     }
                 }
-            } else {
-                $s .= '  ** Unknown format **.' . "\n";
             }
 
             $s .= "\n";

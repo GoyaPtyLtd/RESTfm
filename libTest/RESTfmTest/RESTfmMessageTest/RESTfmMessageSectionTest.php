@@ -29,7 +29,7 @@ class RESTfmMessageSectionTest extends PHPUnit_Framework_TestCase {
             'Field2' => 'Value4',
         ),
     );
-   
+
     public function testGetNameAndDimensions() {
         $section = new RESTfmMessageSection('data', 2);
 
@@ -43,9 +43,11 @@ class RESTfmMessageSectionTest extends PHPUnit_Framework_TestCase {
         $rowsRef = RESTfmMessageSectionTest::$data;
 
         $getRows = $section->getRows();
-        $arrayDiff = array_diff(RESTfmMessageSectionTest::$data[0], $getRows[0]);
-        $arrayDiff = array_diff(RESTfmMessageSectionTest::$data[1], $getRows[1]);
 
+        $arrayDiff = array_diff(RESTfmMessageSectionTest::$data[0], $getRows[0]);
+        $this->assertEmpty($arrayDiff);
+
+        $arrayDiff = array_diff(RESTfmMessageSectionTest::$data[1], $getRows[1]);
         $this->assertEmpty($arrayDiff);
     }
 

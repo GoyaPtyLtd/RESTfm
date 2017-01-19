@@ -19,64 +19,6 @@
 
 class RESTfmMessageTest extends PHPUnit_Framework_TestCase
 {
-    static $importData = array(
-        'meta'  => array(
-            0   => array(
-                'recordID'  =>  '001',
-                'href'      =>  'href1',
-            ),
-            1   => array(
-                'recordID'  =>  '002',
-                'href'      =>  'href2',
-            ),
-        ),
-        'data'  => array(
-            0   => array(
-                'field1'    => 'value1',
-                'field2'    => 'value2',
-            ),
-            1   => array(
-                'field1'    => 'value3',
-                'field2'    => 'value4',
-            ),
-        ),
-        'info'  => array(
-            'infoField1'    => 'infoValue1',
-            'infoField2'    => 'infoValue2',
-        ),
-        'nav'   => array(
-            0   => array(
-                'navField1' => 'navValue1',
-                'navField2' => 'navValue2',
-            ),
-            1   => array(
-                'navField1' => 'navValue3',
-                'navField2' => 'navValue4',
-            ),
-        ),
-        'metaField' => array(
-            0   => array(
-                'metaFieldField1'   => 'metaFieldValue1',
-                'metaFieldField2'   => 'metaFieldValue2',
-            ),
-            1   => array(
-                'metaFieldField1'   => 'metaFieldValue3',
-                'metaFieldField2'   => 'metaFieldValue4',
-            ),
-        ),
-        'multistatus'   => array(
-            0   => array(
-                'recordID'  =>  '002',
-                'Status'    =>  '101',
-                'Reason'    =>  'reason string 1',
-            ),
-            1   => array(
-                'recordID'  =>  '001',
-                'Status'    =>  '102',
-                'Reason'    =>  'reason string 2',
-            ),
-        )
-    );
 
     public function testAddAndGetInfo () {
         $message = new RESTfmMessage();
@@ -192,7 +134,7 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
 
     public function testAddAndGetRecordByRecordId () {
         $message = new RESTfmMessage();
-       
+
         // We only need to identify objects here, not the object's data.
         // The object's own test files are the only place data is tested.
 
@@ -206,6 +148,134 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
 
         $this->assertEquals( spl_object_hash($record),
                              spl_object_hash($messageRecord001) );
+
+        $this->assertNull($message->getRecordByRecordId('nonExistent'));
+    }
+
+    static $importData = array(
+        'meta'  => array(
+            0   => array(
+                'recordID'  =>  '001',
+                'href'      =>  'href1',
+            ),
+            1   => array(
+                'recordID'  =>  '002',
+                'href'      =>  'href2',
+            ),
+        ),
+        'data'  => array(
+            0   => array(
+                'field1'    => 'value1',
+                'field2'    => 'value2',
+            ),
+            1   => array(
+                'field1'    => 'value3',
+                'field2'    => 'value4',
+            ),
+        ),
+        'info'  => array(
+            'infoField1'    => 'infoValue1',
+            'infoField2'    => 'infoValue2',
+        ),
+        'nav'   => array(
+            0   => array(
+                'navField1' => 'navValue1',
+                'navField2' => 'navValue2',
+            ),
+            1   => array(
+                'navField1' => 'navValue3',
+                'navField2' => 'navValue4',
+            ),
+        ),
+        'metaField' => array(
+            0   => array(
+                'metaFieldField1'   => 'metaFieldValue1',
+                'metaFieldField2'   => 'metaFieldValue2',
+            ),
+            1   => array(
+                'metaFieldField1'   => 'metaFieldValue3',
+                'metaFieldField2'   => 'metaFieldValue4',
+            ),
+        ),
+        'multistatus'   => array(
+            0   => array(
+                'recordID'  =>  '002',
+                'Status'    =>  '101',
+                'Reason'    =>  'reason string 1',
+            ),
+            1   => array(
+                'recordID'  =>  '001',
+                'Status'    =>  '102',
+                'Reason'    =>  'reason string 2',
+            ),
+        )
+    );
+
+    public function testGetSectionNames () {
+        $message = new RESTfmMessage();
+
+        $this->assertEmpty($message->getSectionNames());
+
+        $message->importArray(RESTfmMessageTest::$importData);
+
+        $sectionNames = $message->getSectionNames();
+
+        $this->assertArraySubset(['meta', 'data', 'info', 'metaField',
+                                  'multistatus', 'nav'],
+                                 $sectionNames);
+    }
+
+    public function testNonExistentGetSection () {
+        $message = new RESTfmMessage();
+
+        $this->assertNull($message->getSection('nonExistent'));
+    }
+
+    /**
+     * As setSection() must create a new record, or reuse an existing
+     * record between adding 'data' and 'meta' sections, we need to ensure
+     * that it handles this correctly in both orders.
+     */
+    public function testDataMetaOrderInSetSection () {
+        $meta = array(
+            0   => array(
+                'recordID'  =>  '001',
+                'href'      =>  'href1',
+            ),
+            1   => array(
+                'recordID'  =>  '002',
+                'href'      =>  'href2',
+            ),
+        );
+        $data = array(
+            0   => array(
+                'field1'    => 'value1',
+                'field2'    => 'value2',
+            ),
+            1   => array(
+                'field1'    => 'value3',
+                'field2'    => 'value4',
+            ),
+        );
+
+        $messageMetaBeforeData = new RESTfmMessage();
+        $messageMetaBeforeData->setSection('meta', $meta);
+        $messageMetaBeforeData->setSection('data', $data);
+
+        $messageDataBeforeMeta = new RESTfmMessage();
+        $messageDataBeforeMeta->setSection('data', $data);
+        $messageDataBeforeMeta->setSection('meta', $meta);
+
+        $exportMetaBeforeData = $messageMetaBeforeData->exportArray();
+        $exportDataBeforeMeta = $messageDataBeforeMeta->exportArray();
+
+        $this->assertNotEmpty($exportMetaBeforeData);
+
+        $arrayDiff = array_diff($exportMetaBeforeData['meta'][0], $exportDataBeforeMeta['meta'][0]);
+        $this->assertEmpty($arrayDiff);
+
+        $arrayDiff = array_diff($exportMetaBeforeData['data'][1], $exportDataBeforeMeta['data'][1]);
+        $this->assertEmpty($arrayDiff);
     }
 
     public function testImportAndExport () {
@@ -322,5 +392,12 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
         );
     }
 
+    public function testToString () {
+        $message = new RESTfmMessage();
+
+        $message->importArray(RESTfmMessageTest::$importData);
+
+        $this->assertNotEmpty($message->__toString());
+    }
 
 };
