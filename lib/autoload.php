@@ -19,7 +19,10 @@
 
  // Register an autoload function for RESTfm class files.
  spl_autoload_register(
+    // Autoload function to register:
     function($class) {
+
+        // Ignore autoload requests for these.
         static $ignore = NULL;
         if ($ignore === NULL) {
             $ignore = array(
@@ -27,7 +30,6 @@
                     '/^Composer\\\/',
             );
         }
-
         foreach ($ignore as $ignoreRegex) {
             if (preg_match($ignoreRegex, $class) === 1) {
                 # DEBUG log
@@ -36,28 +38,43 @@
             }
         }
 
-        static $classes = NULL;
-        if ($classes === NULL) {
-            $classes = array(
-                    'RESTfmMessage' => '/RESTfm/RESTfmMessage/RESTfmMessage.php',
-                    'RESTfmMessageRecord' => '/RESTfm/RESTfmMessage/RESTfmMessageRecord.php',
-                    'RESTfmMessageRow' => '/RESTfm/RESTfmMessage/RESTfmMessageRow.php',
-                    'RESTfmMessageMultistatus' => '/RESTfm/RESTfmMessage/RESTfmMessageMultistatus.php',
-                    'RESTfmMessageSection' => '/RESTfm/RESTfmMessage/RESTfmMessageSection.php',
-                    'RESTfmMessageInterface' => '/RESTfm/RESTfmMessageInterface/RESTfmMessageInterface.php',
-                    'RESTfmMessageRecordInterface' => '/RESTfm/RESTfmMessageInterface/RESTfmMessageRecordInterface.php',
-                    'RESTfmMessageRowInterface' => '/RESTfm/RESTfmMessageInterface/RESTfmMessageRowInterface.php',
-                    'RESTfmMessageMultistatusInterface' => '/RESTfm/RESTfmMessageInterface/RESTfmMessageMultistatusInterface.php',
-                    'RESTfmMessageSectionInterface' => '/RESTfm/RESTfmMessageInterface/RESTfmMessageSectionInterface.php',
-            );
+        // All php files that make up RESTfm.
+        static $libPhpFiles = NULL;
+        if ($libPhpFiles === NULL) {
+            $libPhpFiles = array();
+
+            // Traverse under $fqpn for $matches ending in $suffix.
+            // $matches = array( <basename> => <fqpn>, ... )
+            function traverseDirs($fqpn, $suffix, &$matches) {
+                $dh = opendir($fqpn);
+                while (($childName = readdir($dh))) {
+                    if ( ($childName == '.' || $childName == '..')) {
+                        continue;
+                    }
+                    $childFqpn = $fqpn . DIRECTORY_SEPARATOR . $childName;
+                    if (is_file($childFqpn) &&
+                          (substr($childName, -strlen($suffix)) === $suffix) ) {
+                        $matches[basename($childName, $suffix)] = $childFqpn;
+                    } elseif (is_dir($childFqpn)) {
+                        traverseDirs($childFqpn, $suffix, $matches);
+                    }
+                }
+                closedir($dh);
+            }
+
+            // Find all .php files under __DIR__
+            traverseDirs(__DIR__, '.php', $libPhpFiles);
         }
 
-        if (isset($classes[$class])) {
-            require_once __DIR__ . $classes[$class];
+        // See if we have a file that matches the name of the class.
+        if (isset($libPhpFiles[$class])) {
+            require_once $libPhpFiles[$class];
         } else {
             error_log("RESTfm autoload failed for class: $class");
         }
     },
+    // Throw exception when autoload function fails to register:
     true,
+    // Prepend function on the autoload queue instead of appending it:
     false
 );

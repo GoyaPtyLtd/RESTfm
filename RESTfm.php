@@ -29,12 +29,12 @@ $startTimeUs = microtime(TRUE);
 error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
 //error_reporting(E_ALL & ~E_STRICT);   // Dev. level reporting
 
-// x-debug's html error output makes CLI debugging with cURL a PITA.
+// x-debug's html error output makes CLI debugging with cURL a problem.
 ini_set('html_errors', FALSE);
 
+// RESTfm lib classes autoload.
 require_once 'lib/autoload.php';
 
-require_once 'lib/RESTfm/RESTfmConfig.php';
 if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
     ini_set('display_errors', '1');
 } else {
@@ -44,12 +44,10 @@ if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
 
 require_once 'lib/RESTfm/init_paths.php';
 
+// Tonic library
 require_once 'lib/tonic/lib/tonic.php';
 
-require_once 'lib/RESTfm/Version.php';
-require_once 'lib/RESTfm/RESTfmRequest.php';
-require_once 'lib/RESTfm/RESTfmDump.php';
-
+// Tonic URI resources:
 require_once 'lib/uriRoot.php';
 require_once 'lib/uriDatabaseConstant.php';
 require_once 'lib/uriDatabaseLayout.php';
@@ -60,10 +58,6 @@ require_once 'lib/uriScript.php';
 require_once 'lib/uriRecord.php';
 //require_once 'lib/uriField.php';
 require_once 'lib/uriBulk.php';
-
-// For testing and debugging.
-//require_once 'lib/uriTest.php';
-
 
 // Ensure we are using SSL if mandated.
 if (RESTfmConfig::getVar('settings', 'SSLOnly')) {
