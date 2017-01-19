@@ -48,7 +48,7 @@ INJECTREVISION="lib/RESTfm/Version.php"
 INJECTVERSION="RESTfm.ini.php.dist demo.html js/demo.js"
 
 # PHPUnit command
-PHPUNIT="PHPUnit/phpunit --bootstrap lib/autoload.php libTest/"
+PHPUNIT="PHPUnit/phpunit --bootstrap lib/autoload.php"
 
 ### Script begins ###
 
