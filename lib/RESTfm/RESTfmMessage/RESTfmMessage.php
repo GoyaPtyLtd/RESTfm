@@ -47,7 +47,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
     // @var array of key/value pairs.
     protected $_info = array();
 
-    // @var array of RESTfmMessageRow
+    // @var array of fieldName/RESTfmMessageRow pairs.
     protected $_metaFields = array();
 
     // @var array of RESTfmMessageMultistatus
@@ -75,12 +75,12 @@ class RESTfmMessage implements RESTfmMessageInterface {
     // --- Access methods for managing data in rows. --- //
 
     /**
-     * Add or update a key/value pair to 'info' section.
+     * Set an 'info' key/value pair.
      *
      * @param string $key
      * @param string $val
      */
-    public function addInfo ($key, $val) {
+    public function setInfo ($key, $val) {
         $this->_info[$key] = $val;
     }
 
@@ -102,7 +102,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
-     * Set a message row object to 'metaField' section for fieldName.
+     * Set a 'metaField' fieldName/row pair.
      *
      * @param string $fieldName
      * @param RESTfmMessageRow $metaField
@@ -114,7 +114,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
     /**
      * @param string $fieldName
      *
-     * @return RESTfmMessageRowInterface
+     * @return RESTfmMessageRow
      */
     public function getMetaField ($fieldName) {
         if (isset($this->_metaFields[$fieldName])) {
@@ -130,7 +130,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
-     * Add a message multistatus object to 'multistatus' section.
+     * Add a 'multistatus' object (row).
      *
      * @param RESTfmMessageMultistatus $multistatus
      */
@@ -146,12 +146,17 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
-     * Add a message row object to 'nav' section.
+     * Add a 'nav' name/href pair.
      *
-     * @param RESTfmMessageRow $nav
+     * @param string name
+     * @param string href
      */
-    public function addNav (RESTfmMessageRowInterface $nav) {
-        $this->_navs[] = $nav;
+    public function addNav ($name, $href) {
+        $this->_navs[] = new RESTfmMessageRow(
+            array(
+                'name' => $name,
+                'href' => $href
+            ));
     }
 
     /**
@@ -162,8 +167,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
-     * Add a message record object that contains data for 'data' and 'meta'
-     * sections.
+     * Add a 'data+meta' record object (row plus meta data).
      *
      * @param RESTfmMessageRecord $record
      */
@@ -379,9 +383,9 @@ class RESTfmMessage implements RESTfmMessageInterface {
 
             case 'nav':
                 foreach ($sectionData as $rowIndex => $row) {
-                    $nav = new RESTfmMessageRow();
-                    $nav->setData($row);
-                    $this->addNav($nav);
+                    if (isset($row['name']) && isset($row['href'])) {
+                        $this->addNav($row['name'], $row['href']);
+                    }
                 }
                 break;
         }

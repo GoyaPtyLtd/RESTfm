@@ -39,12 +39,12 @@ interface RESTfmMessageInterface {
     // --- Access methods for managing data in rows. --- //
 
     /**
-     * Add or update a key/value pair to 'info' section.
+     * Set an 'info' key/value pair.
      *
      * @param string $key
      * @param string $val
      */
-    public function addInfo ($key, $val);
+    public function setInfo ($key, $val);
 
     /**
      * @param string $key
@@ -58,7 +58,7 @@ interface RESTfmMessageInterface {
     public function getInfos ();
 
     /**
-     * Set a message row object to 'metaField' section for fieldName.
+     * Set a 'metaField' fieldName/row pair.
      *
      * @param string $fieldName
      * @param RESTfmMessageRowInterface $metaField
@@ -78,7 +78,7 @@ interface RESTfmMessageInterface {
     public function getMetaFields ();
 
     /**
-     * Add a message multistatus object to 'multistatus' section.
+     * Add a 'multistatus' object (row).
      *
      * @param RESTfmMessageMultistatusInterface $multistatus
      */
@@ -90,11 +90,12 @@ interface RESTfmMessageInterface {
     public function getMultistatus ();
 
     /**
-     * Add a message row object to 'nav' section.
+     * Add a 'nav' name/href pair.
      *
-     * @param RESTfmMessageRowInterface $nav
+     * @param string name
+     * @param string href
      */
-    public function addNav (RESTfmMessageRowInterface $nav);
+    public function addNav ($name, $href);
 
     /**
      * @return array of RESTfmMessageRowInterface.
@@ -102,8 +103,7 @@ interface RESTfmMessageInterface {
     public function getNavs ();
 
     /**
-     * Add a message record object that contains data for 'data' and 'meta'
-     * sections.
+     * Add a 'data+meta' record object (row plus meta data).
      *
      * @param RESTfmMessageRecordInterface $record
      */
