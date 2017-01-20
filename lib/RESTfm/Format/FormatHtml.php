@@ -60,13 +60,15 @@ class FormatHtml extends FormatAbstract {
 
         // Prioritise some sections above others.
         $sectionPriorityFunction = function ($a, $b) {
-            // Sort as 'nav', 'data', 'info', <any other>.
+            // Sort as 'nav', 'data', 'info', 'metaField', any other>.
             if ($a == 'nav' ) { return -1; }
             if ($b == 'nav' ) { return  1; }
             if ($a == 'data') { return -1; }
             if ($b == 'data') { return  1; }
             if ($a == 'info') { return -1; }
             if ($b == 'info') { return  1; }
+            if ($a == 'metaField') { return -1; }
+            if ($b == 'metaField') { return  1; }
             return 0;
         };
         usort($sectionNames, $sectionPriorityFunction);

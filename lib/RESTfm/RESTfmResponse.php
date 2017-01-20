@@ -156,13 +156,13 @@ class RESTfmResponse extends Response {
         // Inject X-RESTfm headers into 'info' section.
         foreach ($this->headers as $header => $value) {
             if (preg_match('/^X-RESTfm-/i', $header)) {
-                $this->_restfmMessage->addInfo($header, $value);
+                $this->_restfmMessage->setInfo($header, $value);
             }
         }
 
         // Inject additional info into 'info' section.
         foreach ($this->_info as $name => $value) {
-            $this->_restfmMessage->addInfo($name, $value);
+            $this->_restfmMessage->setInfo($name, $value);
         }
 
         // Build the message body of this response.

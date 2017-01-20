@@ -180,9 +180,9 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
         }
 
         // Info.
-        $restfmMessage->addInfo('tableRecordCount', $result->getTableRecordCount());
-        $restfmMessage->addInfo('foundSetCount', $result->getFoundSetCount());
-        $restfmMessage->addInfo('fetchCount', $result->getFetchCount());
+        $restfmMessage->setInfo('tableRecordCount', $result->getTableRecordCount());
+        $restfmMessage->setInfo('foundSetCount', $result->getFoundSetCount());
+        $restfmMessage->setInfo('fetchCount', $result->getFetchCount());
 
         return $restfmMessage;
     }
