@@ -52,11 +52,19 @@ interface RESTfmMessageInterface {
     public function getInfo ();
 
     /**
-     * Add a message row object to 'metaField' section.
+     * Set a message row object to 'metaField' section for fieldName.
      *
+     * @param string $fieldName
      * @param RESTfmMessageRowInterface $metaField
      */
-    public function addMetaField (RESTfmMessageRowInterface $metaField);
+    public function setMetaField ($fieldName, RESTfmMessageRowInterface $metaField);
+
+    /**
+     * @param string $fieldName
+     *
+     * @return RESTfmMessageRowInterface
+     */
+    public function getMetaField ($fieldName);
 
     /**
      * @return array of RESTfmMessageRowInterface.

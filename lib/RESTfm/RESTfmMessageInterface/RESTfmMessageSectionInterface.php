@@ -23,7 +23,9 @@
 interface RESTfmMessageSectionInterface {
 
     /**
-     * Get number of dimensions  of data for this section.
+     * Get number of dimensions of data for this section.
+     *
+     * May be 1 or 2.
      *
      * @return integer number of dimensions.
      */
@@ -37,21 +39,16 @@ interface RESTfmMessageSectionInterface {
     public function getName ();
 
     /**
-     * Returns an array of one or more rows.
-     *  Note: A section with only one dimension has only one row.
-     *  Note: A section with two dimensions may have more than one row.
-     *
-     * @return array of section data in the form of:
-     *    1 dimensional:
-     *    array('key' => 'val', ...)
-     *   OR
-     *    2 dimensional:
-     *    array(
-     *      array('key' => 'val', ...),
+     * Returns section data as an array of one or more rows.
+     *  - A section with only one dimension has only one row.
+     *  - A section with two dimensions may have more than one row.
+     *  - In the form of:
+     *    [
+     *      [<key> => <val>, ...],
      *      ...
-     *    ))
+     *    ]
      *
-     * @return array of assoc OR array of array of assoc.
+     * @return array of assoc arrays.
      */
     public function getRows ();
 };

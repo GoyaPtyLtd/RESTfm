@@ -68,6 +68,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
     /**
      * @var associative array of recordId -> record index
      *  for identifying $_records[] by recordId.
+        // TODO dump getRecordById
      */
     protected $_recordIdMap = array();
 
@@ -91,12 +92,24 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
-     * Add a message row object to 'metaField' section.
+     * Set a message row object to 'metaField' section for fieldName.
      *
+     * @param string $fieldName
      * @param RESTfmMessageRow $metaField
      */
-    public function addMetaField (RESTfmMessageRowInterface $metaField) {
-        $this->_metaFields[] = $metaField;
+    public function setMetaField ($fieldName, RESTfmMessageRowInterface $metaField) {
+        $this->_metaFields[$fieldName] = $metaField;
+    }
+
+    /**
+     * @param string $fieldName
+     *
+     * @return RESTfmMessageRowInterface
+     */
+    public function getMetaField ($fieldName) {
+        if (isset($this->_metaFields[$fieldName])) {
+            return $this->_metaFields[$fieldName];
+        }
     }
 
     /**
@@ -147,6 +160,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
     public function addRecord (RESTfmMessageRecordInterface $record) {
         $this->_records[] = $record;
 
+        // TODO dump getRecordById
         $recordId = $record->getRecordId();
         if ($recordId !== NULL) {
             // TODO profile this operation
@@ -170,6 +184,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
      * @return RESTfmMessageRecord or NULL if $recordId does not exist.
      */
     public function getRecordByRecordId ($recordId) {
+        // TODO dump getRecordById
         if (isset($this->_recordIdMap[$recordId])) {
             return $this->_records[$this->_recordIdMap[$recordId]];
         }
@@ -319,9 +334,11 @@ class RESTfmMessage implements RESTfmMessageInterface {
 
             case 'metaField':
                 foreach ($sectionData as $rowIndex => $row) {
-                    $metaField = new RESTfmMessageRow();
-                    $metaField->setData($row);
-                    $this->addMetaField($metaField);
+                    if (isset($row['name'])) {
+                        $metaField = new RESTfmMessageRow();
+                        $metaField->setData($row);
+                        $this->setMetaField($row['name'], $metaField);
+                    }
                 }
                 break;
 

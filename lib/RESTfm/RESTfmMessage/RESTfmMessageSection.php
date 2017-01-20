@@ -28,11 +28,13 @@ class RESTfmMessageSection implements RESTfmMessageSectionInterface {
     // @var string section name.
     protected $_name = "";
 
-    // @var array of assoc OR array of array of assoc.
+    // @var array of assoc arrays.
     protected $_rows = array();
 
     /**
-     * Get number of dimensions  of data for this section.
+     * Get number of dimensions of data for this section.
+     *
+     * May be 1 or 2.
      *
      * @return integer number of dimensions.
      */
@@ -50,21 +52,16 @@ class RESTfmMessageSection implements RESTfmMessageSectionInterface {
     }
 
     /**
-     * Returns an array of one or more rows.
-     *  Note: A section with only one dimension has only one row.
-     *  Note: A section with two dimensions may have more than one row.
-     *
-     * @return array of section data in the form of:
-     *    1 dimensional:
-     *    array('key' => 'val', ...)
-     *   OR
-     *    2 dimensional:
-     *    array(
-     *      array('key' => 'val', ...),
+     * Returns section data as an array of one or more rows.
+     *  - A section with only one dimension has only one row.
+     *  - A section with two dimensions may have more than one row.
+     *  - In the form of:
+     *    [
+     *      [<key> => <val>, ...],
      *      ...
-     *    ))
+     *    ]
      *
-     * @var array of assoc OR array of array of assoc.
+     * @return array of assoc arrays.
      */
     public function getRows () {
         return $this->_rows;

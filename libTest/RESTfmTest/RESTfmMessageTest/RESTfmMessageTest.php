@@ -39,7 +39,7 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
         );
     }
 
-    public function testAddAndGetMetaFields () {
+    public function testSetAndGetMetaFields () {
         $message = new RESTfmMessage();
 
         // We only need to identify objects here, not the object's data.
@@ -48,15 +48,26 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
         $messageRow0 = new RESTfmMessageRow();
         $messageRow1 = new RESTfmMessageRow();
 
-        $message->addMetaField($messageRow0);
-        $message->addMetaField($messageRow1);
+        $message->setMetaField('name0', $messageRow0);
+        $message->setMetaField('name1', $messageRow1);
+
+        $this->assertNull($message->getMetaField('nonExistent'));
+
+        $getMessageRow0 = $message->getMetaField('name0');
+        $getMessageRow1 = $message->getMetaField('name1');
+
+        $this->assertEquals( spl_object_hash($getMessageRow0),
+                             spl_object_hash($messageRow0) );
+
+        $this->assertEquals( spl_object_hash($getMessageRow1),
+                             spl_object_hash($messageRow1) );
 
         $metaFields = $message->getMetaFields();
 
-        $this->assertEquals( spl_object_hash($metaFields[0]),
+        $this->assertEquals( spl_object_hash($metaFields['name0']),
                              spl_object_hash($messageRow0) );
 
-        $this->assertEquals( spl_object_hash($metaFields[1]),
+        $this->assertEquals( spl_object_hash($metaFields['name1']),
                              spl_object_hash($messageRow1) );
     }
 
@@ -189,10 +200,12 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
         ),
         'metaField' => array(
             0   => array(
+                'name'              => 'name0',
                 'metaFieldField1'   => 'metaFieldValue1',
                 'metaFieldField2'   => 'metaFieldValue2',
             ),
             1   => array(
+                'name'              => 'name1',
                 'metaFieldField1'   => 'metaFieldValue3',
                 'metaFieldField2'   => 'metaFieldValue4',
             ),
