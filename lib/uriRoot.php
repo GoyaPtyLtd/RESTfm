@@ -72,12 +72,15 @@ class uriRoot extends RESTfmResource {
         $record = NULL;         // @var RESTfmMessageRecord
         foreach($restfmMessageRecords as $record) {
             $database = $record->getField('database');
-            $href = $request->baseUri.'/'.RESTfmUrl::encode($database).'.'.$format.$queryString->build();
+            $href = $request->baseUri.'/'.RESTfmUrl::encode($database).
+                    '.'.$format.$queryString->build();
             if (isset($RFMlink)) {
                 if ($RFMlink == 'layout') {
-                    $href = $request->baseUri.'/'.RESTfmUrl::encode($database).'/layout.'.$format.$queryString->build();
+                    $href = $request->baseUri.'/'.RESTfmUrl::encode($database).
+                            '/layout.'.$format.$queryString->build();
                 } elseif ($RFMlink == 'script') {
-                    $href = $request->baseUri.'/'.RESTfmUrl::encode($database).'/script.'.$format.$queryString->build();
+                    $href = $request->baseUri.'/'.RESTfmUrl::encode($database).
+                            '/script.'.$format.$queryString->build();
                 }
             }
             $record->setHref($href);

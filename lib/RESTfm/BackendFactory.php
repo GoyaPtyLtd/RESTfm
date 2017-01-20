@@ -17,11 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfmConfig.php';
-require_once 'RESTfmRequest.php';
-require_once 'RESTfmCredentials.php';
-require_once 'BackendAbstract.php';
-
 /**
  * (Database) Backend Factory - instantiates appropriate database backend.
  */

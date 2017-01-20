@@ -17,10 +17,6 @@
  *  Gavin Stewart
  */
 
-require 'OpsDatabaseAbstract.php';
-require 'OpsLayoutAbstract.php';
-require 'OpsRecordAbstract.php';
-
 /**
  * Defines interface for initialisation of database backend, and factory
  * methods for creating operations objects.

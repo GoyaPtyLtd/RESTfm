@@ -52,19 +52,31 @@ class uriDatabaseConstant extends RESTfmResource {
         $response = new RESTfmResponse($request);
         $format = $response->format;
 
-        // Build static hrefs for navigation.
-        $restfmData = new RESTfmDataSimple();
-        $restfmData->pushDataRow( array('resource'    =>  'layout'), NULL,
-            $request->baseUri.'/'.RESTfmUrl::encode($database).'/layout.'.$format.$queryString->build() );
+        // Create virtual records with static hrefs purely for navigation.
+        $restfmMessage = new RESTfmMessage();
+        $restfmMessage->addRecord(new RESTfmMessageRecord(
+            NULL,
+            $request->baseUri.'/'.RESTfmUrl::encode($database).
+                    '/layout.'.$format.$queryString->build(),
+            array('resource' => 'layout')
+        ));
         if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
-            $restfmData->pushDataRow( array('resource'    =>  'echo'), NULL,
-                $request->baseUri.'/'.RESTfmUrl::encode($database).'/echo.'.$format.$queryString->build() );
+            $restfmMessage->addRecord(new RESTfmMessageRecord(
+                NULL,
+                $request->baseUri.'/'.RESTfmUrl::encode($database).
+                        '/echo.'.$format.$queryString->build(),
+                array('resource' => 'echo')
+            ));
         }
-        $restfmData->pushDataRow( array('resource'    =>  'script'), NULL,
-            $request->baseUri.'/'.RESTfmUrl::encode($database).'/script.'.$format.$queryString->build() );
+        $restfmMessage->addRecord(new RESTfmMessageRecord(
+            NULL,
+            $request->baseUri.'/'.RESTfmUrl::encode($database).
+                    '/script.'.$format.$queryString->build(),
+            array('resource' => 'script')
+        ));
 
         $response->setStatus(Response::OK);
-        $response->setData($restfmData);
+        $response->setRestfmMessage($restfmMessage);
         return $response;
     }
 

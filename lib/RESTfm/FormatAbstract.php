@@ -18,6 +18,7 @@
  */
 
 abstract class FormatAbstract {
+    // TODO convert to interface 
 
     // *** Virtual methods. *** //
 
@@ -40,6 +41,8 @@ abstract class FormatAbstract {
     abstract public function write (RESTfmMessage $restfmMessage);
 
     // *** Static data. *** //
+
+    // TODO dump these methods, not needed with RESTfmMessage.
 
     /**
      * @var array
