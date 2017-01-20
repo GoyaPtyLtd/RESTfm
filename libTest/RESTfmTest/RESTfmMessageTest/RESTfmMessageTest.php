@@ -26,7 +26,12 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
         $message->addInfo('addField0', 'addValue0');
         $message->addInfo('addField1', 'addValue1');
 
-        $getInfo = $message->getInfo();
+        $this->assertNull($message->getInfo('nonExistent'));
+
+        $messageGet0 = $message->getInfo('addField0');
+        $this->assertEquals($messageGet0, 'addValue0');
+
+        $getInfo = $message->getInfos();
 
         $this->assertEquals(
                 $getInfo['addField0'],

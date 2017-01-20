@@ -47,9 +47,15 @@ interface RESTfmMessageInterface {
     public function addInfo ($key, $val);
 
     /**
-     * @return array of key/value pairs.
+     * @param string $key
+     * @return string $val
      */
-    public function getInfo ();
+    public function getInfo ($key);
+
+    /**
+     * @return array of [ <key> => <val>, ... ]
+     */
+    public function getInfos ();
 
     /**
      * Set a message row object to 'metaField' section for fieldName.
@@ -67,7 +73,7 @@ interface RESTfmMessageInterface {
     public function getMetaField ($fieldName);
 
     /**
-     * @return array of RESTfmMessageRowInterface.
+     * @return array of [ <fieldName> => <RESTfmMessageRowInterface>, ...]
      */
     public function getMetaFields ();
 

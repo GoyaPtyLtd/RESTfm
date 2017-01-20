@@ -85,9 +85,19 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
-     * @return array of key/value pairs.
+     * @param string $key
+     * @return string $val
      */
-    public function getInfo () {
+    public function getInfo ($key) {
+        if (isset($this->_info[$key])) {
+            return $this->_info[$key];
+        }
+    }
+
+    /**
+     * @return array of [ <key> => <val>, ... ]
+     */
+    public function getInfos () {
         return $this->_info;
     }
 
@@ -113,7 +123,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
-     * @return array of RESTfmMessageRow
+     * @return array of [ <fieldName> => <RESTfmMessageRow>, ...]
      */
     public function getMetaFields () {
         return $this->_metaFields;
