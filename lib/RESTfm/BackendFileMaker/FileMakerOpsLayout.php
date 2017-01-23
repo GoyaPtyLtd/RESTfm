@@ -132,12 +132,12 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
             //       moved into a static FileMakerParser::record($restfmMessage, $record).
             $restfmMessageRecord = new RESTfmMessageRecord($record->getRecordId());
             foreach ($fieldNames as $fieldName) {
-                // Field repetitions are expanded into multiple fields with
-                // an index operator suffix; fieldName[0], fieldName[1] ...
                 $metaFieldRow = NULL; // @var RESTfmMessageRow
                 $metaFieldRow = $metaFields[$fieldName];
-                $fieldRepeat = $metaFieldRow->getField('maxRepeat');
 
+                // Field repetitions are expanded into multiple fields with
+                // an index operator suffix; fieldName[0], fieldName[1] ...
+                $fieldRepeat = $metaFieldRow->getField('maxRepeat');
                 for ($repetition = 0; $repetition < $fieldRepeat; $repetition++) {
                     $fieldNameRepeat = $fieldName;
 
