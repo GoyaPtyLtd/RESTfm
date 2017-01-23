@@ -191,24 +191,24 @@ class uriLayout extends RESTfmResource {
 
         // Start nav link.
         unset($queryString->RFMskip);
-        $restfmMessage->addNav('start',
+        $restfmMessage->setNav('start',
                     $request->baseUri.'/'.$databaseEnc.'/layout/'.
                     $layoutEnc.'.'.$format.$queryString->build()
         );
 
-        // Only build a prev nav link if we have skipped something.
-        if ($findSkip != 0) {
-            $queryString->RFMskip = $skipPrev;
-            $restfmMessage->addNav('prev',
+        // Only build a next nav link if we have not exhausted the found set.
+        if ($skipNext < $foundSetCount) {
+            $queryString->RFMskip = $skipNext;
+            $restfmMessage->setNav('next',
                         $request->baseUri.'/'.$databaseEnc.'/layout/'.
                         $layoutEnc.'.'.$format.$queryString->build()
             );
         }
 
-        // Only build a next nav link if we have not exhausted the found set.
-        if ($skipNext < $foundSetCount) {
-            $queryString->RFMskip = $skipNext;
-            $restfmMessage->addNav('next',
+        // Only build a prev nav link if we have skipped something.
+        if ($findSkip != 0) {
+            $queryString->RFMskip = $skipPrev;
+            $restfmMessage->setNav('prev',
                         $request->baseUri.'/'.$databaseEnc.'/layout/'.
                         $layoutEnc.'.'.$format.$queryString->build()
             );
@@ -216,7 +216,7 @@ class uriLayout extends RESTfmResource {
 
         // End nav link.
         $queryString->RFMskip = $foundSetCount - 1;
-        $restfmMessage->addNav('end',
+        $restfmMessage->setNav('end',
                     $request->baseUri.'/'.$databaseEnc.'/layout/'.
                     $layoutEnc.'.'.$format.$queryString->build()
         );

@@ -82,9 +82,26 @@ class FormatHtml extends FormatAbstract {
                 $str .= '<div class="warn">Warning: no records found.</div>'."\n";
             }
             $str .= "<table>\n";
+            $sectionRows = $section->getRows();
             if ($section->getDimensions() == 1) {
-                // This is a single record, render as field per row.
-                $str .= $this->_record2htmlFieldRow($section->getRows());
+                $row_num = 0;
+                foreach($sectionRows[0] as $fieldName => $val) {
+                    $str .= '<tr>'."\n";
+                    if ($sectionName == 'nav') {
+                        // Inject href field as link in first column of row.
+                        $str .= '<td>[ <a href="'.$val.'">link</a> ]</td>'."\n";
+                    }
+                    $str .= '<th>'.htmlspecialchars($fieldName).'</th>'."\n";
+                    $alt_colour = '';
+                    if ($row_num %2 == 0) {
+                        $alt_colour = ' class="alt-colour"';
+                    }
+                    $str .= '<td'.$alt_colour.'><pre>';
+                    $str .= htmlspecialchars($val);
+                    $str .= '</pre></td>'."\n";
+                    $str .= '</tr>'."\n";
+                    $row_num++;
+                }
             } else {
                 // $section->getDimensions() == 2
                 // This is multiple records, render as record per row.
@@ -94,7 +111,6 @@ class FormatHtml extends FormatAbstract {
                 } else {
                     // No link column
                 }
-                $sectionRows = $section->getRows();
                 // Pull the field names from the first record for the heading row.
                 foreach($sectionRows[0] as $fieldName => $val) {
                     $str .= '<th>'.htmlspecialchars($fieldName).'</th>';
@@ -186,83 +202,4 @@ class FormatHtml extends FormatAbstract {
         }
     }
 
-    /**
-     * Convert a single record (first row) into a HTML string.
-     * Rendered as field per row.
-     *
-     * @param array $rows
-     */
-    protected function _record2htmlFieldRow(array $rows) {
-        $record = $rows[0];
-        $str = '';
-        $row_num = 0;
-        foreach($record as $fieldName => $val) {
-            $str .= '<tr><th>'.htmlspecialchars($fieldName).'</th>';
-            $alt_colour = '';
-            if ($row_num %2 == 0) {
-                $alt_colour = ' class="alt-colour"';
-            }
-            if (is_array($val)) {
-                $str .= '<td>';
-                $str .= "\n".'<table>';
-                $str .= self::_array2htmlItemRow($val);
-                $str .= '</table>'."\n";
-            } else {
-                $str .= '<td'.$alt_colour.'>';
-                $str .= htmlspecialchars($val);
-                // Convert hrefs into links.
-                /*
-                if (strpos($fieldName, 'href') === FALSE) {
-                    $str .= $val;
-                } else {
-                    $str .= '<a href="'.$val.'">'.$val."\n";
-                }
-                */
-            }
-            $str .= '</td></tr>'."\n";
-            $row_num++;
-        }
-
-        return $str;
-    }
-
-    /**
-     * Convert an array into a HTML string.
-     * Rendered as item per row.
-     *
-     * @param[in] array $a
-     *   Array to convert.
-     */
-    protected function _array2htmlItemRow(array $a) {
-        $str = '';
-        $row_num = 0;
-        foreach($a as $val) {
-            $str .= '<tr>';
-            $alt_colour = '';
-            if ($row_num %2 == 0) {
-                $alt_colour = ' class="alt-colour"';
-            }
-            if (is_array($val)) {
-                $str .= '<td>';
-                $str .= '<table>';
-                $str .= self::_array2htmlItemRow($val);
-                $str .= '</table>';
-            } else {
-                $str .= '<td'.$alt_colour.'>';
-                $str .= htmlspecialchars($val);
-                // Convert hrefs into links.
-                /*
-                if (strpos($fieldName, 'href') === FALSE) {
-                    $str .= $val;
-                } else {
-                    $str .= '<a href="'.$val.'">'.$val."\n";
-                }
-                */
-            }
-            $str .= '</td></tr>'."\n";
-            $row_num++;
-        }
-
-        return $str;
-    }
 }
