@@ -609,8 +609,8 @@ RESTfm.refreshResults = function(browseTo) {
 
         // Keep navigation URIs provided by RESTfm server.
         RESTfm.navURIs = {};
-        $.each(data['nav'], function (index, row) {
-            RESTfm.navURIs[row['name']] = row['href'];
+        $.each(data['nav'], function (name, href) {
+            RESTfm.navURIs[name] = href;
         });
 
         // Remember the last successful URI.

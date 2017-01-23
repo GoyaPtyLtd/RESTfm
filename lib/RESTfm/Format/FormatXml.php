@@ -22,13 +22,13 @@ class FormatXml extends FormatAbstract {
     // --- Interface Implementation --- //
 
     /**
-     * Parse the provided data string into the provided RESTfmDataAbstract
+     * Parse the provided data string into the provided RESTfmMessage
      * implementation object.
      *
-     * @param RESTfmDataAbstract $restfmData
+     * @param RESTfmMessage $restfmMessage
      * @param string $data
      */
-    public function parse (RESTfmDataAbstract $restfmData, $data) {
+    public function parse (RESTfmMessage $restfmMessage, $data) {
         libxml_use_internal_errors(TRUE);
         $resourceXML = simplexml_load_string($data);
         if (!$resourceXML) {
@@ -43,6 +43,7 @@ class FormatXml extends FormatAbstract {
         // Our specification is that Record Names are always "row".
         //  @see FormatXml::_writeSection()
         foreach ($resourceXML as $sectionXML) {
+            $sectionData = array();
             foreach ($sectionXML as $childElement) {
                 if (strtolower($childElement->getName()) == 'row') {
                     // Two dimensional section of rows.
@@ -50,27 +51,26 @@ class FormatXml extends FormatAbstract {
                     foreach ($childElement as $field) {
                         $rowData[(string) $field['name']] = (string) $field;
                     }
-                    $restfmData->setSectionData($sectionXML->getName(),
-                                                (string) $childElement['name'],
-                                                $rowData);
+                    $sectionData[(string) $childElement['name']] =
+                                                        $rowData;
                 } elseif (strtolower($childElement->getName()) == 'field') {
                     // Single dimensional section of name=>value pairs.
-                    $restfmData->setSectionData($sectionXML->getName(),
-                                                (string) $childElement['name'],
-                                                (string) $childElement);
+                    $sectionData[(string) $childElement['name']] =
+                                                        (string) $childElement;
                 }
             }
+            $restfmMessage->setSection($sectionXML->getName(), $sectionData);
         }
     }
 
     /**
-     * Write the provided RESTfmData object into a formatted string.
+     * Write the provided RESTfmMessage object into a formatted string.
      *
-     * @param RESTfmDataAbstract $restfmData
+     * @param RESTfmMessage $restfmMessage
      *
      * @return string
      */
-    public function write (RESTfmDataAbstract $restfmData) {
+    public function write (RESTfmMessage $restfmMessage) {
         $xml = new XmlWriter();
         $xml->openMemory();
         if (RESTfmConfig::getVar('settings', 'formatNicely')) {
@@ -84,9 +84,9 @@ class FormatXml extends FormatAbstract {
         // meta entities.
         //$xml->writeAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
 
-        foreach ($restfmData->getSectionNames() as $sectionName) {
+        foreach ($restfmMessage->getSectionNames() as $sectionName) {
             $xml->startElement($sectionName);
-            $this->_writeSection($xml, $restfmData, $sectionName);
+            $this->_writeSection($xml, $restfmMessage->getSection($sectionName));
             $xml->endElement();
         }
 
@@ -102,15 +102,14 @@ class FormatXml extends FormatAbstract {
      *
      * @param[out] XmlWriter $xml
      *  An initialised XmlWriter object ref.
-     * @param[in] RESTfmDataAbstract $restfmData
-     *  Input data object.
+     * @param[in] RESTfmMessageSection $messageSection
+     *  Section data object.
      * @param string $sectionName.
      *  Name of section to render.
      */
-    protected function _writeSection(XMLWriter $xml, RESTfmDataAbstract $restfmData, $sectionName) {
-        if ($restfmData->getSectionDimensions($sectionName) == 2) {
-            $restfmData->setIteratorSection($sectionName);
-            foreach ($restfmData as $row) {
+    protected function _writeSection(XMLWriter $xml, RESTfmMessageSection $messageSection) {
+        if ($messageSection->getDimensions() == 2) {
+            foreach ($messageSection->getRows() as $row) {
                 // We inject a "Record Name" for XML representations of
                 // tables. We use "row" as the Record Name.
                 // http://www.w3.org/XML/RDB.html
@@ -119,7 +118,10 @@ class FormatXml extends FormatAbstract {
                 $xml->endElement();
             }
         } else {
-            self::_row2xml($xml, $restfmData->getSection($sectionName));
+            foreach ($messageSection->getRows() as $onlyRow) {
+                self::_row2xml($xml, $onlyRow);
+                break;  // Only row.
+            }
         }
     }
 

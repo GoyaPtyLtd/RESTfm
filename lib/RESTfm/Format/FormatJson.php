@@ -20,32 +20,32 @@
 class FormatJson extends FormatAbstract {
 
     // --- Interface Implementation --- //
-
-    public function parse (RESTfmDataAbstract $restfmData, $data) {
+    /**
+     * Parse the provided data string into the provided RESTfmMessage
+     * implementation object.
+     *
+     * @param RESTfmMessage $restfmMessage
+     * @param string $data
+     */
+    public function parse (RESTfmMessage $restfmMessage, $data) {
         $a = json_decode($data, TRUE);
         foreach ($a as $sectionName => $sectionData) {
-
-            if ($this->_is_assoc($sectionData)) {           // Associative is
-                $restfmData->addSection($sectionName, 1);   // one dimension.
-                foreach ($sectionData as $key => $val) {
-                    $restfmData->setSectionData($sectionName, $key, $val);
-                }
-            } else {                                        // Indexed is
-                $restfmData->addSection($sectionName, 2);   // two dimensions.
-                foreach ($sectionData as $val) {
-                    $restfmData->setSectionData($sectionName, NULL, $val);
-                }
-            }
-
+            $restfmMessage->setSection($sectionName, $sectionData);
         }
     }
 
-    public function write (RESTfmDataAbstract $restfmData) {
-        $tables = $this->_collate($restfmData);
+    /**
+     * Write the provided RESTfmMessage object into a formatted string.
+     *
+     * @param RESTfmMessage $restfmMessage
+     *
+     * @return string
+     */
+    public function write (RESTfmMessage $restfmMessage) {
         if (RESTfmConfig::getVar('settings', 'formatNicely')) {
-            return $this->_json_encode_pretty($tables);
+            return $this->_json_encode_pretty($restfmMessage->exportArray());
         } else {
-            return json_encode($tables);
+            return json_encode($restfmMessage->exportArray());
         }
     }
 

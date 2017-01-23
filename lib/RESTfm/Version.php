@@ -23,7 +23,7 @@
 class Version {
     private static $_release     = 'dev';
     private static $_revision    = '%%REVISION%%';
-    private static $_protocol    = '5';     // Bump this when REST API changes.
+    private static $_protocol    = '6';     // Bump this when REST API changes.
 
     public static function getRelease() {
         return self::$_release;

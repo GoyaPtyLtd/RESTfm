@@ -22,13 +22,13 @@ class FormatDict extends FormatAbstract {
     // --- Interface Implementation --- //
 
     /**
-     * Parse the provided data string into the provided RESTfmDataAbstract
+     * Parse the provided data string into the provided RESTfmMessage
      * implementation object.
      *
-     * @param RESTfmDataAbstract $restfmData
+     * @param RESTfmMessage $restfmMessage
      * @param string $data
      */
-    public function parse (RESTfmDataAbstract $restfmData, $data) {
+    public function parse (RESTfmMessage $restfmMessage, $data) {
         // Data is key/value pairs and may be two dimensional:
         // <:sectionNameN:=value:><:sectionNameN+1:=value:>
         // OR one dimensional:
@@ -50,29 +50,25 @@ class FormatDict extends FormatAbstract {
                 $sectionName = $matches[1];
                 $rowData = array();
                 $this->_decodeDictPairs($rowData, $value);
-                $restfmData->setSectionData($sectionName, NULL, $rowData);
+                $restfmMessage->setSection($sectionName, $sectionData);
             } else {
                 // Single dimensional section data.
                 $sectionData = array();
                 $this->_decodeDictPairs($sectionData, $value);
-                foreach ($sectionData as $key => $val) {
-                    $restfmData->setSectionData($sectionName, $key, $val);
-                }
+                $restfmMessage->setSection($sectionName, $sectionData);
             }
         }
     }
 
     /**
-     * Write the provided RESTfmData object into a formatted string.
+     * Write the provided RESTfmMessage object into a formatted string.
      *
-     * @param RESTfmDataAbstract $restfmData
+     * @param RESTfmMessage $restfmMessage
      *
      * @return string
      */
-    public function write (RESTfmDataAbstract $restfmData) {
-        $sections = $this->_collate($restfmData);
-
-        $sectionNames = array_keys($sections);
+    public function write (RESTfmMessage $restfmMessage) {
+        $sectionNames = $restfmMessage->getSectionNames();
 
         // Prioritise some sections above others. This priority is taken
         // from the original dict_export.xslt.
@@ -91,25 +87,21 @@ class FormatDict extends FormatAbstract {
         // Render
         $str = '';
         foreach ($sectionNames as $sectionName) {
-            if ($this->_is_assoc($sections[$sectionName])) {
-                // This is an assoc array, render each field.
+            $messageSection = $restfmMessage->getSection($sectionName);
+
+            $rowNum = 1;
+            foreach ($messageSection->getRows() as $row) {
                 $rowStr = '';
-                foreach ($sections[$sectionName] as $fieldName => $fieldValue) {
+                foreach ($row as $fieldName => $fieldValue) {
                     $rowStr .= $this->_renderDictPair($fieldName, $fieldValue);
                 }
-                $str .= $this->_renderDictPair($sectionName, $rowStr);
-            } else {
-                // !_is_assoc($sections[$sectionName])
-                // This is an array of records, render each field in each row.
-                $rowNum = 1;
-                foreach ($sections[$sectionName] as $row) {
-                    $rowStr = '';
-                    foreach ($row as $fieldName => $fieldValue) {
-                        $rowStr .= $this->_renderDictPair($fieldName, $fieldValue);
-                    }
-                    $str .= $this->_renderDictPair($sectionName.$rowNum, $rowStr);
-                    $rowNum++;
+                if ($messageSection->getDimensions() == 1) {
+                    $dictSectionName = $sectionName;
+                } else {
+                    $dictSectionName = $sectionName.$rowNum;
                 }
+                $str .= $this->_renderDictPair($dictSectionName, $rowStr);
+                $rowNum++;
             }
         }
 

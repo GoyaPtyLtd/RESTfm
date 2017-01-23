@@ -21,12 +21,25 @@ class FormatTxt extends FormatAbstract {
 
     // --- Interface Implementation --- //
 
-    public function parse (RESTfmDataAbstract $restfmData, $data) {
+    /**
+     * Parse the provided data string into the provided RESTfmMessage
+     * implementation object.
+     *
+     * @param RESTfmMessage $restfmMessage
+     * @param string $data
+     */
+    public function parse (RESTfmMessage $restfmMessage, $data) {
         throw RESTfmResponseException('No input parser available for txt format.', 500);
     }
 
-    public function write (RESTfmDataAbstract $restfmData) {
-        $tables = $this->_collate($restfmData);
+    /**
+     * Write the provided RESTfmMessage object into a formatted string.
+     *
+     * @param RESTfmMessage $restfmMessage
+     *
+     * @return string
+     */
+    public function write (RESTfmMessage $restfmMessage) {
 
         // Extensions like xdebug will reformat var_dump output if
         // html_errors is set.
@@ -37,7 +50,7 @@ class FormatTxt extends FormatAbstract {
 
         // Capture var_dump output via output buffer routines.
         ob_start();
-        var_dump($tables);
+        var_dump($restfmMessage->exportArray());
         $str = ob_get_contents();
         ob_end_clean();
 
