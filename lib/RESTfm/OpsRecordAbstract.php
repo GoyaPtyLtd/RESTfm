@@ -21,7 +21,7 @@
  * OpsRecordAbstract
  *
  * Wraps all record-level operations to database backend(s). All data I/O is
- * encapsulated in a RESTfmData object, including result codes for the
+ * encapsulated in a RESTfmMessage object, including result codes for the
  * operation(s).
  */
 abstract class OpsRecordAbstract {
@@ -47,8 +47,8 @@ abstract class OpsRecordAbstract {
     abstract public function __construct (BackendAbstract $backend, $database, $layout);
 
     /**
-     * Create a new record from the row data provided, recording the new
-     * recordID (or failure) into the $restfmData object.
+     * Create a new record from the record provided, recording the new
+     * recordID (or failure) into the $restfmMessage object.
      *
      * Success will result in:
      *  - a new 'meta' section row containing a 'recordID' field.
@@ -56,19 +56,19 @@ abstract class OpsRecordAbstract {
      * Failure will result in:
      *  - a new 'multistatus' row containing 'index', 'Status', and 'Reason'
      *
-     * @param RESTfmDataSimple $restfmData
+     * @param RESTfmMessage $restfmMessage
      *  Message object for operation success or failure.
+     * @param RESTfmMessageRecord $requestRecord
+     *  Record containing row data.
      * @param integer $index
      *  Index for this row in original request. We don't have any other
      *  identifier for new record data.
-     * @param array $row
-     *  Associative array of fieldName => value pairs to create a new record
-     *  from.
      */
-    abstract protected function _createRecord (RESTfmDataSimple $restfmData, $index, $row);
+    abstract protected function _createRecord (RESTfmMessage $restfmMessage, RESTfmMessageRecord $requestRecord, $index);
 
     /**
-     * Read the record specified by $recordID into the $restfmData object.
+     * Read the record specified by $requestRecord into the $restfmMessage
+     * object.
      *
      * Success will result in:
      *  - a new 'data' row containing the retrieved record data.
@@ -80,16 +80,16 @@ abstract class OpsRecordAbstract {
      *  - a new 'multistatus' row containing 'recordID', 'Status', and 'Reason'
      *    fields to hold the FileMaker status of the query.
      *
-     * @param RESTfmDataSimple $restfmData
+     * @param RESTfmMessage $restfmMessage
      *  Destination for retrieved data.
-     * @param string $recordID
-     *  String containing record ID to retrieve.
+     * @param RESTfmMessageRecord $requestRecord
+     *  Record containing recordID to retrieve.
      */
-    abstract protected function _readRecord (RESTfmDataSimple $restfmData, $recordID);
+    abstract protected function _readRecord (RESTfmMessage $restfmMessage, RESTfmMessageRecord $requestRecord);
 
     /**
-     * Update an existing record from the recordID and row data provided.
-     * Recording failures into the $restfmData object.
+     * Update an existing record from the record provided.
+     * Recording failures into the $restfmMessage object.
      *
      * If the _updateElseCreate flag is set, we will create a record if the
      * provided recordID does not exist.
@@ -104,33 +104,30 @@ abstract class OpsRecordAbstract {
      *  - Iff a recordID does not exist, a new 'multistatus' row containing
      *    'index', 'Status', and 'Reason'.
      *
-     * @param RESTfmDataSimple $restfmData
+     * @param RESTfmMessage $restfmMessage
      *  Message object for operation success or failure.
-     * @param string $recordID
-     *  Existing recordID to write $row data into.
+     * @param RESTfmMessageRecord $requestRecord
+     *  Must contain row data and recordID
      * @param integer $index
-     *  Index for this row in original request. Only necessary for errors
+     *  Index for this record in original request. Only necessary for errors
      *  arising from _updateElseCreate flag.
-     * @param array $row
-     *  Associative array of fieldName => value pairs to create a new record
-     *  from.
      */
-    abstract protected function _updateRecord (RESTfmDataSimple $restfmData, $recordID, $index, $row);
+    abstract protected function _updateRecord (RESTfmMessage $restfmMessage, RESTfmMessageRecord $requestRecord, $index);
 
     /**
-     * Delete the record specified by $recordID recording failures into the
-     * $restfmData object.
+     * Delete the record specified, recording failures into the
+     * $restfmMessage object.
      *
      * Failure will result in:
      *  - a new 'multistatus' row containing 'recordID', 'Status', and 'Reason'
      *    fields to hold the FileMaker status of the query.
      *
-     * @param RESTfmDataSimple $restfmData
+     * @param RESTfmMessage $restfmMessage
      *  Destination for retrieved data.
-     * @param string $recordID
-     *  String containing record ID to retrieve.
+     * @param RESTfmMessageRecord $requestRecord
+     *  Record containing recordID to delete.
      */
-    abstract protected function _deleteRecord (RESTfmDataSimple $restfmData, $recordID);
+    abstract protected function _deleteRecord (RESTfmMessage $restfmMessage, RESTfmMessageRecord $requestRecord);
 
     /**
      * Call a script in the context of this layout.
@@ -142,7 +139,7 @@ abstract class OpsRecordAbstract {
      * @throws RESTfmResponseException
      *  On error
      *
-     * @return RESTfmDataAbstract
+     * @return RESTfmMessage
      *  - 'data', 'meta', 'metaField' sections.
      *  - does not contain 'multistatus' this is not a bulk operation.
      */
@@ -151,43 +148,44 @@ abstract class OpsRecordAbstract {
     // -- Public methods --
 
     /**
-     * Create record from the provided RESTfmDataAbstract object.
+     * Create record from the provided RESTfmMessage object.
      * Convenience method wraps bulk operation method.
      *
-     * @param RESTfmDataAbstract $queryData
-     *  'data' section required with row containing record data.
+     * @param RESTfmMessageRecord $requestRecord
      *
      * @throws RESTfmResponseException
-     *  On invalid $queryData.
+     *  On invalid $requestMessage.
      *
-     * @return RESTfmDataAbstract
+     * @return RESTfmMessage
      *  - 'meta' section.
      *  - 'multistatus' section only if an error occurred.
      */
-    public function createSingle (RESTfmDataAbstract $queryData) {
+    public function createSingle (RESTfmMessageRecord $requestRecord) {
         $this->_setSingle(TRUE);
-        return $this->createBulk($queryData);
+        $requestMessage = new RESTfmMessage();
+        $requestMessage->addRecord($requestRecord);
+        return $this->createBulk($requestMessage);
     }
 
     /**
-     * Create record(s) from the provided RESTfmDataAbstract object.
+     * Create record(s) from the provided RESTfmMessage object.
      *
-     * @param RESTfmDataAbstract $queryData
+     * @param RESTfmMessage $requestMessage
      *  'data' section required with row(s) containing record data.
      *
      * @throws RESTfmResponseException
-     *  On invalid $queryData.
+     *  On invalid $requestMessage.
      *
-     * @return RESTfmDataAbstract
+     * @return RESTfmMessage
      *  - 'meta' section.
      *  - 'multistatus' section only if an error occurred.
      */
-    public function createBulk (RESTfmDataAbstract $queryData) {
-        if (! $queryData->sectionExists('data')) {
-            throw new RESTfmResponseException('No data section found.', RESTfmResponseException::BADREQUEST);
+    public function createBulk (RESTfmMessage $requestMessage) {
+        if ($requestMessage->getRecordCount() < 1) {
+            throw new RESTfmResponseException('No records found in request.', RESTfmResponseException::BADREQUEST);
         }
 
-        $result = new RESTfmDataSimple();
+        $result = new RESTfmMessage();
 
         // Trigger preOpScript on the first element.
         if ($this->_preOpScript !== NULL) {
@@ -196,19 +194,19 @@ abstract class OpsRecordAbstract {
 
         // Trigger postOpScript on the last element.
         if ($this->_postOpScript != NULL) {
-            $postOpTriggerCount = $queryData->getSectionCount('data');
+            $postOpTriggerCount = $requestMessage->getRecordCount();
         } else {
             $postOpTriggerCount = -1;
         }
 
-        $queryData->setIteratorSection('data');
+        $requestRecord = NULL;  // @var RESTfmMessageRecord
         $i = 0;
-        foreach($queryData as $index => $row) {
+        foreach($requestMessage->getRecords() as $requestRecord) {
             $i++;
             if ($i == $postOpTriggerCount) {
                 $this->_postOpScriptTrigger = TRUE;
             }
-            $this->_createRecord($result, $index, $row);
+            $this->_createRecord($result, $requestRecord, $index);
         }
 
         return $result;
@@ -218,100 +216,90 @@ abstract class OpsRecordAbstract {
      * Read record by the provided record ID.
      * Convenience method wraps bulk operation method.
      *
-     * @param string $recordID
-     *  String containing record ID to retrieve.
+     * @param RESTfmMessageRecord $requestRecord
+     *  Must have recordID set.
      *
      * @throws RESTfmResponseException
-     *  On invalid $queryData.
+     *  On invalid $requestMessage.
      *
-     * @return RESTfmDataAbstract
+     * @return RESTfmMessage
      *  - 'data', 'meta', 'metaField' sections.
      *  - 'multistatus' section only if an error occurred.
      */
-    public function readSingle ($recordID) {
+    public function readSingle (RESTfmMessageRecord $requestRecord) {
         $this->_setSingle(TRUE);
-
-        $requestRestfmData = new RESTfmData();
-        $requestRestfmData->setSectionData('meta', $recordID, array('recordID' => $recordID));
-
-        return $this->readBulk($requestRestfmData);
+        $requestRestfmMessage = new RESTfmMessage();
+        $requestRestfmMessage->addRecord($requestRecord);
+        return $this->readBulk($requestRestfmMessage);
     }
 
     /**
-     * Read record(s) from the provided RESTfmDataAbstrace object.
+     * Read record(s) from the provided RESTfmMessage object.
      *
-     * @param RESTfmDataAbstract $queryData
+     * @param RESTfmMessage $requestMessage
      *  'meta' section required with row(s) containing a 'recordID' field.
      *
      * @throws RESTfmResponseException
-     *  On invalid $queryData.
+     *  On invalid $requestMessage.
      *
-     * @return RESTfmDataAbstract
+     * @return RESTfmMessage
      *  - 'data', 'meta', 'metaField' sections.
      *  - 'multistatus' section only if an error occurred.
      */
-    public function readBulk (RESTfmDataAbstract $queryData) {
-        if (! $queryData->sectionExists('meta')) {
-            throw new RESTfmResponseException('No meta section found.', RESTfmResponseException::BADREQUEST);
+    public function readBulk (RESTfmMessage $requestMessage) {
+        if ($requestMessage->getRecordCount() < 1) {
+            throw new RESTfmResponseException('No records found in request.', RESTfmResponseException::BADREQUEST);
         }
 
-        $result = new RESTfmDataSimple();
+        $result = new RESTfmMessage();
 
-        $queryData->setIteratorSection('meta');
-        foreach($queryData as $row) {
-            if (isset($row['recordID'])) {
-                $this->_readRecord($result, $row['recordID']);
-            }
+        $requestRecord = NULL;  // @var RESTfmMessageRecord
+        foreach($requestMessage->getRecords() as $requestRecord) {
+            $this->_readRecord($result, $requestRecord);
         }
 
         return $result;
     }
 
     /**
-     * Update record from the provided RESTfmDataAbstract object.
+     * Update record from the provided RESTfmMessageRecord object.
      * Convenience method wraps bulk operation method.
      *
-     * @param RESTfmDataAbstract $queryData
-     *  'data' section required with row containing record data.
-     * @param string $recordID
-     *  String containing record ID to update.
+     * @param RESTfmMessageRecord $requestRecord
+     *  Must contain row data and recordID
      *
      * @throws RESTfmResponseException
-     *  On invalid $queryData.
+     *  On invalid $requestRecord.
      *
-     * @return RESTfmDataAbstract
+     * @return RESTfmMessage
      *  - 'multistatus' section only if an error occurred.
      */
-    public function updateSingle (RESTfmDataAbstract $queryData, $recordID) {
+    public function updateSingle (RESTfmMessageRecord $requestRecord) {
         $this->_setSingle(TRUE);
-
-        // Inject recordID into meta section (we are a single operation, so just
-        // one record).
-        $queryData->setSectionData2nd('meta', 0, 'recordID', $recordID);
-
-        return $this->updateBulk($queryData);
+        $requestRestfmMessage = new RESTfmMessage();
+        $requestRestfmMessage->addRecord($requestRecord);
+        return $this->updateBulk($requestRestfmMessage);
     }
 
     /**
-     * Update record(s) from the provided RESTfmDataAbstract object.
+     * Update record(s) from the provided RESTfmMessage object.
      *
-     * @param RESTfmDataAbstract $queryData
+     * @param RESTfmMessage $requestMessage
      *  'data' section required with row(s) containing record data.
      *  'meta' section required with row(s) containing a 'recordID' field.
      *
      * @throws RESTfmResponseException
-     *  On invalid $queryData.
+     *  On invalid $requestMessage.
      *
-     * @return RESTfmDataAbstract
+     * @return RESTfmMessage
      *  - 'multistatus' section only if an error occurred.
      */
-    public function updateBulk (RESTfmDataAbstract $queryData) {
-        if (! $queryData->sectionExists('meta') ||
-                ! $queryData->sectionExists('data')) {
-            throw new RESTfmResponseException('No data or no meta section found.', RESTfmResponseException::BADREQUEST);
+    public function updateBulk (RESTfmMessage $requestMessage) {
+        if ($requestMessage->getRecordCount() < 1) {
+            throw new RESTfmResponseException('No records found in request.', RESTfmResponseException::BADREQUEST);
         }
 
-        $result = new RESTfmDataSimple();
+        $result = new RESTfmMessage();
 
         // Trigger preOpScript on the first element.
         if ($this->_preOpScript !== NULL) {
@@ -320,26 +308,19 @@ abstract class OpsRecordAbstract {
 
         // Trigger postOpScript on the last element.
         if ($this->_postOpScript != NULL) {
-            $postOpTriggerCount = $queryData->getSectionCount('data');
+            $postOpTriggerCount = $requestMessage->getRecordCount();
         } else {
             $postOpTriggerCount = -1;
         }
 
-        $queryData->setIteratorSection('meta');
+        $requestRecord = NULL;  // @var RESTfmMessageRecord
         $i = 0;
-        foreach($queryData as $index => $row) {
+        foreach($requestMessage->getRecords() as $requestRecord) {
             $i++;
             if ($i == $postOpTriggerCount) {
                 $this->_postOpScriptTrigger = TRUE;
             }
-            if (isset($row['recordID'])) {
-                $this->_updateRecord(
-                            $result,
-                            $row['recordID'],
-                            $index,
-                            $queryData->getSectionData('data', $index)
-                        );
-            }
+            $this->_updateRecord($result, $requestRecord, $i);
         }
 
         return $result;
@@ -349,45 +330,40 @@ abstract class OpsRecordAbstract {
      * Delete single record.
      * Convenience method wraps bulk operation method.
      *
-     * @param RESTfmDataAbstract $queryData
-     *  Original RESTfmData from request.
-     * @param string $recordID
-     *  String containing record ID to delete.
+     * @param RESTfmMessageRecord $requestRecord
+     *  Must contain recordID.
      *
      * @throws RESTfmResponseException
-     *  On invalid $queryData.
+     *  On invalid $requestMessage.
      *
-     * @return RESTfmDataAbstract
+     * @return RESTfmMessage
      *  - 'multistatus' section only if an error occurred.
      */
-    public function deleteSingle (RESTfmDataAbstract $queryData, $recordID) {
+    public function deleteSingle (RESTfmMessageRecord $requestRecord) {
         $this->_setSingle(TRUE);
-
-        // Inject recordID into meta section (we are a single operation, so just
-        // one record).
-        $queryData->setSectionData2nd('meta', 0, 'recordID', $recordID);
-
-        return $this->deleteBulk($queryData);
+        $requestRestfmMessage = new RESTfmMessage();
+        $requestRestfmMessage->addRecord($requestRecord);
+        return $this->deleteBulk($requestRestfmMessage);
     }
 
     /**
-     * Delete record(s) from the provided RESTfmDataAbstract object.
+     * Delete record(s) from the provided RESTfmMessage object.
      *
-     * @param RESTfmDataAbstract $queryData
+     * @param RESTfmMessage $requestMessage
      *  'meta' section required with row(s) containing a 'recordID' field.
      *
      * @throws RESTfmResponseException
-     *  On invalid $queryData.
+     *  On invalid $requestMessage.
      *
-     * @return RESTfmDataAbstract
+     * @return RESTfmMessage
      *  - 'multistatus' section only if an error occurred.
      */
-    public function deleteBulk (RESTfmDataAbstract $queryData) {
-        if (! $queryData->sectionExists('meta')) {
-            throw new RESTfmResponseException('No meta section found.', RESTfmResponseException::BADREQUEST);
+    public function deleteBulk (RESTfmMessage $requestMessage) {
+        if ($requestMessage->getRecordCount() < 1) {
+            throw new RESTfmResponseException('No records found in request.', RESTfmResponseException::BADREQUEST);
         }
 
-        $result = new RESTfmDataSimple();
+        $result = new RESTfmMessage();
 
         // Trigger preOpScript on the first element.
         if ($this->_preOpScript !== NULL) {
@@ -396,21 +372,19 @@ abstract class OpsRecordAbstract {
 
         // Trigger postOpScript on the last element.
         if ($this->_postOpScript != NULL) {
-            $postOpTriggerCount = $queryData->getSectionCount('data');
+            $postOpTriggerCount = $requestMessage->getRecordCount();
         } else {
             $postOpTriggerCount = -1;
         }
 
-        $queryData->setIteratorSection('meta');
+        $requestRecord = NULL;  // @var RESTfmMessageRecord
         $i = 0;
-        foreach($queryData as $index => $row) {
+        foreach($requestMessage->getRecords() as $requestRecord) {
             $i++;
             if ($i == $postOpTriggerCount) {
                 $this->_postOpScriptTrigger = TRUE;
             }
-            if (isset($row['recordID'])) {
-                $this->_deleteRecord($result, $row['recordID']);
-            }
+            $this->_deleteRecord($result, $requestRecord);
         }
 
         return $result;
@@ -436,7 +410,7 @@ abstract class OpsRecordAbstract {
     }
 
     /**
-     * Suppress 'data' section in RESTfmData result. Also suppresses
+     * Suppress 'data' section in RESTfmMessage result. Also suppresses
      * 'metaField' section.
      *
      * By default FileMaker will return the record data from a create operation,
@@ -541,7 +515,7 @@ abstract class OpsRecordAbstract {
 
     /**
      * @var boolean
-     *  Flag to suppress 'data' section in RESTfmData.
+     *  Flag to suppress 'data' section in RESTfmMessage.
      */
     protected $_suppressData = FALSE;
 
