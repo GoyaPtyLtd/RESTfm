@@ -73,6 +73,11 @@ interface RESTfmMessageInterface {
     public function getMetaField ($fieldName);
 
     /**
+     * @return integer
+     */
+    public function getMetaFieldCount ();
+
+    /**
      * @return array [ <fieldName> => <RESTfmMessageRowInterface>, ...]
      */
     public function getMetaFields ();

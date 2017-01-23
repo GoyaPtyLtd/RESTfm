@@ -53,7 +53,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
     // @var array of RESTfmMessageMultistatus
     protected $_multistatus = array();
 
-    // @var array of RESTfmMessageRow
+    // @var array of name/href pairs.
     protected $_navs = array();
 
     // @var array of RESTfmMessageRecord
@@ -120,6 +120,13 @@ class RESTfmMessage implements RESTfmMessageInterface {
         if (isset($this->_metaFields[$fieldName])) {
             return $this->_metaFields[$fieldName];
         }
+    }
+
+    /**
+     * @return integer
+     */
+    public function getMetaFieldCount () {
+        return count($this->_metaFields);
     }
 
     /**

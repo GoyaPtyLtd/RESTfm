@@ -58,6 +58,8 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
 
         $this->assertNull($message->getMetaField('nonExistent'));
 
+        $this->assertEquals($message->getMetaFieldCount(), 2);
+
         $getMessageRow0 = $message->getMetaField('name0');
         $getMessageRow1 = $message->getMetaField('name1');
 
@@ -135,6 +137,8 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
 
         $message->addRecord($messageRecord0);
         $message->addRecord($messageRecord1);
+
+        $this->assertEquals($message->getRecordCount(), 2);
 
         $records = $message->getRecords();
 
