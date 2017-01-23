@@ -97,17 +97,22 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
                              spl_object_hash($messageMultistatus1) );
     }
 
-    public function testAddAndGetNavs () {
+    public function testSetAndGetNavs () {
         $message = new RESTfmMessage();
 
-        $message->addNav('name0', 'href0');
-        $message->addNav('name1', 'href1');
+        $message->setNav('name0', 'href0');
+        $message->setNav('name1', 'href1');
+
+        $this->assertNull($message->getNav('nonExistent'));
+
+        $messageGet0 = $message->getNav('name0');
+        $this->assertEquals($messageGet0, 'href0');
 
         $navs = $message->getNavs();
 
-        $this->assertEquals( $navs[0]->getField('name'), 'name0' );
+        $this->assertEquals( $navs['name0'], 'href0' );
 
-        $this->assertEquals( $navs[1]->getField('href'), 'href1' );
+        $this->assertEquals( $navs['name1'], 'href1' );
     }
 
     public function testAddAndGetRecords () {
@@ -186,23 +191,17 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
             'infoField2'    => 'infoValue2',
         ),
         'nav'   => array(
-            0   => array(
-                'name'      => 'name0',
-                'href'      => 'href0',
-            ),
-            1   => array(
-                'name'      => 'name1',
-                'href'      => 'href1',
-            ),
+            'name0'         => 'href0',
+            'name1'         => 'href1',
         ),
         'metaField' => array(
             0   => array(
-                'name'              => 'name0',
+                'name'              => 'field1',
                 'metaFieldField1'   => 'metaFieldValue1',
                 'metaFieldField2'   => 'metaFieldValue2',
             ),
             1   => array(
-                'name'              => 'name1',
+                'name'              => 'field2',
                 'metaFieldField1'   => 'metaFieldValue3',
                 'metaFieldField2'   => 'metaFieldValue4',
             ),
@@ -333,24 +332,14 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
                 $export['info']['infoField2']
         );
 
-        // nav 0
+        // nav
         $this->assertEquals(
-                RESTfmMessageTest::$importData['nav'][0]['name'],
-                $export['nav'][0]['name']
+                RESTfmMessageTest::$importData['nav']['name0'],
+                $export['nav']['name0']
         );
         $this->assertEquals(
-                RESTfmMessageTest::$importData['nav'][0]['href'],
-                $export['nav'][0]['href']
-        );
-
-        // nav 1
-        $this->assertEquals(
-                RESTfmMessageTest::$importData['nav'][1]['name'],
-                $export['nav'][1]['name']
-        );
-        $this->assertEquals(
-                RESTfmMessageTest::$importData['nav'][1]['href'],
-                $export['nav'][1]['href']
+                RESTfmMessageTest::$importData['nav']['name1'],
+                $export['nav']['name1']
         );
 
         // metaField 0

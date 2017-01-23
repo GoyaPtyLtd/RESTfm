@@ -53,7 +53,7 @@ interface RESTfmMessageInterface {
     public function getInfo ($key);
 
     /**
-     * @return array of [ <key> => <val>, ... ]
+     * @return array [ <key> => <val>, ... ]
      */
     public function getInfos ();
 
@@ -73,7 +73,7 @@ interface RESTfmMessageInterface {
     public function getMetaField ($fieldName);
 
     /**
-     * @return array of [ <fieldName> => <RESTfmMessageRowInterface>, ...]
+     * @return array [ <fieldName> => <RESTfmMessageRowInterface>, ...]
      */
     public function getMetaFields ();
 
@@ -85,20 +85,27 @@ interface RESTfmMessageInterface {
     public function addMultistatus (RESTfmMessageMultistatusInterface $multistatus);
 
     /**
-     * @return array of RESTfmMessageMultistatusInterface.
+     * @return array [ <RESTfmMessageMultistatusInterface>, ... ]
      */
     public function getMultistatus ();
 
     /**
-     * Add a 'nav' name/href pair.
+     * Set a 'nav' name/href pair.
      *
      * @param string name
      * @param string href
      */
-    public function addNav ($name, $href);
+    public function setNav ($name, $href);
 
     /**
-     * @return array of RESTfmMessageRowInterface.
+     * @param string name
+     *
+     * @return string href
+     */
+    public function getNav ($name);
+
+    /**
+     * @return array [ <name> => <href>, ... ]
      */
     public function getNavs ();
 
@@ -110,7 +117,7 @@ interface RESTfmMessageInterface {
     public function addRecord (RESTfmMessageRecordInterface $record);
 
     /**
-     * @return array of RESTfmMessageRecordInterface.
+     * @return array [ <RESTfmMessageRecordInterface>, ... ]
      */
     public function getRecords ();
 

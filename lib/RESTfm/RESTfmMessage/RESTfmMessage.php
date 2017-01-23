@@ -95,7 +95,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
-     * @return array of [ <key> => <val>, ... ]
+     * @return array [ <key> => <val>, ... ]
      */
     public function getInfos () {
         return $this->_info;
@@ -123,7 +123,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
-     * @return array of [ <fieldName> => <RESTfmMessageRow>, ...]
+     * @return array [ <fieldName> => <RESTfmMessageRow>, ...]
      */
     public function getMetaFields () {
         return $this->_metaFields;
@@ -139,28 +139,35 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
-     * @return array of RESTfmMessageMultistatus
+     * @return array [ <RESTfmMessageMultistatus>, ... ]
      */
     public function getMultistatus () {
         return $this->_multistatus;
     }
 
     /**
-     * Add a 'nav' name/href pair.
+     * Set a 'nav' name/href pair.
      *
      * @param string name
      * @param string href
      */
-    public function addNav ($name, $href) {
-        $this->_navs[] = new RESTfmMessageRow(
-            array(
-                'name' => $name,
-                'href' => $href
-            ));
+    public function setNav ($name, $href) {
+        $this->_navs[$name] = $href;
     }
 
     /**
-     * @return array of RESTfmMessageRow
+     * @param string name
+     *
+     * @return string href
+     */
+    public function getNav ($name) {
+        if (isset($this->_navs[$name])) {
+            return $this->_navs[$name];
+        }
+    }
+
+    /**
+     * @return array [ <name> => <href>, ... ]
      */
     public function getNavs () {
         return $this->_navs;
@@ -277,11 +284,9 @@ class RESTfmMessage implements RESTfmMessageInterface {
                 break;
 
             case 'nav':
-                $section = new RESTfmMessageSection($sectionName, 2);
+                $section = new RESTfmMessageSection($sectionName, 1);
                 $sectionRows = &$section->_getRowsReference();
-                foreach ($this->_navs as $row) {
-                    $sectionRows[] = &$row->_getDataReference();
-                }
+                $sectionRows[] = &$this->_navs;
                 return $section;
                 break;
         }
@@ -342,7 +347,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
 
             case 'info':
                 foreach ($sectionData as $key => $val) {
-                    $this->_info[$key] = $val;
+                    $this->setInfo($key, $val);
                 }
                 break;
 
@@ -382,10 +387,8 @@ class RESTfmMessage implements RESTfmMessageInterface {
                 break;
 
             case 'nav':
-                foreach ($sectionData as $rowIndex => $row) {
-                    if (isset($row['name']) && isset($row['href'])) {
-                        $this->addNav($row['name'], $row['href']);
-                    }
+                foreach ($sectionData as $name => $href) {
+                    $this->setNav($name, $href);
                 }
                 break;
         }
