@@ -191,6 +191,13 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
+     * @return integer
+     */
+    public function getRecordCount () {
+        return count($this->_records);
+    }
+
+    /**
      * @return array of RESTfmMessageRecord
      */
     public function getRecords () {

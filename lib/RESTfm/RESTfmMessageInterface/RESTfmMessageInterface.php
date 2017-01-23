@@ -117,6 +117,11 @@ interface RESTfmMessageInterface {
     public function addRecord (RESTfmMessageRecordInterface $record);
 
     /**
+     * @return integer
+     */
+    public function getRecordCount ();
+
+    /**
      * @return array [ <RESTfmMessageRecordInterface>, ... ]
      */
     public function getRecords ();
