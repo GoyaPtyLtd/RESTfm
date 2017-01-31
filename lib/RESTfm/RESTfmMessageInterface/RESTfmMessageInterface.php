@@ -61,14 +61,14 @@ interface RESTfmMessageInterface {
      * Set a 'metaField' fieldName/row pair.
      *
      * @param string $fieldName
-     * @param RESTfmMessageRowInterface $metaField
+     * @param RESTfmMessageRow $metaField
      */
-    public function setMetaField ($fieldName, RESTfmMessageRowInterface $metaField);
+    public function setMetaField ($fieldName, RESTfmMessageRow $metaField);
 
     /**
      * @param string $fieldName
      *
-     * @return RESTfmMessageRowInterface
+     * @return RESTfmMessageRow
      */
     public function getMetaField ($fieldName);
 
@@ -78,7 +78,7 @@ interface RESTfmMessageInterface {
     public function getMetaFieldCount ();
 
     /**
-     * @return array [ <fieldName> => <RESTfmMessageRowInterface>, ...]
+     * @return array [ <fieldName> => <RESTfmMessageRow>, ...]
      */
     public function getMetaFields ();
 

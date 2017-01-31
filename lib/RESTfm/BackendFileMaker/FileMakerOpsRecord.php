@@ -495,12 +495,12 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
 
                 $restfmMessageRow = new RESTfmMessageRow();
 
-                $restfmMessageRow->setField('name', $fieldName);
-                $restfmMessageRow->setField('autoEntered', $fieldResult->isAutoEntered() ? 1 : 0);
-                $restfmMessageRow->setField('global', $fieldResult->isGlobal() ? 1 : 0);
-                $restfmMessageRow->setField('maxRepeat', $fieldResult->getRepetitionCount());
-                $restfmMessageRow->setField('resultType', $fieldResult->getResult());
-                //$restfmMessageRow->setField('type', $fieldResult->getType());
+                $restfmMessageRow['name'] = $fieldName;
+                $restfmMessageRow['autoEntered'] = $fieldResult->isAutoEntered() ? 1 : 0;
+                $restfmMessageRow['global'] = $fieldResult->isGlobal() ? 1 : 0;
+                $restfmMessageRow['maxRepeat'] = $fieldResult->getRepetitionCount();
+                $restfmMessageRow['resultType'] = $fieldResult->getResult();
+                //$restfmMessageRow['type'] = $fieldResult->getType();
 
                 $restfmMessage->setMetaField($fieldName, $restfmMessageRow);
             }
@@ -518,7 +518,7 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
 
             // Field repetitions are expanded into multiple fields with
             // an index operator suffix; fieldName[0], fieldName[1] ...
-            $fieldRepeat = $metaFieldRow->getField('maxRepeat');
+            $fieldRepeat = $metaFieldRow['maxRepeat'];
             for ($repetition = 0; $repetition < $fieldRepeat; $repetition++) {
                 $fieldNameRepeat = $fieldName;
 
@@ -531,7 +531,7 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
                 $fieldData = $record->getFieldUnencoded($fieldName, $repetition);
 
                 // Handle container types differently.
-                if ($metaFieldRow->getField('resultType') == 'container') {
+                if ($metaFieldRow['resultType'] == 'container') {
                     switch ($this->_containerEncoding) {
                         case self::CONTAINER_BASE64:
                             $filename = '';
@@ -554,7 +554,7 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
                 }
 
                 // Store this field's data for this row.
-                $restfmMessageRecord->setField($fieldNameRepeat, $fieldData);
+                $restfmMessageRecord[$fieldNameRepeat] = $fieldData;
             }
         }
         $restfmMessage->addRecord($restfmMessageRecord);

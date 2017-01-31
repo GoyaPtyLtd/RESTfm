@@ -18,19 +18,9 @@
  */
 
  /**
-  * A generic row interface for fieldName/value pairs.
+  * An array-like object for a single row of fieldName/value pairs.
   */
-class RESTfmMessageRow implements RESTfmMessageRowInterface {
-
-    /**
-     * A row object containing fieldName/value pairs in RESTfmMessage.
-     *
-     * @param array $assocArray
-     *  Optional array to initalise row data.
-     */
-    public function __construct ($assocArray = NULL) {
-        if ($assocArray !== NULL) { $this->_data = $assocArray; }
-    }
+class RESTfmMessageRow implements ArrayAccess, IteratorAggregate, Countable {
 
     /**
      * @var array of fieldName/value pairs.
@@ -38,51 +28,26 @@ class RESTfmMessageRow implements RESTfmMessageRowInterface {
     protected $_data = array();
 
     /**
-     * Get associative array of all fieldName/value pairs.
+     * An array-like object for a single row of fieldName/value pairs.
      *
-     * @return array of fieldName/value pairs.
-     */
-    public function getData () {
-        return $this->_data;
-    }
-
-    /**
-     * Set multiple fieldName/value pairs from associative array.
+     * Works as expected with foreach(), but must cast to (array) for PHP
+     * functions like array_keys().
+     *
+     * Typical array assignments ($a['key'] = 'val') are fine.
      *
      * @param array $assocArray
+     *  Optional array to initalise row data.
+     */
+     public function __construct ($assocArray = NULL) {
+         if ($assocArray !== NULL) { $this->_data = $assocArray; }
+     }
+
+    /**
+     * @param array $assocArray
+     *  Optional array to initalise row data.
      */
     public function setData ($assocArray) {
         $this->_data = $assocArray;
-    }
-
-    /**
-     * Get only specified fieldName.
-     *
-     * @param string $fieldName
-     *
-     * @return mixed
-     */
-    public function getField ($fieldName) {
-        if (isset($this->_data[$fieldName])) { return $this->_data[$fieldName]; }
-    }
-
-    /**
-     * Set only specified fieldName.
-     *
-     * @param string $fieldName
-     * @param mixed $fieldValue
-     */
-    public function setField ($fieldName, $fieldValue) {
-        $this->_data[$fieldName] = $fieldValue;
-    }
-
-    /**
-     * Unset/delete specified fieldName.
-     *
-     * @param string $fieldName
-     */
-    public function unsetField ($fieldName) {
-        if (isset($this->_data[$fieldName])) { unset($this->_data[$fieldName]); }
     }
 
     /**
@@ -94,4 +59,39 @@ class RESTfmMessageRow implements RESTfmMessageRowInterface {
     public function &_getDataReference () {
         return $this->_data;
     }
+
+
+    // -- ArrayAccess implementation. -- //
+
+    public function offsetExists ($offset) {
+        return (isset($this->_data[$offset]));
+    }
+
+    public function offsetGet ($offset) {
+        if (isset($this->_data[$offset])) {
+            return $this->_data[$offset];
+        }
+        return FALSE;
+    }
+
+    public function offsetSet ($offset, $value) {
+        $this->_data[$offset] = $value;
+    }
+
+    public function offsetUnset ($offset) {
+        unset($this->_data[$offset]);
+    }
+
+    // -- IteratorAggregate implementation. -- //
+
+    public function getIterator () {
+        return new ArrayIterator($this->_data);
+    }
+
+    // -- Countable implementation. -- //
+
+    public function count () {
+        return count($this->_data);
+    }
+
 };

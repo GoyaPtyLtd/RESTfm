@@ -107,7 +107,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
      * @param string $fieldName
      * @param RESTfmMessageRow $metaField
      */
-    public function setMetaField ($fieldName, RESTfmMessageRowInterface $metaField) {
+    public function setMetaField ($fieldName, RESTfmMessageRow $metaField) {
         $this->_metaFields[$fieldName] = $metaField;
     }
 
@@ -433,7 +433,6 @@ class RESTfmMessage implements RESTfmMessageInterface {
             } elseif ($section->getDimensions() == 2) {
                 $sectionData = &$section->_getRowsreference();
             }
-            //$export[] = array($sectionName => $sectionData);
             $export[$sectionName] = $sectionData;
         }
 

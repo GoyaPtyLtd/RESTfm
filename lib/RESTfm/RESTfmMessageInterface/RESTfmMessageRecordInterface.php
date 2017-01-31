@@ -18,10 +18,10 @@
  */
 
 /**
- * An extension of RESTfmMessageRowInterface with additional record related
- * metadata access methods.
+ * An extension of RESTfmMessageRow with additional record related metadata
+ * access methods.
  */
-interface RESTfmMessageRecordInterface extends RESTfmMessageRowInterface {
+interface RESTfmMessageRecordInterface {
 
     /**
      * Return href metadata for record.

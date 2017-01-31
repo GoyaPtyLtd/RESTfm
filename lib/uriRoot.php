@@ -71,7 +71,7 @@ class uriRoot extends RESTfmResource {
         $restfmMessageRecords = $restfmMessage->getRecords();
         $record = NULL;         // @var RESTfmMessageRecord
         foreach($restfmMessageRecords as $record) {
-            $database = $record->getField('database');
+            $database = $record['database'];
             $href = $request->baseUri.'/'.RESTfmUrl::encode($database).
                     '.'.$format.$queryString->build();
             if (isset($RFMlink)) {

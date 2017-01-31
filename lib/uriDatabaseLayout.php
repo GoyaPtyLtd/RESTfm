@@ -54,7 +54,7 @@ class uriDatabaseLayout extends RESTfmResource {
             $record->setHref(
                 $request->baseUri.'/'.
                         RESTfmUrl::encode($database).'/layout/'.
-                        RESTfmUrl::encode($record->getField('layout')).'.'.
+                        RESTfmUrl::encode($record['layout']).'.'.
                         $format.$queryString->build()
             );
         }

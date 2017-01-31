@@ -19,7 +19,7 @@
 
 class RESTfmMessageRecordTest extends PHPUnit_Framework_TestCase {
 
-    public function testConstructorAndGet() {
+    public function testConstructorAndGetDataReference() {
         $rowData = array ('field1'  => 'value1',
                           'field2'  => 'value2');
 
@@ -28,7 +28,7 @@ class RESTfmMessageRecordTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals($record->getHref(), 'href://here');
         $this->assertEquals($record->getRecordId(), 'test0');
 
-        $arrayDiff = array_diff($rowData, $record->getData());
+        $arrayDiff = array_diff($rowData, $record->_getDataReference());
         $this->assertEmpty($arrayDiff);
     }
 

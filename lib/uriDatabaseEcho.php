@@ -125,7 +125,7 @@ class uriDatabaseEcho extends RESTfmResource {
         echo $restfmParameters;
 
         echo "\n" . '------------ Data -------------------' . "\n";
-        echo $request->getRESTfmData();
+        echo $request->getRESTfmMessage();
 
         echo "\n" . '------------ RESTfm -----------------' . "\n";
         echo 'request method=' . $request->method .  "\n";
