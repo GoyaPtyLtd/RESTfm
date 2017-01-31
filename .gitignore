@@ -8,4 +8,5 @@ Packages
 RESTfm.ini.php
 RESTfm.komodoproject
 tools
+unit_coverage_report
 .DS_Store

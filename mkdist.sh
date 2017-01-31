@@ -47,8 +47,11 @@ INJECTREVISION="lib/RESTfm/Version.php"
 # Files to inject Version into (replaces %%VERSION%%)
 INJECTVERSION="RESTfm.ini.php.dist demo.html js/demo.js"
 
-# PHPUnit command
+# PHPUnit command.
 PHPUNIT="PHPUnit/phpunit --bootstrap lib/autoload.php"
+
+# PHPUnit html coverage report directory.
+PHPUNITCOVERAGEDIR="unit_coverage_report"
 
 ### Script begins ###
 
@@ -57,21 +60,33 @@ PHPUNIT="PHPUnit/phpunit --bootstrap lib/autoload.php"
 #
 usage() {
     echo ""
-    echo "Usage: ${ARGV0} [-b|--build] [-c|--clean] [--clean-all] [-u|--unit]"
-    echo "  --build         build distribution packages."
-    echo "  --clean         clean intermediate build files."
-    echo "  --clean-all     expunge entire build area."
-    echo "  --unit          unit tests only."
+    echo "Usage: ${ARGV0} [<flags>]"
+    echo "  -b | --build            :  build distribution packages."
+    echo "  -c | --clean            : clean intermediate build files."
+    echo "       --clean-all        : expunge entire build area."
+    echo "  -u | --unit             : unit tests only."
+    echo "       --unit-coverage    : unit tests coverage only."
     echo ""
 }
 
 #
 # Unit tests. Will exit on failure.
 #
+# @param $1 enableCoverage
+#   Optional. Set to "enableCoverage" to enable PHPUnit html code coverage 
+#   report.
+#
 unitTests() {
-    echo " ++ Unit tests."
-    ${PHPUNIT}
-    if [ $? -ne 0 ]; then
+    if [ "X${1}" == "XenableCoverage" ]; then
+        echo " ++ Unit tests with code coverage report: ${PHPUNITCOVERAGEDIR}"
+        ${PHPUNIT} --coverage-html ${PHPUNITCOVERAGEDIR}
+        RET=$?
+    else
+        echo " ++ Unit tests."
+        ${PHPUNIT}
+        RET=$?
+    fi
+    if [ $RET -ne 0 ]; then
         echo "** Error: all unit tests must pass."
         exit 1
     fi
@@ -99,6 +114,10 @@ while [ $# -ge 1 ]; do
         ;;
     -u|--unit)
         unitTests
+        exit 0
+        ;;
+    --unit-coverage)
+        unitTests enableCoverage
         exit 0
         ;;
     *)
