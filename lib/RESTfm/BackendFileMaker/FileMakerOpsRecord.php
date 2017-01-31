@@ -61,7 +61,7 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
         $FM = $this->_backend->getFileMaker();
         $FM->setProperty('database', $this->_database);
 
-        $valuesRepetitions = $this->_convertValuesToRepetitions($row);
+        $valuesRepetitions = $this->_convertValuesToRepetitions($requestRecord);
 
         $addCommand = $FM->newAddCommand($this->_layout, $valuesRepetitions);
 
@@ -85,23 +85,25 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
             if ($this->_isSingle) {
                 throw new FileMakerResponseException($result);
             }
-            $restfmData->setSectionData('multistatus', NULL, array(
-                'index'         => $index,
-                'Status'        => $result->getCode(),
-                'Reason'        => $result->getMessage(),
+            $restfmMessage->addMultistatus(new RESTfmMessageMultistatus(
+                    $result->getCode(),
+                    $result->getMessage(),
+                    $index
             ));
             return;                                 // Nothing more to do here.
         }
 
         // Query the result for the created records.
+        $record = NULL;     // @var FileMaker_Record
         foreach ($result->getRecords() as $record) {
             if ($this->_suppressData) {
                 // Insert just the recordID into the 'meta' section.
-                $recordID = $record->getRecordId();
-                $restfmData->pushDataRow(NULL, $recordID);
+                $restfmMessage->addRecord(new RESTfmMessageRecord(
+                        $record->getRecordId()
+                ));
             } else {
                 // Parse full record.
-                $this->_parseRecord($restfmData, $record);
+                $this->_parseRecord($restfmMessage, $record);
             }
         }
     }
