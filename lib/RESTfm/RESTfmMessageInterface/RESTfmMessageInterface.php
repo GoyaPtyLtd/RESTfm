@@ -61,14 +61,14 @@ interface RESTfmMessageInterface {
      * Set a 'metaField' fieldName/row pair.
      *
      * @param string $fieldName
-     * @param RESTfmMessageRow $metaField
+     * @param RESTfmMessageRowAbstract $metaField
      */
-    public function setMetaField ($fieldName, RESTfmMessageRow $metaField);
+    public function setMetaField ($fieldName, RESTfmMessageRowAbstract $metaField);
 
     /**
      * @param string $fieldName
      *
-     * @return RESTfmMessageRow
+     * @return RESTfmMessageRowAbstract
      */
     public function getMetaField ($fieldName);
 
@@ -78,7 +78,7 @@ interface RESTfmMessageInterface {
     public function getMetaFieldCount ();
 
     /**
-     * @return array [ <fieldName> => <RESTfmMessageRow>, ...]
+     * @return array [ <fieldName> => <RESTfmMessageRowAbstract>, ...]
      */
     public function getMetaFields ();
 
@@ -117,9 +117,9 @@ interface RESTfmMessageInterface {
     /**
      * Add a 'data+meta' record object (row plus meta data).
      *
-     * @param RESTfmMessageRecordInterface $record
+     * @param RESTfmMessageRecordAbstract $record
      */
-    public function addRecord (RESTfmMessageRecordInterface $record);
+    public function addRecord (RESTfmMessageRecordAbstract $record);
 
     /**
      * @return integer
@@ -127,7 +127,7 @@ interface RESTfmMessageInterface {
     public function getRecordCount ();
 
     /**
-     * @return array [ <RESTfmMessageRecordInterface>, ... ]
+     * @return array [ <RESTfmMessageRecordAbstract>, ... ]
      */
     public function getRecords ();
 
@@ -136,7 +136,7 @@ interface RESTfmMessageInterface {
      *
      * @param string $recordId
      *
-     * @return RESTfmMessageRecordInterface or NULL if $recordId does not exist.
+     * @return RESTfmMessageRecordAbstract or NULL if $recordId does not exist.
      */
     public function getRecordByRecordId ($recordId);
 

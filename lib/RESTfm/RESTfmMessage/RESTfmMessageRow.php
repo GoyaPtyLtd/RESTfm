@@ -20,7 +20,7 @@
  /**
   * An array-like object for a single row of fieldName/value pairs.
   */
-class RESTfmMessageRow implements ArrayAccess, IteratorAggregate, Countable {
+class RESTfmMessageRow extends RESTfmMessageRowAbstract {
 
     /**
      * @var array of fieldName/value pairs.
@@ -38,8 +38,8 @@ class RESTfmMessageRow implements ArrayAccess, IteratorAggregate, Countable {
      * @param array $assocArray
      *  Optional array to initalise row data.
      */
-     public function __construct ($assocArray = NULL) {
-         if ($assocArray !== NULL) { $this->_data = $assocArray; }
+    public function __construct ($assocArray = NULL) {
+        if ($assocArray !== NULL) { $this->_data = $assocArray; }
      }
 
     /**

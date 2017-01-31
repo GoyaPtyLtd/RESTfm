@@ -107,7 +107,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
      * @param string $fieldName
      * @param RESTfmMessageRow $metaField
      */
-    public function setMetaField ($fieldName, RESTfmMessageRow $metaField) {
+    public function setMetaField ($fieldName, RESTfmMessageRowAbstract $metaField) {
         $this->_metaFields[$fieldName] = $metaField;
     }
 
@@ -185,7 +185,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
      *
      * @param RESTfmMessageRecord $record
      */
-    public function addRecord (RESTfmMessageRecordInterface $record) {
+    public function addRecord (RESTfmMessageRecordAbstract $record) {
         $this->_records[] = $record;
 
         // TODO dump getRecordById

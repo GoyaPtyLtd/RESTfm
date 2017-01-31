@@ -21,33 +21,33 @@
  * An extension of RESTfmMessageRow with additional record related metadata
  * access methods.
  */
-interface RESTfmMessageRecordInterface {
+abstract class RESTfmMessageRecordAbstract extends RESTfmMessageRow {
 
     /**
      * Return href metadata for record.
      *
      * @return string
      */
-    public function getHref ();
+    abstract public function getHref ();
 
     /**
      * Set href metadata for record.
      *
      * @param string $href
      */
-    public function setHref ($href);
+    abstract public function setHref ($href);
 
     /**
      * Return recordID metadata for record.
      *
      * @return string
      */
-    public function getRecordId ();
+    abstract public function getRecordId ();
 
     /**
      * Set recordID metadata for record.
      *
      * @param string $recordId
      */
-    public function setRecordId ($recordId);
+    abstract public function setRecordId ($recordId);
 };

@@ -21,7 +21,7 @@
  * An extension of RESTfmMessageRow (array-like) with additional record related
  * metadata access methods.
  */
-class RESTfmMessageRecord extends RESTfmMessageRow implements RESTfmMessageRecordInterface {
+class RESTfmMessageRecord extends RESTfmMessageRecordAbstract {
 
     protected $_meta = array();
 
