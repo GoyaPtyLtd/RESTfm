@@ -280,23 +280,27 @@ class uriLayout extends RESTfmResource {
             $opsRecord->setSuppressData(TRUE);
         }
 
-        $restfmData = $opsRecord->createSingle($request->getRESTfmData());
+        $restfmMessage = $opsRecord->createSingle($request->getRESTfmMessage());
 
         $response = new RESTfmResponse($request);
         $format = $response->format;
 
         // Meta section.
-        // Add hrefs for recordIDs.
-        $restfmData->setIteratorSection('meta');
-        foreach($restfmData as $index => $row) {
-            $href = $request->baseUri.'/'.
+        // Iterate records and set navigation hrefs.
+        $record = NULL;         // @var RESTfmMessageRecord
+        foreach($restfmMessage->getRecords() as $record) {
+            if ($record->getRecordId() === NULL) {
+                continue;
+            }
+            $record->setHref(
+                $request->baseUri.'/'.
                         RESTfmUrl::encode($database).'/layout/'.
                         RESTfmUrl::encode($layout).'/'.
-                        RESTfmUrl::encode($row['recordID']).'.'.$format;
-            $restfmData->setSectionData2nd('meta', $index, 'href', $href);
+                        RESTfmUrl::encode($record->getRecordId()).'.'.$format
+            );
         }
 
-        $response->setData($restfmData);
+        $response->setRestfmMessage($restfmMessage);
         $response->setStatus(Response::CREATED);
         return $response;
     }

@@ -151,7 +151,7 @@ abstract class OpsRecordAbstract {
      * Create record from the provided RESTfmMessage object.
      * Convenience method wraps bulk operation method.
      *
-     * @param RESTfmMessageRecord $requestRecord
+     * @param RESTfmMessage $requestMessage
      *
      * @throws RESTfmResponseException
      *  On invalid $requestMessage.
@@ -160,10 +160,8 @@ abstract class OpsRecordAbstract {
      *  - 'meta' section.
      *  - 'multistatus' section only if an error occurred.
      */
-    public function createSingle (RESTfmMessageRecord $requestRecord) {
+    public function createSingle (RESTfmMessage $requestMessage) {
         $this->_setSingle(TRUE);
-        $requestMessage = new RESTfmMessage();
-        $requestMessage->addRecord($requestRecord);
         return $this->createBulk($requestMessage);
     }
 
@@ -200,10 +198,10 @@ abstract class OpsRecordAbstract {
         }
 
         $requestRecord = NULL;  // @var RESTfmMessageRecord
-        $i = 0;
+        $index = 0;
         foreach($requestMessage->getRecords() as $requestRecord) {
-            $i++;
-            if ($i == $postOpTriggerCount) {
+            $index++;
+            if ($index == $postOpTriggerCount) {
                 $this->_postOpScriptTrigger = TRUE;
             }
             $this->_createRecord($result, $requestRecord, $index);
