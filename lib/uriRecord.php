@@ -141,29 +141,31 @@ class uriRecord extends RESTfmResource {
             $opsRecord->setPreOpScript($restfmParameters->RFMpreScript, $scriptParameters);
         }
         if (isset($restfmParameters->RFMappend)) {
-            $opsRecord->setAppend();
+            $opsRecord->setUpdateAppend();
         }
         if (isset($restfmParameters->RFMelsePOST) || isset($restfmParameters->RFMelseCreate)) {
             $opsRecord->setUpdateElseCreate();
         }
 
-        $restfmData = $opsRecord->updateSingle($request->getRESTfmData(), $rawRecordID);
+        $request->getRESTfmMessage()->getRecord(0)->setRecordId($rawRecordID);
+        $restfmMessage = $opsRecord->updateSingle($request->getRESTfmMessage());
 
         $response = new RESTfmResponse($request);
         $format = $response->format;
 
         // Meta section.
-        // Add hrefs for recordIDs.
-        $restfmData->setIteratorSection('meta');
-        foreach($restfmData as $index => $row) {
-            $href = $request->baseUri.'/'.
+        // Iterate records and set navigation hrefs.
+        $record = NULL;         // @var RESTfmMessageRecord
+        foreach($restfmMessage->getRecords() as $record) {
+            $record->setHref(
+                $request->baseUri.'/'.
                         RESTfmUrl::encode($database).'/layout/'.
                         RESTfmUrl::encode($layout).'/'.
-                        RESTfmUrl::encode($row['recordID']).'.'.$format;
-            $restfmData->setSectionData2nd('meta', $index, 'href', $href);
+                        RESTfmUrl::encode($record->getRecordId()).'.'.$format
+            );
         }
 
-        $response->setData($restfmData);
+        $response->setRestfmMessage($restfmMessage);
         $response->setStatus(Response::OK);
         return $response;
     }

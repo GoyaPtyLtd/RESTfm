@@ -224,52 +224,51 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
      *  arising from _updateElseCreate flag.
      */
     protected function _updateRecord (RESTfmMessage $restfmMessage, RESTfmMessageRecord $requestRecord, $index) {
-        $realRecordID = $recordID;
+        $recordID = $requestRecord->getRecordId();
 
-        $existingRecord = NULL;
-        if (strpos($recordID, '=')) {       // This is a unique-key-recordID
-            $existingRecord = new RESTfmDataSimple();
+        $readMessage = NULL;            // May be re-used for appending data.
+
+        if (strpos($recordID, '=')) {   // This is a unique-key-recordID, will
+                                        // need to find the real recordID.
+            $readMessage = new RESTfmMessage();
 
             // $this->_readRecord() will throw an exception if $this->_isSingle.
             try {
-                $this->_readRecord($existingRecord, $recordID);
+                $this->_readRecord($readMessage, new RESTfmMessageRecord($recordID));
             } catch (RESTfmResponseException $e) {
                 // Check for 404 Not Found in exception.
                 if ($e->getCode() == RESTfmResponseException::NOTFOUND && $this->_updateElseCreate) {
                     // No record matching this unique-key-recordID,
                     // create new record instead.
-                    return $this->_createRecord($restfmData, $index, $row);
+                    return $this->_createRecord($restfmMessage, $requestRecord, $index);
                 }
 
                 // Not 404, re-throw exception.
                 throw $e;
             }
 
-            // Check if we have a multistatus error.
-            if ($existingRecord->sectionExists('multistatus')) {
-                $readStatus = $existingRecord->getSectionData('multistatus', 0);
+            // Check if we have an error.
+            $readStatus = $readMessage->getMultistatus(0);
+            if ($readStatus !== NULL) {
 
                 // Check for FileMaker error 401: No records match the request
-                if ($readStatus['Status'] == 401 && $this->_updateElseCreate) {
+                if ($readStatus->getStatus() == 401 && $this->_updateElseCreate) {
                     // No record matching this unique-key-recordID,
                     // create new record instead.
-                    return $this->_createRecord($restfmData, $index, $row);
+                    return $this->_createRecord($restfmMessage, $requestRecord, $index);
                 }
 
-                // Some other error, set status in our own multistatus.
-                $restfmData->setSectionData('multistatus', NULL, array(
-                    'recordID'      => $recordID,
-                    'Status'        => $readStatus['Status'],
-                    'Reason'        => $readStatus['Reason'],
+                // Some other error, set our own multistatus.
+                $restfmMessage->addMultistatus(new RESTfmMessageMultistatus(
+                        $readStatus->getStatus(),
+                        $readStatus->getReason(),
+                        $requestRecord->getRecordId()
                 ));
                 return;                             // Nothing more to do here.
             }
 
-            // We need the first element of the 'meta' section. The
-            // index will be the recordID we are trying to find.
-            $existingRecord->setIteratorSection('meta');
-            $existingRecord->rewind();
-            $realRecordID = $existingRecord->key();
+            // We now have the real recordID.
+            $recordID = $readMessage->getRecord(0)->getRecordId();
         }
 
         $FM = $this->_backend->getFileMaker();
@@ -277,37 +276,36 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
 
         // Allow appending to existing data.
         if ($this->_updateAppend) {
-            if ($existingRecord == NULL) {
-                $existingRecord = new RESTfmDataSimple();
-                $this->_readRecord($existingRecord, $recordID);
+            if ($readMessage == NULL) {
+                $readMessage = new RESTfmMessage();
+                $this->_readRecord($readMessage, new RESTfmMessageRecord($recordID));
 
                 // Check if we have an error.
-                if ($existingRecord->sectionExists('multistatus')) {
-                    $readStatus = $existingRecord->getSectionData('multistatus', 0);
-                    // Set status in our own multistatus.
-                    $restfmData->setSectionData('multistatus', NULL, array(
-                        'recordID'      => $recordID,
-                        'Status'        => $readStatus['Status'],
-                        'Reason'        => $readStatus['Reason'],
+                $readStatus = $readMessage->getMultistatus(0);
+                if ($readStatus !== NULL) {
+                    // Set our own multistatus for this error.
+                    $restfmMessage->addMultistatus(new RESTfmMessageMultistatus(
+                            $readStatus->getStatus(),
+                            $readStatus->getReason(),
+                            $requestRecord->getRecordId()
                     ));
-                    return;                         // Nothing more to do here.
+                    return;                             // Nothing more to do here.
                 }
             }
 
-            // We need the first element of the 'data' section.
-            $existingRecord->setIteratorSection('data');
-            $existingRecord->rewind();
-            $existingRow = $existingRecord->current();
+            $readRecord = $readMessage->getRecord(0);
 
-            foreach ($row as $fieldName => $value) {
-                $row[$fieldName] = $existingRow[$fieldName] . $value;
+            // Rebuild $requestRecord field values by appending to the field
+            // values in $readRecord.
+            foreach ($requestRecord as $fieldName => $value) {
+                $requestRecord[$fieldName] = $readRecord[$fieldName] . $value;
             }
         }
 
-        $updatedValuesRepetitions = $this->_convertValuesToRepetitions($row);
+        $updatedValuesRepetitions = $this->_convertValuesToRepetitions($requestRecord);
 
         // New edit command on record with values to update.
-        $editCommand = $FM->newEditCommand($this->_layout, $realRecordID, $updatedValuesRepetitions);
+        $editCommand = $FM->newEditCommand($this->_layout, $recordID, $updatedValuesRepetitions);
 
         // Script calling.
         if ($this->_postOpScriptTrigger) {
@@ -328,17 +326,17 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
             // Check for FileMaker error 401: No records match the request
             if ($result->getCode() == 401 && $this->_updateElseCreate) {
                 // No record matching this recordID, create new record instead.
-                return $this->_createRecord($restfmData, $index, $row);
+                return $this->_createRecord($restfmMessage, $requestRecord, $index);
             }
 
             if ($this->_isSingle) {
                 throw new FileMakerResponseException($result);
             }
             // Store result codes in multistatus section
-            $restfmData->setSectionData('multistatus', NULL, array(
-                'recordID'      => $recordID,
-                'Status'        => $result->getCode(),
-                'Reason'        => $result->getMessage(),
+            $restfmMessage->addMultistatus(new RESTfmMessageMultistatus(
+                $result->getCode(),
+                $result->getMessage(),
+                $requestRecord->getRecordId()
             ));
             return;                                 // Nothing more to do here.
         }

@@ -263,7 +263,7 @@ abstract class OpsRecordAbstract {
      * Update record from the provided RESTfmMessageRecord object.
      * Convenience method wraps bulk operation method.
      *
-     * @param RESTfmMessageRecord $requestRecord
+     * @param RESTfmMessage $requestMessage
      *  Must contain row data and recordID
      *
      * @throws RESTfmResponseException
@@ -272,11 +272,9 @@ abstract class OpsRecordAbstract {
      * @return RESTfmMessage
      *  - 'multistatus' section only if an error occurred.
      */
-    public function updateSingle (RESTfmMessageRecord $requestRecord) {
+    public function updateSingle (RESTfmMessage $requestMessage) {
         $this->_setSingle(TRUE);
-        $requestRestfmMessage = new RESTfmMessage();
-        $requestRestfmMessage->addRecord($requestRecord);
-        return $this->updateBulk($requestRestfmMessage);
+        return $this->updateBulk($requestMessage);
     }
 
     /**
