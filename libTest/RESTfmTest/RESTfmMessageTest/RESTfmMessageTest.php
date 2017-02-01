@@ -90,12 +90,17 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
         $message->addMultistatus($messageMultistatus0);
         $message->addMultistatus($messageMultistatus1);
 
-        $multistatus = $message->getMultistatus();
+        $this->assertEquals( spl_object_hash($message->getMultistatus(1)),
+                             spl_object_hash($messageMultistatus1) );
 
-        $this->assertEquals( spl_object_hash($multistatus[0]),
+        $this->assertNull( $message->getMultistatus(-1));
+
+        $multistatuses = $message->getMultistatuses();
+
+        $this->assertEquals( spl_object_hash($multistatuses[0]),
                              spl_object_hash($messageMultistatus0) );
 
-        $this->assertEquals( spl_object_hash($multistatus[1]),
+        $this->assertEquals( spl_object_hash($multistatuses[1]),
                              spl_object_hash($messageMultistatus1) );
     }
 
@@ -139,6 +144,11 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
         $message->addRecord($messageRecord1);
 
         $this->assertEquals($message->getRecordCount(), 2);
+
+        $this->assertEquals( spl_object_hash($message->getRecord(1)),
+                             spl_object_hash($messageRecord1) );
+
+        $this->assertNull($message->getRecord(-1));
 
         $records = $message->getRecords();
 

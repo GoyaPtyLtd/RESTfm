@@ -146,9 +146,22 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
+     * @param integer $index
+     *  Index to return if it exists.
+     *
+     * @return RESTfmMessageMultistatus OR
+     *          array [ <RESTfmMessageMultistatus>, ... ]
+     */
+    public function getMultistatus ($index) {
+        if (isset($this->_multistatus[$index])) {
+            return $this->_multistatus[$index];
+        }
+    }
+
+    /**
      * @return array [ <RESTfmMessageMultistatus>, ... ]
      */
-    public function getMultistatus () {
+    public function getMultistatuses () {
         return $this->_multistatus;
     }
 
@@ -194,6 +207,20 @@ class RESTfmMessage implements RESTfmMessageInterface {
             // TODO profile this operation
             $recordIndex = count($this->_records) - 1;
             $this->_recordIdMap[$recordId] = $recordIndex;
+        }
+    }
+
+    /**
+     * Return a record by index.
+     *
+     * @param integer $index
+     *  Index of record to return, if it exists.
+     *
+     * @return RESTfmMessageRecord
+     */
+    public function getRecord ($index) {
+        if (isset($this->_records[$index])) {
+            return $this->_records[$index];
         }
     }
 

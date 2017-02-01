@@ -90,9 +90,18 @@ interface RESTfmMessageInterface {
     public function addMultistatus (RESTfmMessageMultistatusInterface $multistatus);
 
     /**
-     * @return array [ <RESTfmMessageMultistatusInterface>, ... ]
+     * @param integer $index
+     *  Index to return if it exists.
+     *
+     * @return RESTfmMessageMultistatus OR
+     *          array [ <RESTfmMessageMultistatus>, ... ]
      */
-    public function getMultistatus ();
+    public function getMultistatus ($index);
+
+    /**
+     * @return array [ <RESTfmMessageMultistatus>, ... ]
+     */
+    public function getMultistatuses ();
 
     /**
      * Set a 'nav' name/href pair.
@@ -120,6 +129,16 @@ interface RESTfmMessageInterface {
      * @param RESTfmMessageRecordAbstract $record
      */
     public function addRecord (RESTfmMessageRecordAbstract $record);
+
+    /**
+     * Return a record by index.
+     *
+     * @param integer $index
+     *  Index of record to return, if it exists.
+     *
+     * @return RESTfmMessageRecordAbstract
+     */
+    public function getRecord ($index);
 
     /**
      * @return integer
