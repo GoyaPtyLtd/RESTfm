@@ -358,36 +358,33 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
      *  Record containing recordID to delete.
      */
     protected function _deleteRecord (RESTfmMessage $restfmMessage, RESTfmMessageRecord $requestRecord) {
-        $realRecordID = $recordID;
+        $recordID = $requestRecord->getRecordId();
 
-        $existingRecord = NULL;
-        if (strpos($recordID, '=')) {       // This is a unique-key-recordID
-            $existingRecord = new RESTfmDataSimple();
-            $this->_readRecord($existingRecord, $recordID);
+        if (strpos($recordID, '=')) {   // This is a unique-key-recordID, will
+                                        // need to find the real recordID.
+            $readMessage = new RESTfmMessage();
+            $this->_readRecord($readMessage, new RESTfmMessageRecord($recordID));
 
             // Check if we have an error.
-            if ($existingRecord->sectionExists('multistatus')) {
-                $readStatus = $existingRecord->getSectionData('multistatus', 0);
-                // Set status in our own multistatus.
-                $restfmData->setSectionData('multistatus', NULL, array(
-                    'recordID'      => $recordID,
-                    'Status'        => $readStatus['Status'],
-                    'Reason'        => $readStatus['Reason'],
+            $readStatus = $readMessage->getMultistatus(0);
+            if ($readStatus !== NULL) {
+                // Set our own multistatus for this error.
+                $restfmMessage->addMultistatus(new RESTfmMessageMultistatus(
+                        $readStatus->getStatus(),
+                        $readStatus->getReason(),
+                        $requestRecord->getRecordId()
                 ));
                 return;                             // Nothing more to do here.
             }
 
-            // We need the first element of the 'meta' section. The
-            // index will be the recordID we are trying to find.
-            $existingRecord->setIteratorSection('meta');
-            $existingRecord->rewind();
-            $realRecordID = $existingRecord->key();
+            // We now have the real recordID.
+            $recordID = $readMessage->getRecord(0)->getRecordId();
         }
 
         $FM = $this->_backend->getFileMaker();
         $FM->setProperty('database', $this->_database);
 
-        $deleteCommand = $FM->newDeleteCommand($this->_layout, $realRecordID);
+        $deleteCommand = $FM->newDeleteCommand($this->_layout, $recordID);
 
         // Script calling.
         if ($this->_postOpScriptTrigger) {
@@ -406,10 +403,10 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
                 throw new FileMakerResponseException($result);
             }
             // Store result codes in multistatus section
-            $restfmData->setSectionData('multistatus', NULL, array(
-                'recordID'      => $recordID,
-                'Status'        => $result->getCode(),
-                'Reason'        => $result->getMessage(),
+            $restfmMessage->addMultistatus(new RESTfmMessageMultistatus(
+                $result->getCode(),
+                $result->getMessage(),
+                $requestRecord->getRecordId()
             ));
             return;                                 // Nothing more to do here.
         }

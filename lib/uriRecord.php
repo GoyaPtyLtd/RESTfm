@@ -218,10 +218,10 @@ class uriRecord extends RESTfmResource {
             $opsRecord->setPreOpScript($restfmParameters->RFMpreScript, $scriptParameters);
         }
 
-        $restfmData = $opsRecord->deleteSingle($request->getRESTfmData(), $rawRecordID);
+        $restfmMessage = $opsRecord->deleteSingle(new RESTfmMessageRecord($rawRecordID));
 
         $response = new RESTfmResponse($request);
-        $response->setData($restfmData);
+        $response->setRestfmMessage($restfmMessage);
         $response->setStatus(Response::OK);
         return $response;
     }
