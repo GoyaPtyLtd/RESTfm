@@ -32,6 +32,9 @@ class FormatHtml extends FormatAbstract {
         ));
     }
 
+    /**
+     * @codeCoverageIgnore Not a testable unit.
+     */
     public function write (RESTfmMessage $restfmMessage) {
 
         //$str = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">' . "\n";
@@ -160,6 +163,8 @@ class FormatHtml extends FormatAbstract {
     /**
      *  Set username for credentials of current request. Displayed in UI, and
      *  used in "change user" link to force reauthentication.
+     * 
+     * @codeCoverageIgnore Not a testable unit.
      */
     public function setUsername ($username) {
         $this->_username = $username;

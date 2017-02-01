@@ -53,6 +53,7 @@ if (php_sapi_name() == "cli") {
     global $argv;
 
     if (count($argv) > 1) {
+        // @codeCoverageIgnoreStart
         switch($argv[1]) {
             case '-r':
                 echo Version::getRelease();
@@ -62,6 +63,7 @@ if (php_sapi_name() == "cli") {
                 echo Version::getProtocol();
                 return;
         }
+        // @codeCoverageIgnoreEnd
     }
 
     echo Version::getVersion();

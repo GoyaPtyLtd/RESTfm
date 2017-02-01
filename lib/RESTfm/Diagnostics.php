@@ -21,6 +21,8 @@ require_once 'RESTfmConfig.php';
 
 /**
  * Diagnostics class.
+ *
+ * @codeCoverageIgnore Not a testable unit.
  */
 class Diagnostics {
 
@@ -984,6 +986,8 @@ class Report implements Iterator {
      * Set the output format of a Report instance.
      *
      * @param string $format One of: html, text
+     *
+     * @codeCoverageIgnore
      */
     function setFormat($format) {
         $this->_format = $format;
@@ -997,6 +1001,9 @@ class Report implements Iterator {
         return $this->_items[$key];
     }
 
+    /**
+     * @codeCoverageIgnore
+     */
     function __toString() {
         $s = "";        // String to populate and return.
 

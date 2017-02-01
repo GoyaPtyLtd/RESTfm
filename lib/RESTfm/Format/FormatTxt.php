@@ -35,6 +35,8 @@ class FormatTxt extends FormatAbstract {
     /**
      * Write the provided RESTfmMessage object into a formatted string.
      *
+     * @codeCoverageIgnore Not a testable unit.
+     *
      * @param RESTfmMessage $restfmMessage
      *
      * @return string
