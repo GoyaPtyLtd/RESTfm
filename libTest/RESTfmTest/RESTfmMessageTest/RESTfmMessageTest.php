@@ -20,13 +20,11 @@
 class RESTfmMessageTest extends PHPUnit_Framework_TestCase
 {
 
-    public function testSetAndGetInfo () {
+    public function testSetAndGetAndUnsetInfo () {
         $message = new RESTfmMessage();
 
         $message->setInfo('addField0', 'addValue0');
         $message->setInfo('addField1', 'addValue1');
-
-        $this->assertNull($message->getInfo('nonExistent'));
 
         $messageGet0 = $message->getInfo('addField0');
         $this->assertEquals($messageGet0, 'addValue0');
@@ -42,6 +40,10 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
                 $getInfo['addField1'],
                 'addValue1'
         );
+
+        $message->unsetInfo('addField0');
+
+        $this->assertNull($message->getInfo('addField0'));
     }
 
     public function testSetAndGetMetaFields () {
