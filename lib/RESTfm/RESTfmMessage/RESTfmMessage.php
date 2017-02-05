@@ -95,6 +95,15 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
+     * Unset an 'info' key.
+     *
+     * @param string $key
+     */
+    public function unsetInfo ($key) {
+        unset($this->_info[$key]);
+    }
+
+    /**
      * @return array [ <key> => <val>, ... ]
      */
     public function getInfos () {

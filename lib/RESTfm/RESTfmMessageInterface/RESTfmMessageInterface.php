@@ -47,6 +47,13 @@ interface RESTfmMessageInterface {
     public function setInfo ($key, $val);
 
     /**
+     * Unset an 'info' key.
+     *
+     * @param string $key
+     */
+    public function unsetInfo ($key);
+
+    /**
      * @param string $key
      * @return string $val
      */
