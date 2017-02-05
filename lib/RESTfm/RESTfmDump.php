@@ -77,7 +77,7 @@ class RESTfmDump {
         fwrite($handle, $restfmParameters);
 
         fwrite($handle, "\n" . '------------ Data -------------------' . "\n");
-        fwrite($handle, $request->getRESTfmData());
+        fwrite($handle, $request->getRESTfmMessage());
 
         fwrite($handle, "\n" . '------------ RESTfm -----------------' . "\n");
         fwrite($handle, 'request method=' . $request->method .  "\n");
