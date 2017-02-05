@@ -193,7 +193,7 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
      * @throws RESTfmResponseException
      *  On backend error.
      *
-     * @return RESTfmDataMessage
+     * @return RESTfmMessage
      */
     public function readMetaField () {
         $FM = $this->_backend->getFileMaker();

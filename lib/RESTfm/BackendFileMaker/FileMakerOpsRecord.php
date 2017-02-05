@@ -420,7 +420,7 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
      * @throws RESTfmResponseException
      *  On error
      *
-     * @return RESTfmDataAbstract
+     * @return RESTfmMessage
      *  - 'data', 'meta', 'metaField' sections.
      *  - does not contain 'multistatus' this is not a bulk operation.
      */
@@ -428,7 +428,7 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
         $FM = $this->_backend->getFileMaker();
         $FM->setProperty('database', $this->_database);
 
-        $restfmData = new RESTfmDataSimple();
+        $restfmMessage = new RESTfmMessage();
 
         // FileMaker only supports passing a single string parameter into a
         // script. Any requirements for multiple parameters must be handled
@@ -452,11 +452,11 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
         // Query the result for returned records.
         if (! $this->_suppressData) {
             foreach ($result->getRecords() as $record) {
-                $this->_parseRecord($restfmData, $record);
+                $this->_parseRecord($restfmMessage, $record);
             }
         }
 
-        return $restfmData;
+        return $restfmMessage;
     }
 
     // --- Protected ---
@@ -561,8 +561,8 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
      * Convert an associative array of fieldName => value pairs, where
      * repetitions are expressed as "fieldName[numericalIndex]" => "value",
      * into the form "fieldName" => array( numericalIndex => "value", ... )
-     * i.e. convert from "RESTfmData format" into "FileMaker add/edit $values
-     * format".
+     * i.e. convert from "RESTfmMessage format" into "FileMaker add/edit
+     * $values format".
      *
      * @param Array $values
      *  Associative array of fieldName => value pairs.
