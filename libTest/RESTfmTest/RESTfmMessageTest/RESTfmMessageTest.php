@@ -303,6 +303,30 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
         $this->assertEmpty($arrayDiff);
     }
 
+    /**
+     * setSection() allows for 1d section data to be sent as a single row
+     * in a 2d array. Check this is working for known 1d sections.
+     */
+    public function testSetSectionDimensionalityResilience () {
+        $message = new RESTfmMessage();
+
+        $message->setSection('info', array( array(
+                                                'key0' => 'val0',
+                                                'key1' => 'val1'
+                                                ) ) );
+
+        $message->setSection('nav', array( array(
+                                               'nav0' => 'href0',
+                                               'nav1' => 'href1',
+                                               ) ) );
+
+        $export = $message->exportArray();
+
+        $this->assertEquals($export['info']['key1'], 'val1');
+
+        $this->assertEquals($export['nav']['nav0'], 'href0');
+    }
+
     public function testImportAndExport () {
         $message = new RESTfmMessage();
 

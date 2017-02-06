@@ -60,10 +60,16 @@ class RESTfmMessage implements RESTfmMessageInterface {
     protected $_records = array();
 
     /**
-     * @var array of known section names.
+     * @var array of known section dimensions.
      */
-    protected $_knownSections = array('meta', 'data', 'info',
-                                      'metaField', 'multistatus', 'nav');
+    protected $_knownSectionDimensions = array(
+        'meta'          => 2,
+        'data'          => 2,
+        'info'          => 1,
+        'metaField'     => 2,
+        'multistatus'   => 2,
+        'nav'           => 1,
+    );
 
     /**
      * @var associative array of recordId -> record index
@@ -291,7 +297,8 @@ class RESTfmMessage implements RESTfmMessageInterface {
     public function getSection ($sectionName) {
         switch ($sectionName) {
             case 'meta':
-                $section = new RESTfmMessageSection($sectionName, 2);
+                $section = new RESTfmMessageSection($sectionName,
+                                $this->_knownSectionDimensions[$sectionName]);
                 $sectionRows = &$section->_getRowsReference();
                 foreach ($this->_records as $record) {
                     $sectionRows[] = &$record->_getMetaReference();
@@ -300,7 +307,8 @@ class RESTfmMessage implements RESTfmMessageInterface {
                 break;
 
             case 'data':
-                $section = new RESTfmMessageSection($sectionName, 2);
+                $section = new RESTfmMessageSection($sectionName,
+                                $this->_knownSectionDimensions[$sectionName]);
                 $sectionRows = &$section->_getRowsReference();
                 foreach ($this->_records as $record) {
                     $sectionRows[] = &$record->_getDataReference();
@@ -309,14 +317,16 @@ class RESTfmMessage implements RESTfmMessageInterface {
                 break;
 
             case 'info':
-                $section = new RESTfmMessageSection($sectionName, 1);
+                $section = new RESTfmMessageSection($sectionName,
+                                $this->_knownSectionDimensions[$sectionName]);
                 $sectionRows = &$section->_getRowsReference();
                 $sectionRows[] = &$this->_info;
                 return $section;
                 break;
 
             case 'metaField':
-                $section = new RESTfmMessageSection($sectionName, 2);
+                $section = new RESTfmMessageSection($sectionName,
+                                $this->_knownSectionDimensions[$sectionName]);
                 $sectionRows = &$section->_getRowsReference();
                 foreach ($this->_metaFields as $row) {
                     $sectionRows[] = &$row->_getDataReference();
@@ -325,7 +335,8 @@ class RESTfmMessage implements RESTfmMessageInterface {
                 break;
 
             case 'multistatus':
-                $section = new RESTfmMessageSection($sectionName, 2);
+                $section = new RESTfmMessageSection($sectionName,
+                                $this->_knownSectionDimensions[$sectionName]);
                 $sectionRows = &$section->_getRowsReference();
                 foreach ($this->_multistatus as $row) {
                     $sectionRows[] = &$row->_getMultistatusReference();
@@ -334,7 +345,8 @@ class RESTfmMessage implements RESTfmMessageInterface {
                 break;
 
             case 'nav':
-                $section = new RESTfmMessageSection($sectionName, 1);
+                $section = new RESTfmMessageSection($sectionName,
+                                $this->_knownSectionDimensions[$sectionName]);
                 $sectionRows = &$section->_getRowsReference();
                 $sectionRows[] = &$this->_navs;
                 return $section;
@@ -343,17 +355,25 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
+     * Set section data from provided array parameter.
+     *
+     * Is resilient to passing 1d array parameter as a single array, or as a
+     * single array at index[0] of 2d array. Dimensionality is determined
+     * internally by $sectionName, not parameter format.
+     *
      * @param string $sectionName section name.
      * @param array of section data.
      *  With section data in the form of:
      *    1 dimensional:
-     *    array('key' => 'val', ...)
+     *      ['key' => 'val', ...]
+     *      OR
+     *      [['key' => 'var', ...]]
      *   OR
      *    2 dimensional:
-     *    array(
-     *      array('key' => 'val', ...),
-     *      ...
-     *    ))
+     *      [
+     *          ['key' => 'val', ...],
+     *          ...
+     *      ]
      */
     public function setSection ($sectionName, $sectionData) {
         switch ($sectionName) {
@@ -396,6 +416,10 @@ class RESTfmMessage implements RESTfmMessageInterface {
                 break;
 
             case 'info':
+                // We are 1d, but allow a single 2d row.
+                if (isset($sectionData[0]) && is_array($sectionData[0])) {
+                    $sectionData = $sectionData[0];
+                }
                 foreach ($sectionData as $key => $val) {
                     $this->setInfo($key, $val);
                 }
@@ -416,7 +440,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
                     $multistatus = new RESTfmMessageMultistatus();
                     foreach ($row as $key => $val) {
                         switch ($key) {
-                            // 'index' is depricated for 'recordID' for
+                            // 'index' is deprecated for 'recordID' for
                             // consistency on bulk POST/CREATE operations.
                             //case 'index':
                             //    $multistatus->setIndex($val);
@@ -437,6 +461,10 @@ class RESTfmMessage implements RESTfmMessageInterface {
                 break;
 
             case 'nav':
+                // We are 1d, but allow a single 2d row.
+                if (isset($sectionData[0]) && is_array($sectionData[0])) {
+                    $sectionData = $sectionData[0];
+                }
                 foreach ($sectionData as $name => $href) {
                     $this->setNav($name, $href);
                 }
