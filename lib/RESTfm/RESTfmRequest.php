@@ -372,20 +372,19 @@ class RESTfmRequest extends Request {
 
         // Parse submitted data through formatter.
         $dataFormatter = FormatFactory::makeFormatter($this->_format);
-        $dataFormatter->parse($this->_RESTfmData, $this->data);
+        $dataFormatter->parse($this->_RESTfmMessage, $this->data);
 
-        // Identify and store RFM* parameters from 'info' section and
-        // then remove from 'info' section.
-        $this->_RESTfmData->setIteratorSection('info');
+        // Identify RFM* parameters in 'info' section, store as request
+        // parameter, finally remove from 'info' section.
         $toDelete = array();
-        foreach ($this->_RESTfmData as $key => $val) {
+        foreach ($this->_RESTfmMessage->getInfos() as $key => $val) {
             if (preg_match('/^RFM/', $key)) {
                 $this->_parametersData[$key] = $val;
                 $toDelete[] = $key;
             }
         }
         foreach ($toDelete as $key) {
-            $this->_RESTfmData->deleteSectionData('info', $key);
+            $this->_RESTfmMessage->unsetInfo($key);
         }
     }
 
