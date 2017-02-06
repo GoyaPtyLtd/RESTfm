@@ -51,14 +51,14 @@ class FormatXml extends FormatAbstract {
                     foreach ($childElement as $field) {
                         $rowData[(string) $field['name']] = (string) $field;
                     }
-                    $sectionData[(string) $childElement['name']] =
-                                                        $rowData;
+                    $sectionData[] = $rowData;
                 } elseif (strtolower($childElement->getName()) == 'field') {
                     // Single dimensional section of name=>value pairs.
                     $sectionData[(string) $childElement['name']] =
                                                         (string) $childElement;
                 }
             }
+           
             $restfmMessage->setSection($sectionXML->getName(), $sectionData);
         }
     }

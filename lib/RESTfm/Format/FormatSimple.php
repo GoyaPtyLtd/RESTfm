@@ -121,7 +121,12 @@ class FormatSimple extends FormatAbstract {
 
         $sectionName = array_shift($rows);  // First line is always the name.
 
-        $restfmMessage->setSection($sectionName, $rows);
+        $sectionData = array();
+        foreach ($rows as $row) {
+            $sectionData[] = $this->_parseRow($row);
+        }
+
+        $restfmMessage->setSection($sectionName, $sectionData);
     }
 
     /**

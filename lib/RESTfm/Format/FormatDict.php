@@ -41,6 +41,8 @@ class FormatDict extends FormatAbstract {
         $pairsTop = array();
         $this->_decodeDictPairs($pairsTop, $data);
 
+        $sectionData = array();
+
         // Step through pairs identifying multi-dimensional records
         // by a numerical suffix on the section name.
         foreach ($pairsTop as $sectionName => $value) {
@@ -50,14 +52,18 @@ class FormatDict extends FormatAbstract {
                 $sectionName = $matches[1];
                 $rowData = array();
                 $this->_decodeDictPairs($rowData, $value);
-                $restfmMessage->setSection($sectionName, $sectionData);
+                if (!isset($sectionData[$sectionName])) {
+                    $sectionData[$sectionName] = array();
+                }
+                $sectionData[$sectionName][] = $rowData;
             } else {
                 // Single dimensional section data.
-                $sectionData = array();
-                $this->_decodeDictPairs($sectionData, $value);
-                $restfmMessage->setSection($sectionName, $sectionData);
+                $sectionData[$sectionName] = array();
+                $this->_decodeDictPairs($sectionData[$sectionName], $value);
             }
         }
+
+        $restfmMessage->importArray($sectionData);
     }
 
     /**

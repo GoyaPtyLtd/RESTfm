@@ -29,7 +29,7 @@ class FormatTxt extends FormatAbstract {
      * @param string $data
      */
     public function parse (RESTfmMessage $restfmMessage, $data) {
-        throw RESTfmResponseException('No input parser available for txt format.', 500);
+        throw new RESTfmResponseException('No input parser available for txt format.', 500);
     }
 
     /**

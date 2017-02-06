@@ -163,7 +163,7 @@ class FormatHtml extends FormatAbstract {
     /**
      *  Set username for credentials of current request. Displayed in UI, and
      *  used in "change user" link to force reauthentication.
-     * 
+     *
      * @codeCoverageIgnore Not a testable unit.
      */
     public function setUsername ($username) {
