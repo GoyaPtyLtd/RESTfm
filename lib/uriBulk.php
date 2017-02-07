@@ -82,13 +82,13 @@ class uriBulk extends RESTfmResource {
             $opsRecord->setSuppressData(TRUE);
         }
 
-        $restfmData = $opsRecord->createBulk($request->getRESTfmData());
+        $restfmMessage = $opsRecord->createBulk($request->getRESTfmMessage());
 
         $response = new RESTfmResponse($request);
 
-        $response->setData($restfmData);
+        $response->setRESTfmMessage($restfmMessage);
 
-        if ($restfmData->sectionExists('multistatus')) {
+        if ($restfmMessage->getMultistatusCount() > 0) {
             $response->setStatus(207, 'Multi-status');
         } else {
             $response->setStatus(Response::OK);
@@ -117,13 +117,13 @@ class uriBulk extends RESTfmResource {
 
         $opsRecord = $backend->makeOpsRecord($database, $layout);
 
-        $restfmData = $opsRecord->readBulk($request->getRESTfmData());
+        $restfmMessage = $opsRecord->readBulk($request->getRESTfmMessage());
 
         $response = new RESTfmResponse($request);
 
-        $response->setData($restfmData);
+        $response->setRESTfmMessage($restfmMessage);
 
-        if ($restfmData->sectionExists('multistatus')) {
+        if ($restfmMessage->getMultistatusCount() > 0) {
             $response->setStatus(207, 'Multi-status');
         } else {
             $response->setStatus(Response::OK);
@@ -185,13 +185,13 @@ class uriBulk extends RESTfmResource {
             $opsRecord->setUpdateElseCreate();
         }
 
-        $restfmData = $opsRecord->updateBulk($request->getRESTfmData());
+        $restfmMessage = $opsRecord->updateBulk($request->getRESTfmMessage());
 
         $response = new RESTfmResponse($request);
 
-        $response->setData($restfmData);
+        $response->setRESTfmMessage($restfmMessage);
 
-        if ($restfmData->sectionExists('multistatus')) {
+        if ($restfmMessage->getMultistatusCount() > 0) {
             $response->setStatus(207, 'Multi-status');
         } else {
             $response->setStatus(Response::OK);
@@ -220,13 +220,13 @@ class uriBulk extends RESTfmResource {
 
         $opsRecord = $backend->makeOpsRecord($database, $layout);
 
-        $restfmData = $opsRecord->deleteBulk($request->getRESTfmData());
+        $restfmMessage = $opsRecord->deleteBulk($request->getRESTfmMessage());
 
         $response = new RESTfmResponse($request);
 
-        $response->setData($restfmData);
+        $response->setRESTfmMessage($restfmMessage);
 
-        if ($restfmData->sectionExists('multistatus')) {
+        if ($restfmMessage->getMultistatusCount() > 0) {
             $response->setStatus(207, 'Multi-status');
         } else {
             $response->setStatus(Response::OK);
