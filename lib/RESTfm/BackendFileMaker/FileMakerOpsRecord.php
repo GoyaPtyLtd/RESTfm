@@ -187,8 +187,8 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
                 }
                 // Store result codes in multistatus section
                 $restfmMessage->addMultistatus(new RESTfmMessageMultistatus(
-                    $result->getCode(),
-                    $result->getMessage(),
+                    $record->getCode(),
+                    $record->getMessage(),
                     $recordID
                 ));
                 return;                             // Nothing more to do here.
