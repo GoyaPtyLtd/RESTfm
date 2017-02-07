@@ -83,7 +83,7 @@ class uriScript extends RESTfmResource {
             );
         }
 
-        $response->setRestfmMessage($restfmMessage);
+        $response->setRESTfmMessage($restfmMessage);
         $response->setStatus(Response::OK);
 
         return $response;

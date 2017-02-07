@@ -149,20 +149,20 @@ class RESTfmResponse extends Response {
         }
 
         // Ensure we have response data!
-        if ($this->_restfmMessage == NULL) {
-            $this->_restfmMessage = new RESTfmMessage();
+        if ($this->_RESTfmMessage == NULL) {
+            $this->_RESTfmMessage = new RESTfmMessage();
         }
 
         // Inject X-RESTfm headers into 'info' section.
         foreach ($this->headers as $header => $value) {
             if (preg_match('/^X-RESTfm-/i', $header)) {
-                $this->_restfmMessage->setInfo($header, $value);
+                $this->_RESTfmMessage->setInfo($header, $value);
             }
         }
 
         // Inject additional info into 'info' section.
         foreach ($this->_info as $name => $value) {
-            $this->_restfmMessage->setInfo($name, $value);
+            $this->_RESTfmMessage->setInfo($name, $value);
         }
 
         // Build the message body of this response.
@@ -191,8 +191,8 @@ class RESTfmResponse extends Response {
      *
      * @param RESTfmMessage $restfmMessage
      */
-    public function setRestfmMessage(RESTfmMessage $restfmMessage) {
-        $this->_restfmMessage = $restfmMessage;
+    public function setRESTfmMessage(RESTfmMessage $restfmMessage) {
+        $this->_RESTfmMessage = $restfmMessage;
     }
 
     /**
@@ -235,7 +235,7 @@ class RESTfmResponse extends Response {
      * @var RESTfmMessage
      *  The data associated with this response.
      */
-    protected $_restfmMessage = NULL;
+    protected $_RESTfmMessage = NULL;
 
     /**
      * @var array
@@ -284,7 +284,7 @@ class RESTfmResponse extends Response {
         }
 
         $this->addHeader('Content-type', $this->contentType($formatAs));
-        $this->body = $formatter->write($this->_restfmMessage);
+        $this->body = $formatter->write($this->_RESTfmMessage);
 
         // Use XSLT to produce final format.
         if (isset($useXSLT)) {

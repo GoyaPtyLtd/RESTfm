@@ -48,7 +48,7 @@ class uriDatabaseScript extends RESTfmResource {
         $response = new RESTfmResponse($request);
 
         $response->setStatus(Response::OK);
-        $response->setRestfmMessage($restfmMessage);
+        $response->setRESTfmMessage($restfmMessage);
         return $response;
     }
 

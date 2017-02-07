@@ -60,7 +60,7 @@ class uriDatabaseLayout extends RESTfmResource {
         }
 
         $response->setStatus(Response::OK);
-        $response->setRestfmMessage($restfmMessage);
+        $response->setRESTfmMessage($restfmMessage);
         return $response;
     }
 }

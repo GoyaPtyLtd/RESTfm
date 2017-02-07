@@ -79,7 +79,7 @@ class uriLayout extends RESTfmResource {
             $restfmMessage = $opsLayout->readMetaField();
             $response = new RESTfmResponse($request);
             $response->setStatus(Response::OK);
-            $response->setRestfmMessage($restfmMessage);
+            $response->setRESTfmMessage($restfmMessage);
             return $response;
         }
 
@@ -222,7 +222,7 @@ class uriLayout extends RESTfmResource {
 
 
         $response->setStatus(Response::OK);
-        $response->setRestfmMessage($restfmMessage);
+        $response->setRESTfmMessage($restfmMessage);
         return $response;
     }
 
@@ -300,7 +300,7 @@ class uriLayout extends RESTfmResource {
             );
         }
 
-        $response->setRestfmMessage($restfmMessage);
+        $response->setRESTfmMessage($restfmMessage);
         $response->setStatus(Response::CREATED);
         return $response;
     }

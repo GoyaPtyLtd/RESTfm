@@ -82,7 +82,7 @@ class uriRecord extends RESTfmResource {
             );
         }
 
-        $response->setRestfmMessage($restfmMessage);
+        $response->setRESTfmMessage($restfmMessage);
         $response->setStatus(Response::OK);
         return $response;
     }
@@ -165,7 +165,7 @@ class uriRecord extends RESTfmResource {
             );
         }
 
-        $response->setRestfmMessage($restfmMessage);
+        $response->setRESTfmMessage($restfmMessage);
         $response->setStatus(Response::OK);
         return $response;
     }
@@ -223,7 +223,7 @@ class uriRecord extends RESTfmResource {
         $restfmMessage = $opsRecord->deleteSingle(new RESTfmMessageRecord($rawRecordID));
 
         $response = new RESTfmResponse($request);
-        $response->setRestfmMessage($restfmMessage);
+        $response->setRESTfmMessage($restfmMessage);
         $response->setStatus(Response::OK);
         return $response;
     }
