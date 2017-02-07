@@ -97,6 +97,8 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
 
         $this->assertNull( $message->getMultistatus(-1));
 
+        $this->assertEquals($message->getMultistatusCount(), 2);
+
         $multistatuses = $message->getMultistatuses();
 
         $this->assertEquals( spl_object_hash($multistatuses[0]),

@@ -161,6 +161,13 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
+     * @return integer
+     */
+    public function getMultistatusCount () {
+        return count($this->_multistatus);
+    }
+
+    /**
      * @param integer $index
      *  Index to return if it exists.
      *

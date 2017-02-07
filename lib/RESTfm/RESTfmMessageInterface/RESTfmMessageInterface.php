@@ -106,6 +106,11 @@ interface RESTfmMessageInterface {
     public function getMultistatus ($index);
 
     /**
+     * @return integer
+     */
+    public function getMultistatusCount ();
+
+    /**
      * @return array [ <RESTfmMessageMultistatus>, ... ]
      */
     public function getMultistatuses ();
