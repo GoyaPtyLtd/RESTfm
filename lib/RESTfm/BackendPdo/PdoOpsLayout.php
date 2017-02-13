@@ -73,7 +73,7 @@ class PdoOpsLayout extends OpsLayoutAbstract {
      * @throws RESTfmResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
+     * @return RESTfmMessage
      *  - 'data', 'meta', 'metaField' sections.
      */
     public function read () {
@@ -132,9 +132,9 @@ class PdoOpsLayout extends OpsLayoutAbstract {
             throw new PdoResponseException($e);
         }
 
-        $restfmData = new RESTfmDataSimple();
+        $restfmMessage = new RESTfmMessage();
 
-        $this->_parseMetaField($restfmData, $statement);
+        $this->_parseMetaField($restfmMessage, $statement);
 
         $fetchCount = 0;
         foreach ($statement->fetchAll() as $record) {
@@ -144,18 +144,22 @@ class PdoOpsLayout extends OpsLayoutAbstract {
                 $recordID = $this->_uniqueKey . '===' . $record[$this->_uniqueKey];
             }
 
-            $restfmData->pushDataRow($record, $recordID, NULL);
+            $restfmMessage->addRecord(new RESTfmMessageRecord(
+                $recordID,
+                NULL,
+                $record
+            ));
             $fetchCount++;
         }
 
         $statement->closeCursor();
 
         // Info.
-        $restfmData->pushInfo('tableRecordCount', $tableRecordCount);
-        $restfmData->pushInfo('foundSetCount', $tableRecordCount);
-        $restfmData->pushInfo('fetchCount', $fetchCount);
+        $restfmMessage->setInfo('tableRecordCount', $tableRecordCount);
+        $restfmMessage->setInfo('foundSetCount', $tableRecordCount);
+        $restfmMessage->setInfo('fetchCount', $fetchCount);
 
-        return $restfmData;
+        return $restfmMessage;
     }
 
     /**
@@ -164,7 +168,7 @@ class PdoOpsLayout extends OpsLayoutAbstract {
      * @throws RESTfmResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
+     * @return RESTfmMessage
      *  - 'metaField' section.
      */
     public function readMetaField () {
@@ -177,13 +181,13 @@ class PdoOpsLayout extends OpsLayoutAbstract {
             throw new PdoResponseException($e);
         }
 
-        $restfmData = new RESTfmDataSimple();
+        $restfmMessage = new RESTfmMessage();
 
-        $this->_parseMetaField($restfmData, $statement);
+        $this->_parseMetaField($restfmMessage, $statement);
 
         $statement->closeCursor();
 
-        return $restfmData;
+        return $restfmMessage;
     }
 
     // --- Protected ---
@@ -202,12 +206,12 @@ class PdoOpsLayout extends OpsLayoutAbstract {
 
     /**
      * Parse field meta data out of provided PDO statement object into
-     * provided RESTfmData object.
+     * provided RESTfmMessage object.
      *
-     * @param RESTfmDataSimple $restfmData
+     * @param RESTfmMessage $restfmMessage
      * @param PDOStatement $statement
      */
-    protected function _parseMetaField(RESTfmDataSimple $restfmData, PDOStatement $statement) {
+    protected function _parseMetaField(RESTfmMessage $restfmMessage, PDOStatement $statement) {
         $numColumns = $statement->columnCount();
         for ($i=0; $i < $numColumns; $i++) {
             $allFieldMeta = $statement->getColumnMeta($i);
@@ -215,7 +219,7 @@ class PdoOpsLayout extends OpsLayoutAbstract {
 
             // Keep only required fields.
             $requiredFields = array('native_type', 'flags', 'len', 'precision');
-            $fieldMeta = array();
+            $restfmMessageRow = new RESTfmMessageRow();
             foreach($requiredFields as $requiredField) {
                 if ($requiredField == 'flags') {
                     // Mysql:
@@ -225,13 +229,13 @@ class PdoOpsLayout extends OpsLayoutAbstract {
                         }
                     }
                     // Join flags field array into a string.
-                    $fieldMeta[$requiredField] = join(', ', $allFieldMeta['flags']);
+                    $restfmMessageRow[$requiredField] = join(', ', $allFieldMeta['flags']);
                 } else {
-                    $fieldMeta[$requiredField] = $allFieldMeta[$requiredField];
+                    $restfmMessageRow[$requiredField] = $allFieldMeta[$requiredField];
                 }
             }
 
-            $restfmData->pushFieldMeta($fieldName, $fieldMeta);
+            $restfmMessage->setMetaField($fieldName, $restfmMessageRow);
         }
     }
 

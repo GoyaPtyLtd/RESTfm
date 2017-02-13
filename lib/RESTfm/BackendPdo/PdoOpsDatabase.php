@@ -37,11 +37,11 @@ class PdoOpsDatabase extends OpsDatabaseAbstract {
      * Read databases available - Not applicable to PDO backends, as the database
      * is hard coded in the DSN.
      *
-     * @return RESTfmDataAbstract
+     * @return RESTfmMessage
      *   Empty, no sections.
      */
     public function readDatabases () {
-        return new RESTfmDataSimple;
+        return new RESTfmMessage;
     }
 
     /**
@@ -50,7 +50,7 @@ class PdoOpsDatabase extends OpsDatabaseAbstract {
      * @throws RESTfmResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
+     * @return RESTfmMessage
      *  - 'data', 'meta' sections.
      */
     public function readLayouts () {
@@ -69,13 +69,17 @@ class PdoOpsDatabase extends OpsDatabaseAbstract {
 
         natsort($tables);
 
-        $restfmData = new RESTfmDataSimple();
+        $restfmMessage = new RESTfmMessage();
         foreach($tables as $table) {
             if (empty($table)) continue;
-            $restfmData->pushDataRow( array('layout' => $table), NULL, NULL );
+            $restfmMessage->addRecord(new RESTfmMessageRecord(
+                NULL,
+                NULL,
+                array('layout' => $table)
+            ));
         }
 
-        return $restfmData;
+        return $restfmMessage;
     }
 
     /**
@@ -84,11 +88,11 @@ class PdoOpsDatabase extends OpsDatabaseAbstract {
      * @throws RESTfmResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
+     * @return RESTfmMessage
      *  - 'data', 'meta' sections.
      */
     public function readScripts () {
-        return new RESTfmDataSimple();
+        return new RESTfmMessage();
     }
 
     // --- Protected ---
