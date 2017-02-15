@@ -18,9 +18,6 @@
  */
 
 require_once 'FileMaker.php';
-require_once 'FileMakerOpsRecord.php';
-require_once 'FileMakerOpsDatabase.php';
-require_once 'FileMakerOpsLayout.php';
 
 /**
  * FileMaker implementation of BackendAbstract.

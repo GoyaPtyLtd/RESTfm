@@ -17,9 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfmResponse.php';
-require_once 'RESTfmConfig.php';
-
 /**
  * Exception class for HTTP response errors
  */

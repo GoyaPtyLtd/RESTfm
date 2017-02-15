@@ -22,12 +22,6 @@
  *** WARNING: No repetitions support.
  ***/
 
-require_once 'RESTfm/RESTfmResource.php';
-require_once 'RESTfm/RESTfmResponse.php';
-require_once 'RESTfm/FileMakerResponseException.php';
-require_once 'RESTfm/RESTfmRecordID.php';
-require_once 'RESTfm/RESTfmQueryString.php';
-
 /**
  * RESTfm Field handler for Tonic
  *

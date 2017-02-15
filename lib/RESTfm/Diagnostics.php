@@ -17,8 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfmConfig.php';
-
 /**
  * Diagnostics class.
  *
@@ -131,7 +129,6 @@ class Diagnostics {
 
     public function test_version($reportItem) {
         $reportItem->name = 'RESTfm version';
-        require_once 'Version.php';
         $reportItem->details = Version::getVersion();
     }
 

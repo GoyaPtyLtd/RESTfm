@@ -17,8 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once 'PdoResponseException.php';
-
 /**
  * PdoOpsDatabase
  *

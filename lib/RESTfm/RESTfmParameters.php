@@ -17,8 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfmRequest.php';
-
 /**
  * RESTfmParameters
  *

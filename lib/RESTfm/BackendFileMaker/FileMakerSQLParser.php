@@ -17,8 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once(__DIR__.'/../SQLParser/SQLParser.php');
-
 /**
  * FileMaker specific implementation of SQLParser class.
  */

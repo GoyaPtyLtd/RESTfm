@@ -40,13 +40,7 @@ class FormatFactory {
             $type = self::$_map[$type];
         }
 
-        // Locate format class and instantiate object.
-        $formatPathPrefix = 'lib/RESTfm/Format/';
         $formatClassName = 'Format' . ucfirst(strtolower($type));
-        if (!file_exists($formatPathPrefix . $formatClassName . '.php')) {
-            throw new RESTfmResponseException('Unknown format: ' . $type, 500);
-        }
-        require_once($formatPathPrefix . $formatClassName . '.php');
         return new $formatClassName();
     }
 

@@ -17,8 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfmConfig.php';
-
 /**
  * RESTfm Dump static class.
  */

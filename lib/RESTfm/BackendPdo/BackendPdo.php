@@ -17,11 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once 'PdoResponseException.php';
-require_once 'PdoOpsRecord.php';
-require_once 'PdoOpsDatabase.php';
-require_once 'PdoOpsLayout.php';
-
 /**
  * PHP PDO implementation of BackendAbstract.
  */

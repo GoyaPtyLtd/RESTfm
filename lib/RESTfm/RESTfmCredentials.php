@@ -17,8 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfmConfig.php' ;
-
 /**
  * RESTfm credentials class identifies and holds authentication/authorisation
  * credentials for request.

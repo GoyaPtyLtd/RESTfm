@@ -17,10 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once 'QueryString.php';
-require_once 'RFMfixFM01.php';
-require_once 'RFMfixFM02.php';
-
 /**
  * Static class provides RESTfm specific urlencode/urldecode functions to
  * take into account RFMfixFM01 and RFMfixFM02 flags.

@@ -17,9 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once('SQLParserException.php');
-require_once('SQLToken.php');
-
 /**
  * SQL-like syntax lexer.
  */

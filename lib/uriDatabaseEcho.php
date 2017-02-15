@@ -17,8 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfm/RESTfmResource.php' ;
-
 /**
  * RESTfm echo handler for Tonic.
  *

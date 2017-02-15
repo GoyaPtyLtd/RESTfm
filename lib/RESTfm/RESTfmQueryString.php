@@ -17,10 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once 'QueryString.php';
-require_once 'RFMfixFM01.php';
-require_once 'RFMfixFM02.php';
-
 /**
  * Extends QueryString to include additional encoding.
  */

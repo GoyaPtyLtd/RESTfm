@@ -49,26 +49,18 @@ class BackendFactory {
             $type = self::BACKEND_PDO;
         }
 
-        // Identify backend class.
-        $backendName = 'Backend' . $type;
-        $classPath = dirname(__FILE__) . DIRECTORY_SEPARATOR .
-                     $backendName . DIRECTORY_SEPARATOR .
-                     $backendName . '.php';
-        if (!file_exists($classPath)) {
-            throw new RESTfmResponseException('Unknown backend: ' . $type, 500);
-        }
-        require_once($classPath);
+        $backendClassName = 'Backend' . $type;
 
         $restfmCredentials = $request->getRESTfmCredentials();
 
         if ($type === self::BACKEND_PDO) {
-            $backendObject = new $backendName(
+            $backendObject = new $backendClassName(
                             RESTfmConfig::getVar('databasePDOMap', $database),
                             $restfmCredentials->getUsername(),
                             $restfmCredentials->getPassword()
                         );
         } else {    # Default to FileMaker
-            $backendObject = new $backendName(
+            $backendObject = new $backendClassName(
                             RESTfmConfig::getVar('database', 'hostspec'),
                             $restfmCredentials->getUsername(),
                             $restfmCredentials->getPassword()
