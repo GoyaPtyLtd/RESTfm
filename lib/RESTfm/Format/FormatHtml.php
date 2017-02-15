@@ -17,7 +17,7 @@
  *  Gavin Stewart
  */
 
-class FormatHtml extends FormatAbstract {
+class FormatHtml implements FormatInterface {
 
     // --- Interface Implementation --- //
 

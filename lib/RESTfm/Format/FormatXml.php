@@ -17,7 +17,7 @@
  *  Gavin Stewart
  */
 
-class FormatXml extends FormatAbstract {
+class FormatXml implements FormatInterface {
 
     // --- Interface Implementation --- //
 
@@ -58,7 +58,7 @@ class FormatXml extends FormatAbstract {
                                                         (string) $childElement;
                 }
             }
-           
+
             $restfmMessage->setSection($sectionXML->getName(), $sectionData);
         }
     }

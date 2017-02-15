@@ -17,7 +17,7 @@
  *  Gavin Stewart
  */
 
-class FormatDict extends FormatAbstract {
+class FormatDict implements FormatInterface {
 
     // --- Interface Implementation --- //
 

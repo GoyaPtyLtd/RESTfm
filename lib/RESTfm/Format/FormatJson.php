@@ -17,7 +17,7 @@
  *  Gavin Stewart
  */
 
-class FormatJson extends FormatAbstract {
+class FormatJson implements FormatInterface {
 
     // --- Interface Implementation --- //
     /**

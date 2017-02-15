@@ -32,7 +32,7 @@
  *      - value chars \ ¶ " escaped with        : \
  *      - value char \n translated to           : ¶
  */
-class FormatSimple extends FormatAbstract {
+class FormatSimple implements FormatInterface {
 
     /**
      * Parse the provided data string into the provided RESTfmMessage

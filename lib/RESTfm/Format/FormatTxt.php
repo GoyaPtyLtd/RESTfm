@@ -17,7 +17,7 @@
  *  Gavin Stewart
  */
 
-class FormatTxt extends FormatAbstract {
+class FormatTxt implements FormatInterface {
 
     // --- Interface Implementation --- //
 
