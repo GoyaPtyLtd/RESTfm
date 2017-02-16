@@ -162,15 +162,6 @@ interface RESTfmMessageInterface {
      */
     public function getRecords ();
 
-    /**
-     * Return a single record identified by $recordId
-     *
-     * @param string $recordId
-     *
-     * @return RESTfmMessageRecordAbstract or NULL if $recordId does not exist.
-     */
-    public function getRecordByRecordId ($recordId);
-
 
     // --- Access methods for managing data in sections. --- //
 

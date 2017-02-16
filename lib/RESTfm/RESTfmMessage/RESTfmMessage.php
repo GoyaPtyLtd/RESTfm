@@ -71,13 +71,6 @@ class RESTfmMessage implements RESTfmMessageInterface {
         'nav'           => 1,
     );
 
-    /**
-     * @var associative array of recordId -> record index
-     *  for identifying $_records[] by recordId.
-        // TODO dump getRecordById
-     */
-    protected $_recordIdMap = array();
-
     // --- Access methods for managing data in rows. --- //
 
     /**
@@ -222,14 +215,6 @@ class RESTfmMessage implements RESTfmMessageInterface {
      */
     public function addRecord (RESTfmMessageRecordAbstract $record) {
         $this->_records[] = $record;
-
-        // TODO dump getRecordById
-        $recordId = $record->getRecordId();
-        if ($recordId !== NULL) {
-            // TODO profile this operation
-            $recordIndex = count($this->_records) - 1;
-            $this->_recordIdMap[$recordId] = $recordIndex;
-        }
     }
 
     /**
@@ -258,20 +243,6 @@ class RESTfmMessage implements RESTfmMessageInterface {
      */
     public function getRecords () {
         return $this->_records;
-    }
-
-    /**
-     * Return a single record identified by $recordId
-     *
-     * @param string $recordId
-     *
-     * @return RESTfmMessageRecord or NULL if $recordId does not exist.
-     */
-    public function getRecordByRecordId ($recordId) {
-        // TODO dump getRecordById
-        if (isset($this->_recordIdMap[$recordId])) {
-            return $this->_records[$this->_recordIdMap[$recordId]];
-        }
     }
 
     // --- Access methods for managing data in sections. --- //
@@ -400,7 +371,6 @@ class RESTfmMessage implements RESTfmMessageInterface {
                                 break;
                             case 'recordID':
                                 $record->setRecordId($val);
-                                $this->_recordIdMap[$val] = $index;
                                 break;
                         }
                     }

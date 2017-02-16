@@ -163,26 +163,6 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
                              spl_object_hash($messageRecord1) );
     }
 
-    public function testAddAndGetRecordByRecordId () {
-        $message = new RESTfmMessage();
-
-        // We only need to identify objects here, not the object's data.
-        // The object's own test files are the only place data is tested.
-
-        $messageRecord001 = new RESTfmMessageRecord('001');
-        $messageRecord002 = new RESTfmMessageRecord('002');
-
-        $message->addRecord($messageRecord001);
-        $message->addRecord($messageRecord002);
-
-        $record = $message->getRecordByRecordId('001');
-
-        $this->assertEquals( spl_object_hash($record),
-                             spl_object_hash($messageRecord001) );
-
-        $this->assertNull($message->getRecordByRecordId('nonExistent'));
-    }
-
     static $importData = array(
         'meta'  => array(
             0   => array(
