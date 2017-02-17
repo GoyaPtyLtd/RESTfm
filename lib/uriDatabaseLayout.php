@@ -44,7 +44,7 @@ class uriDatabaseLayout extends RESTfmResource {
 
         $queryString = new QueryString(TRUE);
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
         $format = $response->format;
 
         // Iterate records and set navigation hrefs.
@@ -59,7 +59,7 @@ class uriDatabaseLayout extends RESTfmResource {
             );
         }
 
-        $response->setStatus(Response::OK);
+        $response->setStatus(\Tonic\Response::OK);
         $response->setRESTfmMessage($restfmMessage);
         return $response;
     }

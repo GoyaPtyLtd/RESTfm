@@ -42,9 +42,9 @@ class uriDatabaseScript extends RESTfmResource {
         $opsDatabase = $backend->makeOpsDatabase($database);
         $restfmMessage = $opsDatabase->readScripts();
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
 
-        $response->setStatus(Response::OK);
+        $response->setStatus(\Tonic\Response::OK);
         $response->setRESTfmMessage($restfmMessage);
         return $response;
     }

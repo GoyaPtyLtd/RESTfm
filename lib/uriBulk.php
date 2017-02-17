@@ -84,14 +84,14 @@ class uriBulk extends RESTfmResource {
 
         $restfmMessage = $opsRecord->createBulk($request->getRESTfmMessage());
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
 
         $response->setRESTfmMessage($restfmMessage);
 
         if ($restfmMessage->getMultistatusCount() > 0) {
             $response->setStatus(207, 'Multi-status');
         } else {
-            $response->setStatus(Response::OK);
+            $response->setStatus(\Tonic\Response::OK);
         }
 
         return $response;
@@ -119,14 +119,14 @@ class uriBulk extends RESTfmResource {
 
         $restfmMessage = $opsRecord->readBulk($request->getRESTfmMessage());
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
 
         $response->setRESTfmMessage($restfmMessage);
 
         if ($restfmMessage->getMultistatusCount() > 0) {
             $response->setStatus(207, 'Multi-status');
         } else {
-            $response->setStatus(Response::OK);
+            $response->setStatus(\Tonic\Response::OK);
         }
 
         return $response;
@@ -187,14 +187,14 @@ class uriBulk extends RESTfmResource {
 
         $restfmMessage = $opsRecord->updateBulk($request->getRESTfmMessage());
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
 
         $response->setRESTfmMessage($restfmMessage);
 
         if ($restfmMessage->getMultistatusCount() > 0) {
             $response->setStatus(207, 'Multi-status');
         } else {
-            $response->setStatus(Response::OK);
+            $response->setStatus(\Tonic\Response::OK);
         }
 
         return $response;
@@ -222,14 +222,14 @@ class uriBulk extends RESTfmResource {
 
         $restfmMessage = $opsRecord->deleteBulk($request->getRESTfmMessage());
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
 
         $response->setRESTfmMessage($restfmMessage);
 
         if ($restfmMessage->getMultistatusCount() > 0) {
             $response->setStatus(207, 'Multi-status');
         } else {
-            $response->setStatus(Response::OK);
+            $response->setStatus(\Tonic\Response::OK);
         }
 
         return $response;

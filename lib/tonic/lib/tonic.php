@@ -7,12 +7,10 @@
  * file that was distributed with this source code.
  */
 
-/* Turn on namespace in PHP5.3 if you have namespace collisions from the Tonic classnames
 namespace Tonic;
 use \ReflectionClass as ReflectionClass;
 use \ReflectionMethod as ReflectionMethod;
 use \Exception as Exception;
-//*/
 
 /**
  * Model the data of the incoming HTTP request

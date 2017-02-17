@@ -17,10 +17,12 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm;
+
 /**
  * RESTfmResponse class.
  */
-class RESTfmResponse extends Response {
+class Response extends \Tonic\Response {
 
     /**
      * @var string
@@ -77,12 +79,12 @@ class RESTfmResponse extends Response {
      */
     public function __construct($request, $uri = NULL) {
         parent::__construct($request, $uri);
-        $this->format = $request->mostAcceptable(RESTfmConfig::getFormats());
+        $this->format = $request->mostAcceptable(\RESTfmConfig::getFormats());
 
         // If we have an RFMreauth query string, then we need to force a
         // change of authorisation credentials. We only expect this when
         // using the html format.
-        $queryString = new RESTfmQueryString(TRUE);
+        $queryString = new \RESTfmQueryString(TRUE);
         if(isset($queryString->RFMreauth)) {
             $currentUsername = $request->getRESTfmCredentials()->getUsername();
             // Only send unauthorised if username hasn't been set to something
@@ -92,8 +94,8 @@ class RESTfmResponse extends Response {
             // query string does not change, we can only detect that a
             // different username has been entered.
             if ($currentUsername == urldecode($queryString->RFMreauth) && $queryString->RFMreauth != '') {
-                header('Refresh:0;url=' . RESTfmConfig::getVar('settings', 'baseURI'));
-                throw new ResponseException("User requested re-authorisation.", Response::UNAUTHORIZED);
+                header('Refresh:0;url=' . \RESTfmConfig::getVar('settings', 'baseURI'));
+                throw new \ResponseException("User requested re-authorisation.", \Tonic\Response::UNAUTHORIZED);
             }
 
             // Remove RFMreauth from server querystring.
@@ -122,14 +124,14 @@ class RESTfmResponse extends Response {
      * Overrides tonic's method.
      */
     public function output() {
-        $this->addHeader('X-RESTfm-Version', Version::getVersion());
-        $this->addHeader('X-RESTfm-Protocol', Version::getProtocol());
+        $this->addHeader('X-RESTfm-Version', \Version::getVersion());
+        $this->addHeader('X-RESTfm-Protocol', \Version::getProtocol());
         $this->addHeader('X-RESTfm-Status', $this->code);
         $this->addHeader('X-RESTfm-Reason', $this->reason);
         $this->addHeader('X-RESTfm-Method', $this->request->method);
 
         // Check if we need to authorise this origin (CORS)
-        $configOrigins = RESTfmConfig::getVar('allowed_origins');
+        $configOrigins = \RESTfmConfig::getVar('allowed_origins');
         if (isset($_SERVER["HTTP_ORIGIN"]) && is_array($configOrigins)) {
             $request_origin = $_SERVER['HTTP_ORIGIN'];
             $allow_origin = null;
@@ -150,7 +152,7 @@ class RESTfmResponse extends Response {
 
         // Ensure we have response data!
         if ($this->_RESTfmMessage == NULL) {
-            $this->_RESTfmMessage = new RESTfmMessage();
+            $this->_RESTfmMessage = new \RESTfmMessage();
         }
 
         // Inject X-RESTfm headers into 'info' section.
@@ -191,7 +193,7 @@ class RESTfmResponse extends Response {
      *
      * @param RESTfmMessage $restfmMessage
      */
-    public function setRESTfmMessage(RESTfmMessage $restfmMessage) {
+    public function setRESTfmMessage(\RESTfmMessage $restfmMessage) {
         $this->_RESTfmMessage = $restfmMessage;
     }
 
@@ -261,13 +263,13 @@ class RESTfmResponse extends Response {
         // Build a formatter. We fall back to text, because we also format
         // errors via RESTfmResponseException. No output would be bad!
         try {
-            $formatter = FormatFactory::makeFormatter($formatAs);
-        } catch (Exception $e) {
+            $formatter = \FormatFactory::makeFormatter($formatAs);
+        } catch (\Exception $e) {
             // Fallback
             $formatAs = 'txt';
             try {
-                $formatter = FormatFactory::makeFormatter($formatAs);
-            } catch (Exception $e) {
+                $formatter = \FormatFactory::makeFormatter($formatAs);
+            } catch (\Exception $e) {
                 // Fatal error, we should never get here.
                 $this->code = $e->getCode();
                 $this->reason = $e->getMessage();
@@ -289,12 +291,12 @@ class RESTfmResponse extends Response {
         // Use XSLT to produce final format.
         if (isset($useXSLT)) {
             $xsltFile = file_get_contents($useXSLT);
-            $xsltProcessor = new XSLTProcessor();
-            $xsltXML = new SimpleXMLElement($xsltFile);
+            $xsltProcessor = new \XSLTProcessor();
+            $xsltXML = new \SimpleXMLElement($xsltFile);
             $outputMethod = $xsltXML->xpath('xsl:output/@method');
             $this->addHeader('Content-type', $this->contentType((string)$outputMethod[0]));
             $xsltProcessor->importStyleSheet($xsltXML);
-            $this->body = $xsltProcessor->transformToXml(new SimpleXMLElement($this->body));
+            $this->body = $xsltProcessor->transformToXml(new \SimpleXMLElement($this->body));
         }
     }
 

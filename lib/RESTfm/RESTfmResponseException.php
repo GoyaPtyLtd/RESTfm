@@ -20,7 +20,7 @@
 /**
  * Exception class for HTTP response errors
  */
-class RESTfmResponseException extends ResponseException {
+class RESTfmResponseException extends \Tonic\ResponseException {
 
     /**
      * HTTP response code constant
@@ -76,7 +76,7 @@ class RESTfmResponseException extends ResponseException {
      */
     public function response($request) {
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
 
         foreach ($this->_addHeader as $name => $value) {
             $response->addHeader($name, $value);

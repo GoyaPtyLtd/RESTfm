@@ -77,8 +77,8 @@ class uriLayout extends RESTfmResource {
 
         if (isset($restfmParameters->RFMmetaFieldOnly)) {
             $restfmMessage = $opsLayout->readMetaField();
-            $response = new RESTfmResponse($request);
-            $response->setStatus(Response::OK);
+            $response = new RESTfm\Response($request);
+            $response->setStatus(\Tonic\Response::OK);
             $response->setRESTfmMessage($restfmMessage);
             return $response;
         }
@@ -159,7 +159,7 @@ class uriLayout extends RESTfmResource {
         // Info section.
         $restfmMessage->setInfo('skip', $findSkip);
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
         $format = $response->format;
         $queryString = new RESTfmQueryString(TRUE);
 
@@ -221,7 +221,7 @@ class uriLayout extends RESTfmResource {
         );
 
 
-        $response->setStatus(Response::OK);
+        $response->setStatus(\Tonic\Response::OK);
         $response->setRESTfmMessage($restfmMessage);
         return $response;
     }
@@ -282,7 +282,7 @@ class uriLayout extends RESTfmResource {
 
         $restfmMessage = $opsRecord->createSingle($request->getRESTfmMessage());
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
         $format = $response->format;
 
         // Meta section.
@@ -301,7 +301,7 @@ class uriLayout extends RESTfmResource {
         }
 
         $response->setRESTfmMessage($restfmMessage);
-        $response->setStatus(Response::CREATED);
+        $response->setStatus(\Tonic\Response::CREATED);
         return $response;
     }
 

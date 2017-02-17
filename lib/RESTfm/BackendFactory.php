@@ -42,7 +42,7 @@ class BackendFactory {
      *
      * @return BackendAbstract
      */
-    public static function make (RESTfmRequest $request, $database = NULL) {
+    public static function make (RESTfm\Request $request, $database = NULL) {
         // FileMaker is the default, but $database may map to a PDO backend.
         $type = self::BACKEND_FILEMAKER;
         if ($database !== NULL && RESTfmConfig::checkVar('databasePDOMap', $database)) {

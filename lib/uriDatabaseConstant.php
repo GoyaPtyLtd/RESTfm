@@ -49,7 +49,7 @@ class uriDatabaseConstant extends RESTfmResource {
 
         $queryString = new RESTfmQueryString(TRUE);
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
         $format = $response->format;
 
         // Create virtual records with static hrefs purely for navigation.
@@ -75,7 +75,7 @@ class uriDatabaseConstant extends RESTfmResource {
             array('resource' => 'script')
         ));
 
-        $response->setStatus(Response::OK);
+        $response->setStatus(\Tonic\Response::OK);
         $response->setRESTfmMessage($restfmMessage);
         return $response;
     }

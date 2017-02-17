@@ -68,7 +68,7 @@ class uriScript extends RESTfmResource {
 
         $restfmMessage = $opsRecord->callScript($script, $scriptParameter);
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
         $format = $response->format;
 
         // Meta section.
@@ -84,7 +84,7 @@ class uriScript extends RESTfmResource {
         }
 
         $response->setRESTfmMessage($restfmMessage);
-        $response->setStatus(Response::OK);
+        $response->setStatus(\Tonic\Response::OK);
 
         return $response;
     }

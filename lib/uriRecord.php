@@ -67,7 +67,7 @@ class uriRecord extends RESTfmResource {
 
         $restfmMessage = $opsRecord->readSingle(new RESTfmMessageRecord($rawRecordID));
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
         $format = $response->format;
 
         // Meta section.
@@ -83,7 +83,7 @@ class uriRecord extends RESTfmResource {
         }
 
         $response->setRESTfmMessage($restfmMessage);
-        $response->setStatus(Response::OK);
+        $response->setStatus(\Tonic\Response::OK);
         return $response;
     }
 
@@ -150,7 +150,7 @@ class uriRecord extends RESTfmResource {
         $request->getRESTfmMessage()->getRecord(0)->setRecordId($rawRecordID);
         $restfmMessage = $opsRecord->updateSingle($request->getRESTfmMessage());
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
         $format = $response->format;
 
         // Meta section.
@@ -166,7 +166,7 @@ class uriRecord extends RESTfmResource {
         }
 
         $response->setRESTfmMessage($restfmMessage);
-        $response->setStatus(Response::OK);
+        $response->setStatus(\Tonic\Response::OK);
         return $response;
     }
 
@@ -222,9 +222,9 @@ class uriRecord extends RESTfmResource {
 
         $restfmMessage = $opsRecord->deleteSingle(new RESTfmMessageRecord($rawRecordID));
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
         $response->setRESTfmMessage($restfmMessage);
-        $response->setStatus(Response::OK);
+        $response->setStatus(\Tonic\Response::OK);
         return $response;
     }
 }

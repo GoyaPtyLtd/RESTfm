@@ -88,8 +88,8 @@ if (isset($_SERVER['HTTP_X_ORIGINAL_URL'])) {
 }
 
 // Handle request.
-$request = new RESTfmRequest($requestConfig);
-RESTfmDump::requestData($request);
+$request = new RESTfm\Request($requestConfig);
+//RESTfmDump::requestData($request);
 try {
     if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
         require_once 'lib/RESTfm/diagnostic_checks.php';
@@ -103,14 +103,14 @@ try {
     if (preg_match('/^2\d\d$/', $response->code)) {
         $restfmParameters = $request->getRESTfmParameters();
         if (isset($restfmParameters->RFMsquash2XX)) {
-            $response->code = Response::OK;     // 200
+            $response->code = Tonic\Response::OK;     // 200
         }
     }
 
-    RESTfmDump::requestParsed($request);
-} catch (ResponseException $e) {
+    //RESTfmDump::requestParsed($request);
+} catch (Tonic\ResponseException $e) {
     switch ($e->getCode()) {
-        case Response::UNAUTHORIZED:
+        case Tonic\Response::UNAUTHORIZED:
             // Modify the response code from Unauthorized to Forbidden for
             // data formats handled by applications.
 
@@ -132,7 +132,7 @@ try {
 
 if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
     // Add profiling information.
-    if (is_a($response, 'RESTfmResponse')) {
+    if (is_a($response, 'RESTfm\Response')) {
         // In some early startup errors, we may not be RESTfmResponse, so we
         // checked.
 
@@ -157,7 +157,7 @@ if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
 
 // Add maximum POST size and memory limit information for all RESTfm 2xx
 // responses where a username was specified (non-guest).
-if ( is_a($response, 'RESTfmResponse') &&
+if ( is_a($response, 'RESTfm\Response') &&
         preg_match('/^2\d\d$/', $response->code) ) {
     $requestUsername = $request->getRESTfmCredentials()->getUsername();
     if (! empty($requestUsername)) {
@@ -172,7 +172,7 @@ if ( is_a($response, 'RESTfmResponse') &&
 
 // Final response output.
 $response->output();
-RESTfmDump::responseBody($response);
+//RESTfmDump::responseBody($response);
 
 exit;
 

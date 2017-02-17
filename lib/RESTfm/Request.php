@@ -17,12 +17,14 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm;
+
 /**
- * RESTfmRequest class.
+ * RESTfm\Request class.
  *
  * Extends Tonic's Request class for RESTfm specific features.
  */
-class RESTfmRequest extends Request {
+class Request extends \Tonic\Request {
 
     /**
      * @var RESTfmMessage
@@ -92,8 +94,8 @@ class RESTfmRequest extends Request {
         // Call parent class method.
         try {
             return(parent::loadResource());
-        } catch (ResponseException $e) {
-            throw new RESTfmResponseException($e->getMessage(), $e->getCode(), $e);
+        } catch (\ResponseException $e) {
+            throw new \RESTfmResponseException($e->getMessage(), $e->getCode(), $e);
         }
     }
 
@@ -140,9 +142,9 @@ class RESTfmRequest extends Request {
      */
     public function parse () {
 
-        $this->_RESTfmMessage = new RESTfmMessage();
+        $this->_RESTfmMessage = new \RESTfmMessage();
 
-        $this->_RESTfmParameters = new RESTfmParameters();
+        $this->_RESTfmParameters = new \RESTfmParameters();
 
         $this->_handleGetData();
 
@@ -163,10 +165,10 @@ class RESTfmRequest extends Request {
 
         // Set RFMurl encoding format.
         if (isset($this->_RESTfmParameters->RFMfixFM01)) {
-            RESTfmUrl::setEncoding(RESTfmUrl::RFMfixFM01);
+            \RESTfmUrl::setEncoding(\RESTfmUrl::RFMfixFM01);
         }
         if (isset($this->_RESTfmParameters->RFMfixFM02)) {
-            RESTfmUrl::setEncoding(RESTfmUrl::RFMfixFM02);
+            \RESTfmUrl::setEncoding(\RESTfmUrl::RFMfixFM02);
         }
 
         // Set requested override method.
@@ -177,7 +179,7 @@ class RESTfmRequest extends Request {
             }
         }
 
-        $this->_RESTfmCredentials = new RESTfmCredentials($this->_RESTfmParameters);
+        $this->_RESTfmCredentials = new \RESTfmCredentials($this->_RESTfmParameters);
     }
 
     /**
@@ -226,7 +228,7 @@ class RESTfmRequest extends Request {
      * RFM* parameters from the query string are also determined here.
      */
     protected function _handleGetData () {
-        $queryString = new RESTfmQueryString(TRUE);
+        $queryString = new \RESTfmQueryString(TRUE);
 
         // Identify RFM* query string parameters.
         $this->_parametersQueryString = $queryString->getRegex('/^RFM.*/');
@@ -247,7 +249,7 @@ class RESTfmRequest extends Request {
             // RESTfmMessage ourselves.
             $getData = $queryString->getRegex('/^(?!RFM).+/'); // NOT RFM*
             if (count($getData) > 0) {
-                $this->_RESTfmMessage->addRecord(new RESTfmMessageRecord(NULL, NULL, $getData));
+                $this->_RESTfmMessage->addRecord(new \RESTfmMessageRecord(NULL, NULL, $getData));
             }
         }
     }
@@ -274,7 +276,7 @@ class RESTfmRequest extends Request {
             return;
         } elseif (stripos($_SERVER['CONTENT_TYPE'], 'application/x-www-form-urlencoded') !== FALSE) {
             // Use our parser, not PHP's.
-            $parser = new RESTfmQueryString();
+            $parser = new \RESTfmQueryString();
             $parser->parse_str($this->data, $postData);
         } elseif (stripos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') !== FALSE ) {
             // At the moment we are at the mercy of PHP's parsing. This
@@ -294,8 +296,8 @@ class RESTfmRequest extends Request {
                 isset($this->_parametersQueryString['RFMfixFM02'])) {
             $decodedData = array();
             foreach ($postData as $key => $value) {
-                $decodedData[RFMfixFM02::postDecode($key)] =
-                        RFMfixFM02::postDecode($value);
+                $decodedData[\RFMfixFM02::postDecode($key)] =
+                        \RFMfixFM02::postDecode($value);
             }
             $postData = $decodedData;
         }
@@ -323,7 +325,7 @@ class RESTfmRequest extends Request {
         } else {
             // All submitted data is in array, we will populate
             // RESTfmMessage ourselves.
-            $this->_RESTfmMessage->addRecord(new RESTfmMessageRecord(NULL, NULL, $postData));
+            $this->_RESTfmMessage->addRecord(new \RESTfmMessageRecord(NULL, NULL, $postData));
             unset($this->data);
         }
     }
@@ -347,31 +349,31 @@ class RESTfmRequest extends Request {
                 $this->_format = 'application/x-www-form-urlencoded';
             } else {
                 // Determine the most acceptable format using tonic.
-                $this->_format = $this->mostAcceptable(RESTfmConfig::getFormats());
+                $this->_format = $this->mostAcceptable(\RESTfmConfig::getFormats());
             }
         }
 
         // Ensure we have a format.
         if ($this->_format == '') {
             // This is trouble, we have data but in no known format.
-            throw new RESTfmResponseException(
+            throw new \RESTfmResponseException(
                         'Unable to determine format for resource ' . $this->uri,
-                        RESPONSE::BADREQUEST);
+                        \Tonic\Response::BADREQUEST);
         }
 
         // Check if our format is available through a provided xslt.
         if (file_exists('lib/xslt/'.$this->_format.'_import.xslt')) {
             $useXSLT = 'lib/xslt/'.$this->_format.'_import.xslt';
             $xsltFile = file_get_contents($useXSLT);
-            $xsltProcessor = new XSLTProcessor();
-            $xsltProcessor->importStyleSheet(new SimpleXMLElement($xsltFile));
-            $this->data = $xsltProcessor->transformToXml(new SimpleXMLElement($this->data));
+            $xsltProcessor = new \XSLTProcessor();
+            $xsltProcessor->importStyleSheet(new \SimpleXMLElement($xsltFile));
+            $this->data = $xsltProcessor->transformToXml(new \SimpleXMLElement($this->data));
 
             $this->_format = 'xml';
         }
 
         // Parse submitted data through formatter.
-        $dataFormatter = FormatFactory::makeFormatter($this->_format);
+        $dataFormatter = \FormatFactory::makeFormatter($this->_format);
         $dataFormatter->parse($this->_RESTfmMessage, $this->data);
 
         // Identify RFM* parameters in 'info' section, store as request

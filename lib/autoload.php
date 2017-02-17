@@ -38,8 +38,21 @@
             }
         }
 
-        // All php files that make up RESTfm.
-        static $libPhpFiles = NULL;
+        // If $class is namespaced, try converting to a path.
+        if (strpos($class, '\\') !== FALSE) {
+            $classPath =
+                __DIR__ . DIRECTORY_SEPARATOR .
+                str_replace('\\', DIRECTORY_SEPARATOR, $class) . '.php';
+            if (file_exists($classPath)) {
+                require_once($classPath);
+                return;
+            }
+        }
+
+        // Not namespaced, so find php file by matching $class against filename
+        // no matter where the file is located under lib.
+
+        static $libPhpFiles = NULL; // @var array Basenames of lib php files.
         if ($libPhpFiles === NULL) {
             $libPhpFiles = array();
 
@@ -66,12 +79,14 @@
             traverseDirs(__DIR__, '.php', $libPhpFiles);
         }
 
-        // See if we have a file that matches the name of the class.
+        // See if we have a filename that matches $class.
         if (isset($libPhpFiles[$class])) {
             require_once $libPhpFiles[$class];
-        } else {
-            error_log("RESTfm autoload failed for class: $class");
+            return;
         }
+
+        // We never found the right php file :(
+        error_log("RESTfm autoload failed for class: $class");
     },
     // Throw exception when autoload function fails to register:
     true,

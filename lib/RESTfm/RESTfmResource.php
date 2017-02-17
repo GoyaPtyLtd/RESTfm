@@ -22,7 +22,7 @@
  *
  * Extends Tonic's Resource class for RESTfm specific features.
  */
-class RESTfmResource extends Resource {
+class RESTfmResource extends Tonic\Resource {
 
     /**
      * Nothing special in constructor, just pass through to parent.

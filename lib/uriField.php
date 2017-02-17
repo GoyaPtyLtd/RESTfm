@@ -48,7 +48,7 @@ class uriField extends RESTfmResource {
      */
     function get($request, $database, $layout, $rawRecordID, $field) {
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
         $recordID = new RESTfmRecordID($rawRecordID);
 
         $record = $recordID->getRecord(urldecode($database), urldecode($layout));
@@ -93,7 +93,7 @@ class uriField extends RESTfmResource {
         }
         $resourceData->pushData($recordRow, $href, urldecode($recordID));
 
-        $response->setStatus(Response::OK);
+        $response->setStatus(\Tonic\Response::OK);
         $response->setResourceData($resourceData);
         return $response;
     }

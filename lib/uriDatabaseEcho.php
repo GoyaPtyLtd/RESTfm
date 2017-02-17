@@ -108,7 +108,7 @@ class uriDatabaseEcho extends RESTfmResource {
         $restfmDataLayouts = $opsDatabase->readLayouts();
 
         // Only needed to determine response format.
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
 
         $restfmParameters = $request->getRESTfmParameters();
 

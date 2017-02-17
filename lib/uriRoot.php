@@ -24,7 +24,7 @@
  */
 class uriRoot extends RESTfmResource {
 
-    const URI = '';
+    const URI = '/';
 
     /**
      * Handle a GET request for this resource
@@ -46,7 +46,7 @@ class uriRoot extends RESTfmResource {
 
         $queryString = new RESTfmQueryString(TRUE);
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
         $format = $response->format;
 
         $RFMlink = NULL;
@@ -86,7 +86,7 @@ class uriRoot extends RESTfmResource {
             $record->setHref($href);
         }
 
-        $response->setStatus(Response::OK);
+        $response->setStatus(\Tonic\Response::OK);
         $response->setRESTfmMessage($restfmMessage);
         return $response;
     }
