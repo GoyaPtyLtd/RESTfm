@@ -17,7 +17,9 @@
  *  Gavin Stewart
  */
 
-namespace RESTfm\Message;
+namespace libTests\RESTfm\Message;
+
+use RESTfm\Message\Row;
 
 class RowTest extends \PHPUnit_Framework_TestCase {
 

@@ -17,7 +17,9 @@
  *  Gavin Stewart
  */
 
-class VersionTest extends PHPUnit_Framework_TestCase {
+namespace libTests\RESTfm;
+
+class VersionTest extends \PHPUnit_Framework_TestCase {
 
     static $versionPath = "lib/RESTfm/Version.php";
 
@@ -29,14 +31,14 @@ class VersionTest extends PHPUnit_Framework_TestCase {
         ob_end_clean();
 
         // Protocol is always an integer.
-        $this->assertRegExp('/^\d+$/', Version::getProtocol());
+        $this->assertRegExp('/^\d+$/', \Version::getProtocol());
 
         // Revision and release could be any non empty string.
-        $this->assertNotEmpty(Version::getRelease());
-        $this->assertNotEmpty(Version::getRevision());
+        $this->assertNotEmpty(\Version::getRelease());
+        $this->assertNotEmpty(\Version::getRevision());
 
         // Versions always contains a slash.
-        $this->assertRegExp('/\//', Version::getVersion());
+        $this->assertRegExp('/\//', \Version::getVersion());
     }
 
     /**
@@ -45,7 +47,7 @@ class VersionTest extends PHPUnit_Framework_TestCase {
     public function testCliProtocol () {
         $this->assertEquals(
             exec('php ' . VersionTest::$versionPath . ' -p'),
-            Version::getProtocol()
+            \Version::getProtocol()
         );
     }
 
@@ -56,7 +58,7 @@ class VersionTest extends PHPUnit_Framework_TestCase {
         // This doesn't perform any code coverage.
         $this->assertEquals(
             exec('php ' . VersionTest::$versionPath . ' -r'),
-            Version::getRelease()
+            \Version::getRelease()
         );
     }
 
@@ -67,7 +69,7 @@ class VersionTest extends PHPUnit_Framework_TestCase {
         // This doesn't perform any code coverage.
         $this->assertEquals(
             exec('php ' . VersionTest::$versionPath),
-            Version::getVersion()
+            \Version::getVersion()
         );
     }
 };

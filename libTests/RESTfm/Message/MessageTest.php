@@ -17,7 +17,12 @@
  *  Gavin Stewart
  */
 
-namespace RESTfm\Message;
+namespace libTests\RESTfm\Message;
+
+use RESTfm\Message\Message;
+use RESTfm\Message\Row;
+use RESTfm\Message\Multistatus;
+use RESTfm\Message\Record;
 
 class MessageTest extends \PHPUnit_Framework_Testcase
 {
