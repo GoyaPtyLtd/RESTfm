@@ -17,11 +17,13 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\Message;
+
 /**
- * An extension of RESTfmMessageRow with additional record related metadata
+ * An extension of RESTfm\Message\Row with additional record related metadata
  * access methods.
  */
-abstract class RESTfmMessageRecordAbstract extends RESTfmMessageRow {
+abstract class RecordAbstract extends Row {
 
     /**
      * Return href metadata for record.

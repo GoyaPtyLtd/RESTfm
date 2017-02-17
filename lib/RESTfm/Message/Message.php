@@ -17,24 +17,26 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\Message;
+
 /**
- * RESTfmMessage
+ * RESTfm\Message\Message
  *
  * This message interface provides access to the request/response data sent
  * between formats (web input/output) and backends (database input/output).
  *
  * In general:
- *   Request: import format -> RESTfmMessage -> backend
- *   Response: backend -> RESTfmMessage -> export format
+ *   Request: import format -> Message -> backend
+ *   Response: backend -> Message -> export format
  *
  * In practice, responses are created from raised exceptions as well.
  *
- * Not every request will create a RESTfmMessage as some requests contain
+ * Not every request will create a Message as some requests contain
  * no actual data.
  *
- * Every response will contain data and so will create a RESTfmMessage.
+ * Every response will contain data and so will create a Message.
  */
-class RESTfmMessage implements RESTfmMessageInterface {
+class Message implements MessageInterface {
 
     /**
      * A message object for passing request/response data between formats
@@ -47,16 +49,16 @@ class RESTfmMessage implements RESTfmMessageInterface {
     // @var array of key/value pairs.
     protected $_info = array();
 
-    // @var array of fieldName/RESTfmMessageRow pairs.
+    // @var array of fieldName/Row pairs.
     protected $_metaFields = array();
 
-    // @var array of RESTfmMessageMultistatus
+    // @var array of Multistatus
     protected $_multistatus = array();
 
     // @var array of name/href pairs.
     protected $_navs = array();
 
-    // @var array of RESTfmMessageRecord
+    // @var array of Record
     protected $_records = array();
 
     /**
@@ -113,16 +115,16 @@ class RESTfmMessage implements RESTfmMessageInterface {
      * Set a 'metaField' fieldName/row pair.
      *
      * @param string $fieldName
-     * @param RESTfmMessageRow $metaField
+     * @param Row $metaField
      */
-    public function setMetaField ($fieldName, RESTfmMessageRowAbstract $metaField) {
+    public function setMetaField ($fieldName, RowAbstract $metaField) {
         $this->_metaFields[$fieldName] = $metaField;
     }
 
     /**
      * @param string $fieldName
      *
-     * @return RESTfmMessageRow
+     * @return Row
      */
     public function getMetaField ($fieldName) {
         if (isset($this->_metaFields[$fieldName])) {
@@ -138,7 +140,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
-     * @return array [ <fieldName> => <RESTfmMessageRow>, ...]
+     * @return array [ <fieldName> => <Row>, ...]
      */
     public function getMetaFields () {
         return $this->_metaFields;
@@ -147,9 +149,9 @@ class RESTfmMessage implements RESTfmMessageInterface {
     /**
      * Add a 'multistatus' object (row).
      *
-     * @param RESTfmMessageMultistatus $multistatus
+     * @param Multistatus $multistatus
      */
-    public function addMultistatus (RESTfmMessageMultistatusInterface $multistatus) {
+    public function addMultistatus (MultistatusInterface $multistatus) {
         $this->_multistatus[] = $multistatus;
     }
 
@@ -164,8 +166,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
      * @param integer $index
      *  Index to return if it exists.
      *
-     * @return RESTfmMessageMultistatus OR
-     *          array [ <RESTfmMessageMultistatus>, ... ]
+     * @return Multistatus
      */
     public function getMultistatus ($index) {
         if (isset($this->_multistatus[$index])) {
@@ -174,7 +175,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
-     * @return array [ <RESTfmMessageMultistatus>, ... ]
+     * @return array [ <Multistatus>, ... ]
      */
     public function getMultistatuses () {
         return $this->_multistatus;
@@ -211,9 +212,9 @@ class RESTfmMessage implements RESTfmMessageInterface {
     /**
      * Add a 'data+meta' record object (row plus meta data).
      *
-     * @param RESTfmMessageRecord $record
+     * @param Record $record
      */
-    public function addRecord (RESTfmMessageRecordAbstract $record) {
+    public function addRecord (RecordAbstract $record) {
         $this->_records[] = $record;
     }
 
@@ -223,7 +224,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
      * @param integer $index
      *  Index of record to return, if it exists.
      *
-     * @return RESTfmMessageRecord
+     * @return Record
      */
     public function getRecord ($index) {
         if (isset($this->_records[$index])) {
@@ -239,7 +240,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
     }
 
     /**
-     * @return array of RESTfmMessageRecord
+     * @return array of Record
      */
     public function getRecords () {
         return $this->_records;
@@ -270,12 +271,12 @@ class RESTfmMessage implements RESTfmMessageInterface {
     /**
      * @param string $sectionName
      *
-     * @return RESTfmMessageSection
+     * @return Section
      */
     public function getSection ($sectionName) {
         switch ($sectionName) {
             case 'meta':
-                $section = new RESTfmMessageSection($sectionName,
+                $section = new Section($sectionName,
                                 $this->_knownSectionDimensions[$sectionName]);
                 $sectionRows = &$section->_getRowsReference();
                 foreach ($this->_records as $record) {
@@ -285,7 +286,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
                 break;
 
             case 'data':
-                $section = new RESTfmMessageSection($sectionName,
+                $section = new Section($sectionName,
                                 $this->_knownSectionDimensions[$sectionName]);
                 $sectionRows = &$section->_getRowsReference();
                 foreach ($this->_records as $record) {
@@ -295,7 +296,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
                 break;
 
             case 'info':
-                $section = new RESTfmMessageSection($sectionName,
+                $section = new Section($sectionName,
                                 $this->_knownSectionDimensions[$sectionName]);
                 $sectionRows = &$section->_getRowsReference();
                 $sectionRows[] = &$this->_info;
@@ -303,7 +304,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
                 break;
 
             case 'metaField':
-                $section = new RESTfmMessageSection($sectionName,
+                $section = new Section($sectionName,
                                 $this->_knownSectionDimensions[$sectionName]);
                 $sectionRows = &$section->_getRowsReference();
                 foreach ($this->_metaFields as $row) {
@@ -313,7 +314,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
                 break;
 
             case 'multistatus':
-                $section = new RESTfmMessageSection($sectionName,
+                $section = new Section($sectionName,
                                 $this->_knownSectionDimensions[$sectionName]);
                 $sectionRows = &$section->_getRowsReference();
                 foreach ($this->_multistatus as $row) {
@@ -323,7 +324,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
                 break;
 
             case 'nav':
-                $section = new RESTfmMessageSection($sectionName,
+                $section = new Section($sectionName,
                                 $this->_knownSectionDimensions[$sectionName]);
                 $sectionRows = &$section->_getRowsReference();
                 $sectionRows[] = &$this->_navs;
@@ -361,7 +362,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
                     if (isset($this->_records[$index])) {
                         $record = $this->_records[$index];
                     } else {
-                        $record = new RESTfmMessageRecord();
+                        $record = new Record();
                         $this->addRecord($record);
                     }
                     foreach ($row as $key => $val) {
@@ -384,7 +385,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
                     if (isset($this->_records[$index])) {
                         $record = $this->_records[$index];
                     } else {
-                        $record = new RESTfmMessageRecord();
+                        $record = new Record();
                         $this->addRecord($record);
                     }
                     $record->setData($row);
@@ -405,7 +406,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
             case 'metaField':
                 foreach ($sectionData as $rowIndex => $row) {
                     if (isset($row['name'])) {
-                        $metaField = new RESTfmMessageRow();
+                        $metaField = new Row();
                         $metaField->setData($row);
                         $this->setMetaField($row['name'], $metaField);
                     }
@@ -414,7 +415,7 @@ class RESTfmMessage implements RESTfmMessageInterface {
 
             case 'multistatus':
                 foreach ($sectionData as $rowIndex => $row) {
-                    $multistatus = new RESTfmMessageMultistatus();
+                    $multistatus = new Multistatus();
                     foreach ($row as $key => $val) {
                         switch ($key) {
                             // 'index' is deprecated for 'recordID' for

@@ -17,10 +17,12 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\Message;
+
 /**
  * Section access interface for export formats.
  */
-class RESTfmMessageSection implements RESTfmMessageSectionInterface {
+class Section implements SectionInterface {
 
     // @var integer number of dimensions.
     protected $_dimensions = 0;
@@ -68,7 +70,7 @@ class RESTfmMessageSection implements RESTfmMessageSectionInterface {
     }
 
     /**
-     * RESTfmMessage internal function.
+     * RESTfm\Message internal function.
      * Constructor.
      *
      * @param string section name.
@@ -80,7 +82,7 @@ class RESTfmMessageSection implements RESTfmMessageSectionInterface {
     }
 
     /**
-     * RESTfmMessage internal function.
+     * RESTfm\Message internal function.
      * Get reference to internal _rows array.
      *
      * @return arrayref _rows array.

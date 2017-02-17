@@ -17,16 +17,19 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\Message;
+
 /**
- * An extension of RESTfmMessageRow (array-like) with additional record related
- * metadata access methods.
+ * An extension of RESTfm\Message\Row (array-like) with additional record
+ * related metadata access methods.
  */
-class RESTfmMessageRecord extends RESTfmMessageRecordAbstract {
+class Record extends RecordAbstract {
 
     protected $_meta = array();
 
     /**
-     * A record object containing recordID, href, and fieldName/value pairs in RESTfmMessage.
+     * A record object containing recordID, href, and fieldName/value pairs in
+     * Message.
      *
      * @param string $recordId
      *  Optional recordID.
@@ -78,7 +81,7 @@ class RESTfmMessageRecord extends RESTfmMessageRecordAbstract {
     }
 
     /**
-     * RESTfmMessage internal function.
+     * RESTfm\Message internal function.
      * Return a reference to the internal _meta array.
      *
      * @param arrayref _meta array.

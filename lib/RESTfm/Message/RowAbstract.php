@@ -17,10 +17,14 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\Message;
+
  /**
   * An array-like object for a single row of fieldName/value pairs.
   */
-abstract class RESTfmMessageRowAbstract implements ArrayAccess, IteratorAggregate, Countable {
+abstract class RowAbstract implements \ArrayAccess,
+                                      \IteratorAggregate,
+                                      \Countable {
 
     /**
      * An array-like object for a single row of fieldName/value pairs.

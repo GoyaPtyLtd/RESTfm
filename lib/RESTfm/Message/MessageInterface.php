@@ -17,24 +17,26 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\Message;
+
 /**
- * RESTfmMessageInterface
+ * RESTfm\Message\MessageInterface
  *
  * This message interface provides access to the request/response data sent
  * between formats (web input/output) and backends (database input/output).
  *
  * In general:
- *   Request: import format -> RESTfmMessage -> backend
- *   Response: backend -> RESTfmMessage -> export format
+ *   Request: import format -> Message -> backend
+ *   Response: backend -> Message -> export format
  *
  * In practice, responses are created from raised exceptions as well.
  *
- * Not every request will create a RESTfmMessage as some requests contain
+ * Not every request will create a Message as some requests contain
  * no actual data.
  *
- * Every response will contain data and so will create a RESTfmMessage.
+ * Every response will contain data and so will create a Message.
  */
-interface RESTfmMessageInterface {
+interface MessageInterface {
 
     // --- Access methods for managing data in rows. --- //
 
@@ -68,14 +70,14 @@ interface RESTfmMessageInterface {
      * Set a 'metaField' fieldName/row pair.
      *
      * @param string $fieldName
-     * @param RESTfmMessageRowAbstract $metaField
+     * @param RowAbstract $metaField
      */
-    public function setMetaField ($fieldName, RESTfmMessageRowAbstract $metaField);
+    public function setMetaField ($fieldName, RowAbstract $metaField);
 
     /**
      * @param string $fieldName
      *
-     * @return RESTfmMessageRowAbstract
+     * @return RowAbstract
      */
     public function getMetaField ($fieldName);
 
@@ -85,23 +87,22 @@ interface RESTfmMessageInterface {
     public function getMetaFieldCount ();
 
     /**
-     * @return array [ <fieldName> => <RESTfmMessageRowAbstract>, ...]
+     * @return array [ <fieldName> => <RowAbstract>, ...]
      */
     public function getMetaFields ();
 
     /**
      * Add a 'multistatus' object (row).
      *
-     * @param RESTfmMessageMultistatusInterface $multistatus
+     * @param MultistatusInterface $multistatus
      */
-    public function addMultistatus (RESTfmMessageMultistatusInterface $multistatus);
+    public function addMultistatus (MultistatusInterface $multistatus);
 
     /**
      * @param integer $index
      *  Index to return if it exists.
      *
-     * @return RESTfmMessageMultistatus OR
-     *          array [ <RESTfmMessageMultistatus>, ... ]
+     * @return Multistatus
      */
     public function getMultistatus ($index);
 
@@ -111,7 +112,7 @@ interface RESTfmMessageInterface {
     public function getMultistatusCount ();
 
     /**
-     * @return array [ <RESTfmMessageMultistatus>, ... ]
+     * @return array [ <Multistatus>, ... ]
      */
     public function getMultistatuses ();
 
@@ -138,9 +139,9 @@ interface RESTfmMessageInterface {
     /**
      * Add a 'data+meta' record object (row plus meta data).
      *
-     * @param RESTfmMessageRecordAbstract $record
+     * @param RecordAbstract $record
      */
-    public function addRecord (RESTfmMessageRecordAbstract $record);
+    public function addRecord (RecordAbstract $record);
 
     /**
      * Return a record by index.
@@ -148,7 +149,7 @@ interface RESTfmMessageInterface {
      * @param integer $index
      *  Index of record to return, if it exists.
      *
-     * @return RESTfmMessageRecordAbstract
+     * @return RecordAbstract
      */
     public function getRecord ($index);
 
@@ -158,7 +159,7 @@ interface RESTfmMessageInterface {
     public function getRecordCount ();
 
     /**
-     * @return array [ <RESTfmMessageRecordAbstract>, ... ]
+     * @return array [ <RecordAbstract>, ... ]
      */
     public function getRecords ();
 
@@ -174,7 +175,7 @@ interface RESTfmMessageInterface {
     /**
      * @param string $sectionName
      *
-     * @return RESTfmMessageSectionInterface
+     * @return SectionInterface
      */
     public function getSection ($sectionName);
 

@@ -17,10 +17,12 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\Message;
+
 /**
  * Multistatus interface.
  */
-interface RESTfmMessageMultistatusInterface {
+interface MultistatusInterface {
 
     /**
      * Get status code.

@@ -2,7 +2,7 @@
 <phpunit colors="true">
   <testsuites>
     <testsuite name="RESTfm-lib">
-      <directory>libTest</directory>
+      <directory>libTests</directory>
     </testsuite>
   </testsuites>
   <filter>

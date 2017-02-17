@@ -17,10 +17,12 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\Message;
+
  /**
   * An array-like object for a single row of fieldName/value pairs.
   */
-class RESTfmMessageRow extends RESTfmMessageRowAbstract {
+class Row extends RowAbstract {
 
     /**
      * @var array of fieldName/value pairs.
@@ -51,7 +53,7 @@ class RESTfmMessageRow extends RESTfmMessageRowAbstract {
     }
 
     /**
-     * RESTfmMessage internal function.
+     * RESTfm\Message internal function.
      * Return a reference to the internal _data array.
      *
      * @return arrayref _data array.
@@ -85,7 +87,7 @@ class RESTfmMessageRow extends RESTfmMessageRowAbstract {
     // -- IteratorAggregate implementation. -- //
 
     public function getIterator () {
-        return new ArrayIterator($this->_data);
+        return new \ArrayIterator($this->_data);
     }
 
     // -- Countable implementation. -- //

@@ -17,7 +17,9 @@
  *  Gavin Stewart
  */
 
-class RESTfmMessageRowTest extends PHPUnit_Framework_TestCase {
+namespace RESTfm\Message;
+
+class RowTest extends \PHPUnit_Framework_TestCase {
 
     static $data = array(
         'Field1' => 'Value1',
@@ -25,7 +27,7 @@ class RESTfmMessageRowTest extends PHPUnit_Framework_TestCase {
     );
 
     public function testConstructorSet() {
-        $row = new RESTfmMessageRow(array(
+        $row = new Row(array(
                     'Field98'    => 'Value98',
                     'Field99'    => 'Value99',
                 ));
@@ -38,13 +40,13 @@ class RESTfmMessageRowTest extends PHPUnit_Framework_TestCase {
 
 
     public function testSetDataAndGetDataReference() {
-        $row = new RESTfmMessageRow();
+        $row = new Row();
 
-        $row->setData(RESTfmMessageRowTest::$data);
+        $row->setData(RowTest::$data);
 
         $arrayRef = &$row->_getDataReference();
 
-        $arrayDiff = array_diff(RESTfmMessageRowTest::$data, $arrayRef);
+        $arrayDiff = array_diff(RowTest::$data, $arrayRef);
         $this->assertEmpty($arrayDiff);
 
         return $row;
@@ -53,9 +55,9 @@ class RESTfmMessageRowTest extends PHPUnit_Framework_TestCase {
     /**
      * @depends testSetDataAndGetDataReference
      */
-    public function testIterator(RESTfmMessageRow $row) {
+    public function testIterator(Row $row) {
         foreach ($row as $fieldName => $val) {
-            $this->assertEquals(RESTfmMessageRowTest::$data[$fieldName],
+            $this->assertEquals(RowTest::$data[$fieldName],
                                 $val);
         }
         return $row;
@@ -65,7 +67,7 @@ class RESTfmMessageRowTest extends PHPUnit_Framework_TestCase {
     /**
      * @depends testIterator
      */
-    public function testSetAndGetField(RESTfmMessageRow $row) {
+    public function testSetAndGetField(Row $row) {
 
         $row['Field3'] = 'Value3';
         $row['Field4'] = 'Value4';
@@ -79,7 +81,7 @@ class RESTfmMessageRowTest extends PHPUnit_Framework_TestCase {
     /**
      * @depends testSetAndGetField
      */
-    public function testCountFields(RESTfmMessageRow $row) {
+    public function testCountFields(Row $row) {
         $this->assertEquals(count($row), 4);
 
         return $row;
@@ -88,7 +90,7 @@ class RESTfmMessageRowTest extends PHPUnit_Framework_TestCase {
     /**
      * @depends testCountFields
      */
-    public function testIssetAndUnset(RESTfmMessageRow $row) {
+    public function testIssetAndUnset(Row $row) {
         $this->assertTrue(isset($row['Field2']));
 
         unset($row['Field2']);

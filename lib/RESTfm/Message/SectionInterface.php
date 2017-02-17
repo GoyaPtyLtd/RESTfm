@@ -17,10 +17,12 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\Message;
+
 /**
  * Section access interface for export formats.
  */
-interface RESTfmMessageSectionInterface {
+interface SectionInterface {
 
     /**
      * Get number of dimensions of data for this section.

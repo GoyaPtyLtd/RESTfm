@@ -17,13 +17,15 @@
  *  Gavin Stewart
  */
 
-class RESTfmMessageRecordTest extends PHPUnit_Framework_TestCase {
+namespace RESTfm\Message;
+
+class RecordTest extends \PHPUnit_Framework_TestCase {
 
     public function testConstructorAndGetDataReference() {
         $rowData = array ('field1'  => 'value1',
                           'field2'  => 'value2');
 
-        $record = new RESTfmMessageRecord( 'test0', 'href://here', $rowData);
+        $record = new Record( 'test0', 'href://here', $rowData);
 
         $this->assertEquals($record->getHref(), 'href://here');
         $this->assertEquals($record->getRecordId(), 'test0');
@@ -33,7 +35,7 @@ class RESTfmMessageRecordTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testSetAndGetHref() {
-        $record = new RESTfmMessageRecord();
+        $record = new Record();
 
         $this->assertNull($record->getHref());
 
@@ -43,7 +45,7 @@ class RESTfmMessageRecordTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testSetAndGetRecordId() {
-        $record = new RESTfmMessageRecord();
+        $record = new Record();
 
         $this->assertNull($record->getRecordId());
 
@@ -53,7 +55,7 @@ class RESTfmMessageRecordTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testGetMetaReference() {
-        $record = new RESTfmMessageRecord('recordIdTest', 'hrefTest');
+        $record = new Record('recordIdTest', 'hrefTest');
         $recordMeta = &$record->_getMetaReference();
 
         $this->assertEquals($recordMeta['recordID'], 'recordIdTest');

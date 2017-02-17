@@ -17,15 +17,17 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\Message;
+
 /**
  * Multistatus interface.
  */
-class RESTfmMessageMultistatus implements RESTfmMessageMultistatusInterface {
+class Multistatus implements MultistatusInterface {
 
     protected $_multiStatus = array();
 
     /**
-     * A multistatus row object for RESTfmMessage.
+     * A multistatus row object for Message.
      *
      * Must set all parameters or none.
      * @param integer $statusCode
@@ -102,7 +104,7 @@ class RESTfmMessageMultistatus implements RESTfmMessageMultistatusInterface {
     }
 
     /**
-     * RESTfmMessage internal function.
+     * RESTfm\Message internal function.
      * Return reference to the internal _multiStatus array.
      *
      * @return arrayref _multistatus array.

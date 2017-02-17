@@ -17,11 +17,13 @@
  *  Gavin Stewart
  */
 
-class RESTfmMessageTest extends PHPUnit_Framework_TestCase
+namespace RESTfm\Message;
+
+class MessageTest extends \PHPUnit_Framework_Testcase
 {
 
     public function testSetAndGetAndUnsetInfo () {
-        $message = new RESTfmMessage();
+        $message = new Message();
 
         $message->setInfo('addField0', 'addValue0');
         $message->setInfo('addField1', 'addValue1');
@@ -47,13 +49,13 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
     }
 
     public function testSetAndGetMetaFields () {
-        $message = new RESTfmMessage();
+        $message = new Message();
 
         // We only need to identify objects here, not the object's data.
         // The object's own test files are the only place data is tested.
 
-        $messageRow0 = new RESTfmMessageRow();
-        $messageRow1 = new RESTfmMessageRow();
+        $messageRow0 = new Row();
+        $messageRow1 = new Row();
 
         $message->setMetaField('name0', $messageRow0);
         $message->setMetaField('name1', $messageRow1);
@@ -81,13 +83,13 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
     }
 
     public function testAddAndGetMultistatus () {
-        $message = new RESTfmMessage();
+        $message = new Message();
 
         // We only need to identify objects here, not the object's data.
         // The object's own test files are the only place data is tested.
 
-        $messageMultistatus0 = new RESTfmMessageMultistatus();
-        $messageMultistatus1 = new RESTfmMessageMultistatus();
+        $messageMultistatus0 = new Multistatus();
+        $messageMultistatus1 = new Multistatus();
 
         $message->addMultistatus($messageMultistatus0);
         $message->addMultistatus($messageMultistatus1);
@@ -109,7 +111,7 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
     }
 
     public function testSetAndGetNavs () {
-        $message = new RESTfmMessage();
+        $message = new Message();
 
         $message->setNav('name0', 'href0');
         $message->setNav('name1', 'href1');
@@ -127,7 +129,7 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
     }
 
     public function testAddAndGetRecords () {
-        $message = new RESTfmMessage();
+        $message = new Message();
 
         // We only need to identify objects here, not the object's data.
         // The object's own test files are the only place data is tested.
@@ -141,8 +143,8 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
                         'rowField2' =>  'rowValue4',
         );
 
-        $messageRecord0 = new RESTfmMessageRecord();
-        $messageRecord1 = new RESTfmMessageRecord();
+        $messageRecord0 = new Record();
+        $messageRecord1 = new Record();
 
         $message->addRecord($messageRecord0);
         $message->addRecord($messageRecord1);
@@ -219,11 +221,11 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
     );
 
     public function testGetSectionNames () {
-        $message = new RESTfmMessage();
+        $message = new Message();
 
         $this->assertEmpty($message->getSectionNames());
 
-        $message->importArray(RESTfmMessageTest::$importData);
+        $message->importArray(MessageTest::$importData);
 
         $sectionNames = $message->getSectionNames();
 
@@ -233,7 +235,7 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
     }
 
     public function testNonExistentGetSection () {
-        $message = new RESTfmMessage();
+        $message = new Message();
 
         $this->assertNull($message->getSection('nonExistent'));
     }
@@ -265,11 +267,11 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
             ),
         );
 
-        $messageMetaBeforeData = new RESTfmMessage();
+        $messageMetaBeforeData = new Message();
         $messageMetaBeforeData->setSection('meta', $meta);
         $messageMetaBeforeData->setSection('data', $data);
 
-        $messageDataBeforeMeta = new RESTfmMessage();
+        $messageDataBeforeMeta = new Message();
         $messageDataBeforeMeta->setSection('data', $data);
         $messageDataBeforeMeta->setSection('meta', $meta);
 
@@ -290,7 +292,7 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
      * in a 2d array. Check this is working for known 1d sections.
      */
     public function testSetSectionDimensionalityResilience () {
-        $message = new RESTfmMessage();
+        $message = new Message();
 
         $message->setSection('info', array( array(
                                                 'key0' => 'val0',
@@ -310,113 +312,113 @@ class RESTfmMessageTest extends PHPUnit_Framework_TestCase
     }
 
     public function testImportAndExport () {
-        $message = new RESTfmMessage();
+        $message = new Message();
 
-        $message->importArray(RESTfmMessageTest::$importData);
+        $message->importArray(MessageTest::$importData);
 
         $export = $message->exportArray();
 
         // record 0
         $this->assertEquals(
-                RESTfmMessageTest::$importData['meta'][0]['recordID'],
+                MessageTest::$importData['meta'][0]['recordID'],
                 $export['meta'][0]['recordID']
         );
         $this->assertEquals(
-                RESTfmMessageTest::$importData['meta'][0]['href'],
+                MessageTest::$importData['meta'][0]['href'],
                 $export['meta'][0]['href']
         );
         $this->assertEquals(
-                RESTfmMessageTest::$importData['data'][0]['field1'],
+                MessageTest::$importData['data'][0]['field1'],
                 $export['data'][0]['field1']
         );
 
         // record 1
         $this->assertEquals(
-                RESTfmMessageTest::$importData['meta'][1]['recordID'],
+                MessageTest::$importData['meta'][1]['recordID'],
                 $export['meta'][1]['recordID']
         );
         $this->assertEquals(
-                RESTfmMessageTest::$importData['meta'][1]['href'],
+                MessageTest::$importData['meta'][1]['href'],
                 $export['meta'][1]['href']
         );
         $this->assertEquals(
-                RESTfmMessageTest::$importData['data'][1]['field1'],
+                MessageTest::$importData['data'][1]['field1'],
                 $export['data'][1]['field1']
         );
 
         // info
         $this->assertEquals(
-                RESTfmMessageTest::$importData['info']['infoField1'],
+                MessageTest::$importData['info']['infoField1'],
                 $export['info']['infoField1']
         );
         $this->assertEquals(
-                RESTfmMessageTest::$importData['info']['infoField2'],
+                MessageTest::$importData['info']['infoField2'],
                 $export['info']['infoField2']
         );
 
         // nav
         $this->assertEquals(
-                RESTfmMessageTest::$importData['nav']['name0'],
+                MessageTest::$importData['nav']['name0'],
                 $export['nav']['name0']
         );
         $this->assertEquals(
-                RESTfmMessageTest::$importData['nav']['name1'],
+                MessageTest::$importData['nav']['name1'],
                 $export['nav']['name1']
         );
 
         // metaField 0
         $this->assertEquals(
-                RESTfmMessageTest::$importData['metaField'][0]['metaFieldField1'],
+                MessageTest::$importData['metaField'][0]['metaFieldField1'],
                 $export['metaField'][0]['metaFieldField1']
         );
         $this->assertEquals(
-                RESTfmMessageTest::$importData['metaField'][0]['metaFieldField2'],
+                MessageTest::$importData['metaField'][0]['metaFieldField2'],
                 $export['metaField'][0]['metaFieldField2']
         );
 
         // metaField 1
         $this->assertEquals(
-                RESTfmMessageTest::$importData['metaField'][1]['metaFieldField1'],
+                MessageTest::$importData['metaField'][1]['metaFieldField1'],
                 $export['metaField'][1]['metaFieldField1']
         );
         $this->assertEquals(
-                RESTfmMessageTest::$importData['metaField'][1]['metaFieldField2'],
+                MessageTest::$importData['metaField'][1]['metaFieldField2'],
                 $export['metaField'][1]['metaFieldField2']
         );
 
         // multistatus 0
         $this->assertEquals(
-                RESTfmMessageTest::$importData['multistatus'][0]['recordID'],
+                MessageTest::$importData['multistatus'][0]['recordID'],
                 $export['multistatus'][0]['recordID']
         );
         $this->assertEquals(
-                RESTfmMessageTest::$importData['multistatus'][0]['Status'],
+                MessageTest::$importData['multistatus'][0]['Status'],
                 $export['multistatus'][0]['Status']
         );
         $this->assertEquals(
-                RESTfmMessageTest::$importData['multistatus'][0]['Reason'],
+                MessageTest::$importData['multistatus'][0]['Reason'],
                 $export['multistatus'][0]['Reason']
         );
 
         // multistatus 1
         $this->assertEquals(
-                RESTfmMessageTest::$importData['multistatus'][1]['recordID'],
+                MessageTest::$importData['multistatus'][1]['recordID'],
                 $export['multistatus'][1]['recordID']
         );
         $this->assertEquals(
-                RESTfmMessageTest::$importData['multistatus'][1]['Status'],
+                MessageTest::$importData['multistatus'][1]['Status'],
                 $export['multistatus'][1]['Status']
         );
         $this->assertEquals(
-                RESTfmMessageTest::$importData['multistatus'][1]['Reason'],
+                MessageTest::$importData['multistatus'][1]['Reason'],
                 $export['multistatus'][1]['Reason']
         );
     }
 
     public function testToString () {
-        $message = new RESTfmMessage();
+        $message = new Message();
 
-        $message->importArray(RESTfmMessageTest::$importData);
+        $message->importArray(MessageTest::$importData);
 
         $this->assertNotEmpty($message->__toString());
     }

@@ -17,10 +17,12 @@
  *  Gavin Stewart
  */
 
-class RESTfmMessageMultistatusTest extends PHPUnit_Framework_TestCase {
+namespace RESTfm\Message;
+
+class MultistatusTest extends \PHPUnit_Framework_TestCase {
 
     public function testConstructorSetAndGet() {
-        $multistatus = new RESTfmMessageMultistatus('9999', 'test again', 'someOtherRecordId');
+        $multistatus = new Multistatus('9999', 'test again', 'someOtherRecordId');
 
         $this->assertEquals($multistatus->getStatus(), '9999');
         $this->assertEquals($multistatus->getReason(), 'test again');
@@ -28,7 +30,7 @@ class RESTfmMessageMultistatusTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testSetAndGetStatus() {
-        $multistatus = new RESTfmMessageMultistatus();
+        $multistatus = new Multistatus();
 
         $this->assertNull($multistatus->getStatus());
 
@@ -38,7 +40,7 @@ class RESTfmMessageMultistatusTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testSetAndGetReason() {
-        $multistatus = new RESTfmMessageMultistatus();
+        $multistatus = new Multistatus();
 
         $this->assertNull($multistatus->getReason());
 
@@ -48,7 +50,7 @@ class RESTfmMessageMultistatusTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testSetAndGetRecordId() {
-        $multistatus = new RESTfmMessageMultistatus();
+        $multistatus = new Multistatus();
 
         $this->assertNull($multistatus->getRecordId());
 
@@ -58,7 +60,7 @@ class RESTfmMessageMultistatusTest extends PHPUnit_Framework_TestCase {
     }
 
     public function testGetMultistatusReference() {
-        $multistatus = new RESTfmMessageMultistatus('9999', 'test again', 'someOtherRecordId');
+        $multistatus = new Multistatus('9999', 'test again', 'someOtherRecordId');
         $multistatusReference = &$multistatus->_getMultistatusReference();
 
         $this->assertEquals($multistatusReference['Status'], '9999');

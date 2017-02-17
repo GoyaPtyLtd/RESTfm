@@ -17,7 +17,9 @@
  *  Gavin Stewart
  */
 
-class RESTfmMessageSectionTest extends PHPUnit_Framework_TestCase {
+namespace RESTfm\Message;
+
+class SectionTest extends \PHPUnit_Framework_TestCase {
 
     static $data = array(
         0 => array(
@@ -31,23 +33,23 @@ class RESTfmMessageSectionTest extends PHPUnit_Framework_TestCase {
     );
 
     public function testGetNameAndDimensions() {
-        $section = new RESTfmMessageSection('data', 2);
+        $section = new Section('data', 2);
 
         $this->assertEquals($section->getName(), 'data');
         $this->assertEquals($section->getDimensions(), 2);
     }
 
     public function testInjectAndGetRows() {
-        $section = new RESTfmMessageSection('data', 2);
+        $section = new Section('data', 2);
         $rowsRef = &$section->_getRowsReference();
-        $rowsRef = RESTfmMessageSectionTest::$data;
+        $rowsRef = SectionTest::$data;
 
         $getRows = $section->getRows();
 
-        $arrayDiff = array_diff(RESTfmMessageSectionTest::$data[0], $getRows[0]);
+        $arrayDiff = array_diff(SectionTest::$data[0], $getRows[0]);
         $this->assertEmpty($arrayDiff);
 
-        $arrayDiff = array_diff(RESTfmMessageSectionTest::$data[1], $getRows[1]);
+        $arrayDiff = array_diff(SectionTest::$data[1], $getRows[1]);
         $this->assertEmpty($arrayDiff);
     }
 
