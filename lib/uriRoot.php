@@ -61,7 +61,7 @@ class uriRoot extends RESTfmResource {
         if (RESTfmConfig::checkVar('databasePDOMap')) {
             $pdos = RESTfmConfig::getVar('databasePDOMap');
             foreach ($pdos as $dbMapName => $dsn) {
-                $restfmMessage->addRecord(new RESTfmMessageRecord(
+                $restfmMessage->addRecord(new \RESTfm\Message\Record(
                     NULL, NULL, array('database' => $dbMapName)
                 ));
             }
@@ -69,7 +69,7 @@ class uriRoot extends RESTfmResource {
 
         // Iterate records and set navigation hrefs.
         $restfmMessageRecords = $restfmMessage->getRecords();
-        $record = NULL;         // @var RESTfmMessageRecord
+        $record = NULL;         // @var \RESTfm\Message\Record
         foreach($restfmMessageRecords as $record) {
             $database = $record['database'];
             $href = $request->baseUri.'/'.RESTfmUrl::encode($database).
@@ -87,7 +87,7 @@ class uriRoot extends RESTfmResource {
         }
 
         $response->setStatus(\Tonic\Response::OK);
-        $response->setRESTfmMessage($restfmMessage);
+        $response->setMessage($restfmMessage);
         return $response;
     }
 

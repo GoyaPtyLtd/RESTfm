@@ -49,7 +49,7 @@ class uriDatabaseLayout extends RESTfmResource {
 
         // Iterate records and set navigation hrefs.
         $restfmMessageRecords = $restfmMessage->getRecords();
-        $record = NULL;         // @var RESTfmMessageRecord
+        $record = NULL;         // @var \RESTfm\Message\Record
         foreach($restfmMessageRecords as $record) {
             $record->setHref(
                 $request->baseUri.'/'.
@@ -60,7 +60,7 @@ class uriDatabaseLayout extends RESTfmResource {
         }
 
         $response->setStatus(\Tonic\Response::OK);
-        $response->setRESTfmMessage($restfmMessage);
+        $response->setMessage($restfmMessage);
         return $response;
     }
 }

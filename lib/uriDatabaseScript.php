@@ -35,7 +35,7 @@ class uriDatabaseScript extends RESTfmResource {
      *
      * @return Response
      */
-    function get(Request $request, $database) {
+    function get($request, $database) {
         $database = RESTfmUrl::decode($database);
 
         $backend = BackendFactory::make($request, $database);
@@ -45,7 +45,7 @@ class uriDatabaseScript extends RESTfmResource {
         $response = new RESTfm\Response($request);
 
         $response->setStatus(\Tonic\Response::OK);
-        $response->setRESTfmMessage($restfmMessage);
+        $response->setMessage($restfmMessage);
         return $response;
     }
 

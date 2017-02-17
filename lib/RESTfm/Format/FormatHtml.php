@@ -21,13 +21,13 @@ class FormatHtml implements FormatInterface {
 
     // --- Interface Implementation --- //
 
-    public function parse (RESTfmMessage $restfmMessage, $data) {
+    public function parse (\RESTfm\Message\Message $restfmMessage, $data) {
         // $data is URL encoded key => value pairs as in a HTTP POST body or
         // HTTP GET query string.
         $a = array();
         $this->_parse_str($data, $a);
 
-        $restfmMessage->addRecord(new RESTfmMessageRecord(
+        $restfmMessage->addRecord(new \RESTfm\Message\Record(
             NULL, NULL, $a
         ));
     }
@@ -35,7 +35,7 @@ class FormatHtml implements FormatInterface {
     /**
      * @codeCoverageIgnore Not a testable unit.
      */
-    public function write (RESTfmMessage $restfmMessage) {
+    public function write (\RESTfm\Message\Message $restfmMessage) {
 
         //$str = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">' . "\n";
         $str = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">' . "\n";

@@ -24,7 +24,7 @@
  * queries that do not operate at the record level, such as listing
  * databases, layouts, etc.
  *
- * All data I/O is encapsulated in a RESTfmMessage object.
+ * All data I/O is encapsulated in a \RESTfm\Message\Message object.
  */
 abstract class OpsDatabaseAbstract {
 
@@ -51,7 +51,7 @@ abstract class OpsDatabaseAbstract {
      * @throws RESTfmResponseException
      *  On backend error.
      *
-     * @return RESTfmMessage
+     * @return \RESTfm\Message\Message
      */
     abstract public function readDatabases ();
 
@@ -61,7 +61,7 @@ abstract class OpsDatabaseAbstract {
      * @throws RESTfmResponseException
      *  On backend error.
      *
-     * @return RESTfmMessage
+     * @return \RESTfm\Message\Message
      */
     abstract public function readLayouts ();
 
@@ -71,7 +71,7 @@ abstract class OpsDatabaseAbstract {
      * @throws RESTfmResponseException
      *  On backend error.
      *
-     * @return RESTfmMessage
+     * @return \RESTfm\Message\Message
      */
     abstract public function readScripts ();
 

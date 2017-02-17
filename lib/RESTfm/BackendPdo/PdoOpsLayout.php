@@ -71,7 +71,7 @@ class PdoOpsLayout extends OpsLayoutAbstract {
      * @throws RESTfmResponseException
      *  On backend error.
      *
-     * @return RESTfmMessage
+     * @return \RESTfm\Message\Message
      *  - 'data', 'meta', 'metaField' sections.
      */
     public function read () {
@@ -130,7 +130,7 @@ class PdoOpsLayout extends OpsLayoutAbstract {
             throw new PdoResponseException($e);
         }
 
-        $restfmMessage = new RESTfmMessage();
+        $restfmMessage = new \RESTfm\Message\Message();
 
         $this->_parseMetaField($restfmMessage, $statement);
 
@@ -142,7 +142,7 @@ class PdoOpsLayout extends OpsLayoutAbstract {
                 $recordID = $this->_uniqueKey . '===' . $record[$this->_uniqueKey];
             }
 
-            $restfmMessage->addRecord(new RESTfmMessageRecord(
+            $restfmMessage->addRecord(new \RESTfm\Message\Record(
                 $recordID,
                 NULL,
                 $record
@@ -166,7 +166,7 @@ class PdoOpsLayout extends OpsLayoutAbstract {
      * @throws RESTfmResponseException
      *  On backend error.
      *
-     * @return RESTfmMessage
+     * @return \RESTfm\Message\Message
      *  - 'metaField' section.
      */
     public function readMetaField () {
@@ -179,7 +179,7 @@ class PdoOpsLayout extends OpsLayoutAbstract {
             throw new PdoResponseException($e);
         }
 
-        $restfmMessage = new RESTfmMessage();
+        $restfmMessage = new \RESTfm\Message\Message();
 
         $this->_parseMetaField($restfmMessage, $statement);
 
@@ -204,12 +204,12 @@ class PdoOpsLayout extends OpsLayoutAbstract {
 
     /**
      * Parse field meta data out of provided PDO statement object into
-     * provided RESTfmMessage object.
+     * provided \RESTfm\Message\Message object.
      *
-     * @param RESTfmMessage $restfmMessage
+     * @param \RESTfm\Message\Message $restfmMessage
      * @param PDOStatement $statement
      */
-    protected function _parseMetaField(RESTfmMessage $restfmMessage, PDOStatement $statement) {
+    protected function _parseMetaField(\RESTfm\Message\Message $restfmMessage, PDOStatement $statement) {
         $numColumns = $statement->columnCount();
         for ($i=0; $i < $numColumns; $i++) {
             $allFieldMeta = $statement->getColumnMeta($i);
@@ -217,7 +217,7 @@ class PdoOpsLayout extends OpsLayoutAbstract {
 
             // Keep only required fields.
             $requiredFields = array('native_type', 'flags', 'len', 'precision');
-            $restfmMessageRow = new RESTfmMessageRow();
+            $restfmMessageRow = new \RESTfm\Message\Row();
             foreach($requiredFields as $requiredField) {
                 if ($requiredField == 'flags') {
                     // Mysql:

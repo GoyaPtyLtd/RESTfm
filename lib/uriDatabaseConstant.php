@@ -53,22 +53,22 @@ class uriDatabaseConstant extends RESTfmResource {
         $format = $response->format;
 
         // Create virtual records with static hrefs purely for navigation.
-        $restfmMessage = new RESTfmMessage();
-        $restfmMessage->addRecord(new RESTfmMessageRecord(
+        $restfmMessage = new \RESTfm\Message\Message();
+        $restfmMessage->addRecord(new \RESTfm\Message\Record(
             NULL,
             $request->baseUri.'/'.RESTfmUrl::encode($database).
                     '/layout.'.$format.$queryString->build(),
             array('resource' => 'layout')
         ));
         if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
-            $restfmMessage->addRecord(new RESTfmMessageRecord(
+            $restfmMessage->addRecord(new \RESTfm\Message\Record(
                 NULL,
                 $request->baseUri.'/'.RESTfmUrl::encode($database).
                         '/echo.'.$format.$queryString->build(),
                 array('resource' => 'echo')
             ));
         }
-        $restfmMessage->addRecord(new RESTfmMessageRecord(
+        $restfmMessage->addRecord(new \RESTfm\Message\Record(
             NULL,
             $request->baseUri.'/'.RESTfmUrl::encode($database).
                     '/script.'.$format.$queryString->build(),
@@ -76,7 +76,7 @@ class uriDatabaseConstant extends RESTfmResource {
         ));
 
         $response->setStatus(\Tonic\Response::OK);
-        $response->setRESTfmMessage($restfmMessage);
+        $response->setMessage($restfmMessage);
         return $response;
     }
 

@@ -22,13 +22,13 @@ class FormatXml implements FormatInterface {
     // --- Interface Implementation --- //
 
     /**
-     * Parse the provided data string into the provided RESTfmMessage
+     * Parse the provided data string into the provided \RESTfm\Message\Message
      * implementation object.
      *
-     * @param RESTfmMessage $restfmMessage
+     * @param \RESTfm\Message\Message $restfmMessage
      * @param string $data
      */
-    public function parse (RESTfmMessage $restfmMessage, $data) {
+    public function parse (\RESTfm\Message\Message $restfmMessage, $data) {
         libxml_use_internal_errors(TRUE);
         $resourceXML = simplexml_load_string($data);
         if (!$resourceXML) {
@@ -64,13 +64,13 @@ class FormatXml implements FormatInterface {
     }
 
     /**
-     * Write the provided RESTfmMessage object into a formatted string.
+     * Write the provided \RESTfm\Message\Message object into a formatted string.
      *
-     * @param RESTfmMessage $restfmMessage
+     * @param \RESTfm\Message\Message $restfmMessage
      *
      * @return string
      */
-    public function write (RESTfmMessage $restfmMessage) {
+    public function write (\RESTfm\Message\Message $restfmMessage) {
         $xml = new XmlWriter();
         $xml->openMemory();
         if (RESTfmConfig::getVar('settings', 'formatNicely')) {
@@ -102,12 +102,12 @@ class FormatXml implements FormatInterface {
      *
      * @param[out] XmlWriter $xml
      *  An initialised XmlWriter object ref.
-     * @param[in] RESTfmMessageSection $messageSection
+     * @param[in] \RESTfm\Message\Section $messageSection
      *  Section data object.
      * @param string $sectionName.
      *  Name of section to render.
      */
-    protected function _writeSection(XMLWriter $xml, RESTfmMessageSection $messageSection) {
+    protected function _writeSection(XMLWriter $xml, \RESTfm\Message\Section $messageSection) {
         if ($messageSection->getDimensions() == 2) {
             foreach ($messageSection->getRows() as $row) {
                 // We inject a "Record Name" for XML representations of

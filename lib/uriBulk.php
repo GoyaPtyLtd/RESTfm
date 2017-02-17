@@ -82,11 +82,11 @@ class uriBulk extends RESTfmResource {
             $opsRecord->setSuppressData(TRUE);
         }
 
-        $restfmMessage = $opsRecord->createBulk($request->getRESTfmMessage());
+        $restfmMessage = $opsRecord->createBulk($request->getMessage());
 
         $response = new RESTfm\Response($request);
 
-        $response->setRESTfmMessage($restfmMessage);
+        $response->setMessage($restfmMessage);
 
         if ($restfmMessage->getMultistatusCount() > 0) {
             $response->setStatus(207, 'Multi-status');
@@ -117,11 +117,11 @@ class uriBulk extends RESTfmResource {
 
         $opsRecord = $backend->makeOpsRecord($database, $layout);
 
-        $restfmMessage = $opsRecord->readBulk($request->getRESTfmMessage());
+        $restfmMessage = $opsRecord->readBulk($request->getMessage());
 
         $response = new RESTfm\Response($request);
 
-        $response->setRESTfmMessage($restfmMessage);
+        $response->setMessage($restfmMessage);
 
         if ($restfmMessage->getMultistatusCount() > 0) {
             $response->setStatus(207, 'Multi-status');
@@ -185,11 +185,11 @@ class uriBulk extends RESTfmResource {
             $opsRecord->setUpdateElseCreate();
         }
 
-        $restfmMessage = $opsRecord->updateBulk($request->getRESTfmMessage());
+        $restfmMessage = $opsRecord->updateBulk($request->getMessage());
 
         $response = new RESTfm\Response($request);
 
-        $response->setRESTfmMessage($restfmMessage);
+        $response->setMessage($restfmMessage);
 
         if ($restfmMessage->getMultistatusCount() > 0) {
             $response->setStatus(207, 'Multi-status');
@@ -220,11 +220,11 @@ class uriBulk extends RESTfmResource {
 
         $opsRecord = $backend->makeOpsRecord($database, $layout);
 
-        $restfmMessage = $opsRecord->deleteBulk($request->getRESTfmMessage());
+        $restfmMessage = $opsRecord->deleteBulk($request->getMessage());
 
         $response = new RESTfm\Response($request);
 
-        $response->setRESTfmMessage($restfmMessage);
+        $response->setMessage($restfmMessage);
 
         if ($restfmMessage->getMultistatusCount() > 0) {
             $response->setStatus(207, 'Multi-status');

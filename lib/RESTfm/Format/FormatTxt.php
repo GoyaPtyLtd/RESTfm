@@ -22,26 +22,26 @@ class FormatTxt implements FormatInterface {
     // --- Interface Implementation --- //
 
     /**
-     * Parse the provided data string into the provided RESTfmMessage
+     * Parse the provided data string into the provided \RESTfm\Message\Message
      * implementation object.
      *
-     * @param RESTfmMessage $restfmMessage
+     * @param \RESTfm\Message\Message $restfmMessage
      * @param string $data
      */
-    public function parse (RESTfmMessage $restfmMessage, $data) {
+    public function parse (\RESTfm\Message\Message $restfmMessage, $data) {
         throw new RESTfmResponseException('No input parser available for txt format.', 500);
     }
 
     /**
-     * Write the provided RESTfmMessage object into a formatted string.
+     * Write the provided \RESTfm\Message\Message object into a formatted string.
      *
      * @codeCoverageIgnore Not a testable unit.
      *
-     * @param RESTfmMessage $restfmMessage
+     * @param \RESTfm\Message\Message $restfmMessage
      *
      * @return string
      */
-    public function write (RESTfmMessage $restfmMessage) {
+    public function write (\RESTfm\Message\Message $restfmMessage) {
 
         // Extensions like xdebug will reformat var_dump output if
         // html_errors is set.

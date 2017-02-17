@@ -151,20 +151,20 @@ class Response extends \Tonic\Response {
         }
 
         // Ensure we have response data!
-        if ($this->_RESTfmMessage == NULL) {
-            $this->_RESTfmMessage = new \RESTfmMessage();
+        if ($this->_Message == NULL) {
+            $this->_Message = new Message\Message();
         }
 
         // Inject X-RESTfm headers into 'info' section.
         foreach ($this->headers as $header => $value) {
             if (preg_match('/^X-RESTfm-/i', $header)) {
-                $this->_RESTfmMessage->setInfo($header, $value);
+                $this->_Message->setInfo($header, $value);
             }
         }
 
         // Inject additional info into 'info' section.
         foreach ($this->_info as $name => $value) {
-            $this->_RESTfmMessage->setInfo($name, $value);
+            $this->_Message->setInfo($name, $value);
         }
 
         // Build the message body of this response.
@@ -191,10 +191,10 @@ class Response extends \Tonic\Response {
     /**
      * Store response data.
      *
-     * @param RESTfmMessage $restfmMessage
+     * @param \RESTfm\Message\Message $restfmMessage
      */
-    public function setRESTfmMessage(\RESTfmMessage $restfmMessage) {
-        $this->_RESTfmMessage = $restfmMessage;
+    public function setMessage(\RESTfm\Message\Message $restfmMessage) {
+        $this->_Message = $restfmMessage;
     }
 
     /**
@@ -234,10 +234,10 @@ class Response extends \Tonic\Response {
     protected $reason = '';
 
     /**
-     * @var RESTfmMessage
+     * @var \RESTfm\Message\Message
      *  The data associated with this response.
      */
-    protected $_RESTfmMessage = NULL;
+    protected $_Message = NULL;
 
     /**
      * @var array
@@ -286,7 +286,7 @@ class Response extends \Tonic\Response {
         }
 
         $this->addHeader('Content-type', $this->contentType($formatAs));
-        $this->body = $formatter->write($this->_RESTfmMessage);
+        $this->body = $formatter->write($this->_Message);
 
         // Use XSLT to produce final format.
         if (isset($useXSLT)) {

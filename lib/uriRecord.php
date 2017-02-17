@@ -65,14 +65,14 @@ class uriRecord extends RESTfmResource {
             $opsRecord->setContainerEncoding($containerEncoding);
         }
 
-        $restfmMessage = $opsRecord->readSingle(new RESTfmMessageRecord($rawRecordID));
+        $restfmMessage = $opsRecord->readSingle(new \RESTfm\Message\Record($rawRecordID));
 
         $response = new RESTfm\Response($request);
         $format = $response->format;
 
         // Meta section.
         // Iterate records and set navigation hrefs.
-        $record = NULL;         // @var RESTfmMessageRecord
+        $record = NULL;         // @var \RESTfm\Message\Record
         foreach($restfmMessage->getRecords() as $record) {
             $record->setHref(
                 $request->baseUri.'/'.
@@ -82,7 +82,7 @@ class uriRecord extends RESTfmResource {
             );
         }
 
-        $response->setRESTfmMessage($restfmMessage);
+        $response->setMessage($restfmMessage);
         $response->setStatus(\Tonic\Response::OK);
         return $response;
     }
@@ -147,15 +147,15 @@ class uriRecord extends RESTfmResource {
             $opsRecord->setUpdateElseCreate();
         }
 
-        $request->getRESTfmMessage()->getRecord(0)->setRecordId($rawRecordID);
-        $restfmMessage = $opsRecord->updateSingle($request->getRESTfmMessage());
+        $request->getMessage()->getRecord(0)->setRecordId($rawRecordID);
+        $restfmMessage = $opsRecord->updateSingle($request->getMessage());
 
         $response = new RESTfm\Response($request);
         $format = $response->format;
 
         // Meta section.
         // Iterate records and set navigation hrefs.
-        $record = NULL;         // @var RESTfmMessageRecord
+        $record = NULL;         // @var \RESTfm\Message\Record
         foreach($restfmMessage->getRecords() as $record) {
             $record->setHref(
                 $request->baseUri.'/'.
@@ -165,7 +165,7 @@ class uriRecord extends RESTfmResource {
             );
         }
 
-        $response->setRESTfmMessage($restfmMessage);
+        $response->setMessage($restfmMessage);
         $response->setStatus(\Tonic\Response::OK);
         return $response;
     }
@@ -220,10 +220,10 @@ class uriRecord extends RESTfmResource {
             $opsRecord->setPreOpScript($restfmParameters->RFMpreScript, $scriptParameters);
         }
 
-        $restfmMessage = $opsRecord->deleteSingle(new RESTfmMessageRecord($rawRecordID));
+        $restfmMessage = $opsRecord->deleteSingle(new \RESTfm\Message\Record($rawRecordID));
 
         $response = new RESTfm\Response($request);
-        $response->setRESTfmMessage($restfmMessage);
+        $response->setMessage($restfmMessage);
         $response->setStatus(\Tonic\Response::OK);
         return $response;
     }

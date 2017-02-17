@@ -47,7 +47,7 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
      * @throws RESTfmResponseException
      *  On backend error.
      *
-     * @return RESTfmMessage
+     * @return \RESTfm\Message\Message
      */
     public function read () {
         $FM = $this->_backend->getFileMaker();
@@ -115,7 +115,7 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
             throw new FileMakerResponseException($result);
         }
 
-        $restfmMessage = new RESTfmMessage();
+        $restfmMessage = new \RESTfm\Message\Message();
 
         $this->_parseMetaField($restfmMessage, $result);
         $metaFields = $restfmMessage->getMetaFields();
@@ -130,9 +130,9 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
         foreach ($result->getRecords() as $record) {
             // @TODO This code is duplicated in FileMakerOpsRecord, could be
             //       moved into a static FileMakerParser::record($restfmMessage, $record).
-            $restfmMessageRecord = new RESTfmMessageRecord($record->getRecordId());
+            $restfmMessageRecord = new \RESTfm\Message\Record($record->getRecordId());
             foreach ($fieldNames as $fieldName) {
-                $metaFieldRow = NULL; // @var RESTfmMessageRow
+                $metaFieldRow = NULL; // @var \RESTfm\Message\Row
                 $metaFieldRow = $metaFields[$fieldName];
 
                 // Field repetitions are expanded into multiple fields with
@@ -193,7 +193,7 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
      * @throws RESTfmResponseException
      *  On backend error.
      *
-     * @return RESTfmMessage
+     * @return \RESTfm\Message\Message
      */
     public function readMetaField () {
         $FM = $this->_backend->getFileMaker();
@@ -204,7 +204,7 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
             throw new FileMakerResponseException($layoutResult);
         }
 
-        $restfmMessage = new RESTfmMessage();
+        $restfmMessage = new \RESTfm\Message\Message();
 
         $this->_parseMetaField($restfmMessage, $layoutResult);
 
@@ -227,15 +227,15 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
 
     /**
      * Parse field meta data out of provided FileMaker result object into
-     * provided RESTfmMessage object.
+     * provided \RESTfm\Message\Message object.
      *
      * @TODO This code is duplicated in FileMakerOpsRecord, could be
      *       moved into a static FileMakerParser::metaField($restfmMessage, $result).
      *
-     * @param RESTfmMessage $restfmMessage
+     * @param \RESTfm\Message\Message $restfmMessage
      * @param FileMaker_Result|FileMaker_Layout $result
      */
-    protected function _parseMetaField(RESTfmMessage $restfmMessage, $result) {
+    protected function _parseMetaField(\RESTfm\Message\Message $restfmMessage, $result) {
 
         if (is_a($result, 'FileMaker_Result')) {
             $layoutResult = $result->getLayout();
@@ -251,7 +251,7 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
         foreach ($fieldNames as $fieldName) {
             $fieldResult = $layoutResult->getField($fieldName);
 
-            $restfmMessageRow = new RESTfmMessageRow();
+            $restfmMessageRow = new \RESTfm\Message\Row();
 
             $restfmMessageRow['name'] = $fieldName;
             $restfmMessageRow['autoEntered'] = $fieldResult->isAutoEntered() ? 1 : 0;

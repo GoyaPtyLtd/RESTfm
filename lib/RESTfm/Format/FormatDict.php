@@ -22,13 +22,13 @@ class FormatDict implements FormatInterface {
     // --- Interface Implementation --- //
 
     /**
-     * Parse the provided data string into the provided RESTfmMessage
+     * Parse the provided data string into the provided \RESTfm\Message\Message
      * implementation object.
      *
-     * @param RESTfmMessage $restfmMessage
+     * @param \RESTfm\Message\Message $restfmMessage
      * @param string $data
      */
-    public function parse (RESTfmMessage $restfmMessage, $data) {
+    public function parse (\RESTfm\Message\Message $restfmMessage, $data) {
         // Data is key/value pairs and may be two dimensional:
         // <:sectionNameN:=value:><:sectionNameN+1:=value:>
         // OR one dimensional:
@@ -67,13 +67,13 @@ class FormatDict implements FormatInterface {
     }
 
     /**
-     * Write the provided RESTfmMessage object into a formatted string.
+     * Write the provided \RESTfm\Message\Message object into a formatted string.
      *
-     * @param RESTfmMessage $restfmMessage
+     * @param \RESTfm\Message\Message $restfmMessage
      *
      * @return string
      */
-    public function write (RESTfmMessage $restfmMessage) {
+    public function write (\RESTfm\Message\Message $restfmMessage) {
         $sectionNames = $restfmMessage->getSectionNames();
 
         // Prioritise some sections above others. This priority is taken

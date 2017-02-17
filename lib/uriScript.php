@@ -73,7 +73,7 @@ class uriScript extends RESTfmResource {
 
         // Meta section.
         // Iterate records and set navigation hrefs.
-        $record = NULL;         // @var RESTfmMessageRecord
+        $record = NULL;         // @var \RESTfm\Message\Record
         foreach($restfmMessage->getRecords() as $record) {
             $record->setHref(
                 $request->baseUri.'/'.
@@ -83,7 +83,7 @@ class uriScript extends RESTfmResource {
             );
         }
 
-        $response->setRESTfmMessage($restfmMessage);
+        $response->setMessage($restfmMessage);
         $response->setStatus(\Tonic\Response::OK);
 
         return $response;

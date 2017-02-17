@@ -79,7 +79,7 @@ class uriLayout extends RESTfmResource {
             $restfmMessage = $opsLayout->readMetaField();
             $response = new RESTfm\Response($request);
             $response->setStatus(\Tonic\Response::OK);
-            $response->setRESTfmMessage($restfmMessage);
+            $response->setMessage($restfmMessage);
             return $response;
         }
 
@@ -168,7 +168,7 @@ class uriLayout extends RESTfmResource {
 
         // Meta section.
         // Iterate records and set navigation hrefs.
-        $record = NULL;         // @var RESTfmMessageRecord
+        $record = NULL;         // @var \RESTfm\Message\Record
         foreach($restfmMessage->getRecords() as $record) {
             if ($record->getRecordId() === NULL) {
                 continue;
@@ -222,7 +222,7 @@ class uriLayout extends RESTfmResource {
 
 
         $response->setStatus(\Tonic\Response::OK);
-        $response->setRESTfmMessage($restfmMessage);
+        $response->setMessage($restfmMessage);
         return $response;
     }
 
@@ -280,14 +280,14 @@ class uriLayout extends RESTfmResource {
             $opsRecord->setSuppressData(TRUE);
         }
 
-        $restfmMessage = $opsRecord->createSingle($request->getRESTfmMessage());
+        $restfmMessage = $opsRecord->createSingle($request->getMessage());
 
         $response = new RESTfm\Response($request);
         $format = $response->format;
 
         // Meta section.
         // Iterate records and set navigation hrefs.
-        $record = NULL;         // @var RESTfmMessageRecord
+        $record = NULL;         // @var \RESTfm\Message\Record
         foreach($restfmMessage->getRecords() as $record) {
             if ($record->getRecordId() === NULL) {
                 continue;
@@ -300,7 +300,7 @@ class uriLayout extends RESTfmResource {
             );
         }
 
-        $response->setRESTfmMessage($restfmMessage);
+        $response->setMessage($restfmMessage);
         $response->setStatus(\Tonic\Response::CREATED);
         return $response;
     }

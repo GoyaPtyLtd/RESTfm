@@ -40,7 +40,7 @@ class FileMakerOpsDatabase extends OpsDatabaseAbstract {
      * @throws FileMakerResponseException
      *  On backend error.
      *
-     * @return RESTfmMessage
+     * @return \RESTfm\Message\Message
      */
     public function readDatabases () {
         $FM = $this->_backend->getFileMaker();
@@ -50,9 +50,9 @@ class FileMakerOpsDatabase extends OpsDatabaseAbstract {
         }
         natsort($result);
 
-        $restfmMessage = new RESTfmMessage();
+        $restfmMessage = new \RESTfm\Message\Message();
         foreach($result as $database) {
-            $restfmMessage->addRecord(new RESTfmMessageRecord(
+            $restfmMessage->addRecord(new \RESTfm\Message\Record(
                 NULL, NULL, array('database' => $database)
             ));
         }
@@ -66,7 +66,7 @@ class FileMakerOpsDatabase extends OpsDatabaseAbstract {
      * @throws RESTfmResponseException
      *  On backend error.
      *
-     * @return RESTfmMessage
+     * @return \RESTfm\Message\Message
      */
     public function readLayouts () {
         $FM = $this->_backend->getFileMaker();
@@ -76,10 +76,10 @@ class FileMakerOpsDatabase extends OpsDatabaseAbstract {
         }
         natsort($result);
 
-        $restfmMessage = new RESTfmMessage();
+        $restfmMessage = new \RESTfm\Message\Message();
         foreach($result as $layout) {
             if (empty($layout)) continue;
-            $restfmMessage->addRecord(new RESTfmMessageRecord(
+            $restfmMessage->addRecord(new \RESTfm\Message\Record(
                 NULL, NULL, array('layout' => $layout)
             ));
         }
@@ -93,7 +93,7 @@ class FileMakerOpsDatabase extends OpsDatabaseAbstract {
      * @throws RESTfmResponseException
      *  On backend error.
      *
-     * @return RESTfmMessage
+     * @return \RESTfm\Message\Message
      */
     public function readScripts () {
         $FM = $this->_backend->getFileMaker();
@@ -103,9 +103,9 @@ class FileMakerOpsDatabase extends OpsDatabaseAbstract {
         }
         natsort($result);
 
-        $restfmMessage = new RESTfmMessage();
+        $restfmMessage = new \RESTfm\Message\Message();
         foreach($result as $script) {
-            $restfmMessage->addRecord(new RESTfmMessageRecord(
+            $restfmMessage->addRecord(new \RESTfm\Message\Record(
                 NULL, NULL, array('script' => $script)
             ));
         }

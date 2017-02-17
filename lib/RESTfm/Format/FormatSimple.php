@@ -35,13 +35,13 @@
 class FormatSimple implements FormatInterface {
 
     /**
-     * Parse the provided data string into the provided RESTfmMessage
+     * Parse the provided data string into the provided \RESTfm\Message\Message
      * implementation object.
      *
-     * @param RESTfmMessage $restfmMessage
+     * @param \RESTfm\Message\Message $restfmMessage
      * @param string $data
      */
-    public function parse (RESTfmMessage $restfmMessage, $data) {
+    public function parse (\RESTfm\Message\Message $restfmMessage, $data) {
 
         // Each section delimited by \n\n, allow for \r\n\r\n, \r\r
         $sections = preg_split('/\n\n|\r\n\r\n|\r\r/', $data, -1, PREG_SPLIT_NO_EMPTY);
@@ -56,13 +56,13 @@ class FormatSimple implements FormatInterface {
     }
 
     /**
-     * Write the provided RESTfmMessage object into a formatted string.
+     * Write the provided \RESTfm\Message\Message object into a formatted string.
      *
-     * @param RESTfmMessage $restfmMessage
+     * @param \RESTfm\Message\Message $restfmMessage
      *
      * @return string
      */
-    public function write (RESTfmMessage $restfmMessage) {
+    public function write (\RESTfm\Message\Message $restfmMessage) {
         $s = '';    // Final .simple output.
 
         foreach ($restfmMessage->getSectionNames() as $sectionName) {
@@ -110,12 +110,12 @@ class FormatSimple implements FormatInterface {
     /**
      * Parse out a single intact section.
      *
-     * @param RESTfmMessage $restfmMessage
+     * @param \RESTfm\Message\Message $restfmMessage
      *  Object to store section data.
      * @param string $section
      *  .simple encoded string of section including name.
      */
-    protected function _parseSection (RESTfmMessage $restfmMessage, $section) {
+    protected function _parseSection (\RESTfm\Message\Message $restfmMessage, $section) {
         // Allow various line endings.
         $rows = preg_split('/\n|\r\n|\r/', $section, -1, PREG_SPLIT_NO_EMPTY);
 

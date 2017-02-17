@@ -22,7 +22,7 @@
  *
  * Wraps all layout-level operations to database backend(s).
  *
- * All data I/O is encapsulated in a RESTfmMessage object.
+ * All data I/O is encapsulated in a \RESTfm\Message\Message object.
  */
 abstract class OpsLayoutAbstract {
 
@@ -50,7 +50,7 @@ abstract class OpsLayoutAbstract {
      * @throws RESTfmResponseException
      *  On backend error.
      *
-     * @return RESTfmMessage
+     * @return \RESTfm\Message\Message
      */
     abstract public function read ();
 
@@ -60,7 +60,7 @@ abstract class OpsLayoutAbstract {
      * @throws RESTfmResponseException
      *  On backend error.
      *
-     * @return RESTfmMessage
+     * @return \RESTfm\Message\Message
      */
     abstract public function readMetaField ();
 

@@ -27,10 +27,10 @@ namespace RESTfm;
 class Request extends \Tonic\Request {
 
     /**
-     * @var RESTfmMessage
+     * @var \RESTfm\Message\Message
      *  Parsed HTTP request data.
      */
-    protected $_RESTfmMessage = NULL;
+    protected $_Message = NULL;
 
     /*
      * @var RESTfmParameters
@@ -142,7 +142,7 @@ class Request extends \Tonic\Request {
      */
     public function parse () {
 
-        $this->_RESTfmMessage = new \RESTfmMessage();
+        $this->_Message = new Message\Message();
 
         $this->_RESTfmParameters = new \RESTfmParameters();
 
@@ -183,12 +183,12 @@ class Request extends \Tonic\Request {
     }
 
     /**
-     * Returns the RESTfmMessage object populated from the HTTP request data.
+     * Returns the \RESTfm\Message\Message object populated from the HTTP request data.
      *
-     * @return RESTfmMessage
+     * @return \RESTfm\Message\Message
      */
-    public function getRESTfmMessage () {
-        return $this->_RESTfmMessage;
+    public function getMessage () {
+        return $this->_Message;
     }
 
     /**
@@ -246,10 +246,10 @@ class Request extends \Tonic\Request {
             unset($this->_parametersQueryString['RFMdata']);
         } else {
             // All submitted data is in query string, we will populate
-            // RESTfmMessage ourselves.
+            // \RESTfm\Message\Message ourselves.
             $getData = $queryString->getRegex('/^(?!RFM).+/'); // NOT RFM*
             if (count($getData) > 0) {
-                $this->_RESTfmMessage->addRecord(new \RESTfmMessageRecord(NULL, NULL, $getData));
+                $this->_Message->addRecord(new Message\Record(NULL, NULL, $getData));
             }
         }
     }
@@ -324,8 +324,8 @@ class Request extends \Tonic\Request {
             $this->data = $postData['RFMdata'];
         } else {
             // All submitted data is in array, we will populate
-            // RESTfmMessage ourselves.
-            $this->_RESTfmMessage->addRecord(new \RESTfmMessageRecord(NULL, NULL, $postData));
+            // \RESTfm\Message\Message ourselves.
+            $this->_Message->addRecord(new Message\Record(NULL, NULL, $postData));
             unset($this->data);
         }
     }
@@ -374,19 +374,19 @@ class Request extends \Tonic\Request {
 
         // Parse submitted data through formatter.
         $dataFormatter = \FormatFactory::makeFormatter($this->_format);
-        $dataFormatter->parse($this->_RESTfmMessage, $this->data);
+        $dataFormatter->parse($this->_Message, $this->data);
 
         // Identify RFM* parameters in 'info' section, store as request
         // parameter, finally remove from 'info' section.
         $toDelete = array();
-        foreach ($this->_RESTfmMessage->getInfos() as $key => $val) {
+        foreach ($this->_Message->getInfos() as $key => $val) {
             if (preg_match('/^RFM/', $key)) {
                 $this->_parametersData[$key] = $val;
                 $toDelete[] = $key;
             }
         }
         foreach ($toDelete as $key) {
-            $this->_RESTfmMessage->unsetInfo($key);
+            $this->_Message->unsetInfo($key);
         }
     }
 
