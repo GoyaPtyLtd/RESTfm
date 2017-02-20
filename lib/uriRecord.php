@@ -83,7 +83,7 @@ class uriRecord extends RESTfmResource {
         }
 
         $response->setMessage($restfmMessage);
-        $response->setStatus(\Tonic\Response::OK);
+        $response->setStatus(RESTfm\Response::OK);
         return $response;
     }
 
@@ -166,7 +166,7 @@ class uriRecord extends RESTfmResource {
         }
 
         $response->setMessage($restfmMessage);
-        $response->setStatus(\Tonic\Response::OK);
+        $response->setStatus(RESTfm\Response::OK);
         return $response;
     }
 
@@ -224,7 +224,7 @@ class uriRecord extends RESTfmResource {
 
         $response = new RESTfm\Response($request);
         $response->setMessage($restfmMessage);
-        $response->setStatus(\Tonic\Response::OK);
+        $response->setStatus(RESTfm\Response::OK);
         return $response;
     }
 }

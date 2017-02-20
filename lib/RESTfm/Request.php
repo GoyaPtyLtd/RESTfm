@@ -358,7 +358,7 @@ class Request extends \Tonic\Request {
             // This is trouble, we have data but in no known format.
             throw new \RESTfmResponseException(
                         'Unable to determine format for resource ' . $this->uri,
-                        \Tonic\Response::BADREQUEST);
+                        RESTfm\Response::BADREQUEST);
         }
 
         // Check if our format is available through a provided xslt.

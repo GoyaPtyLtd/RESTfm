@@ -78,7 +78,7 @@ class uriLayout extends RESTfmResource {
         if (isset($restfmParameters->RFMmetaFieldOnly)) {
             $restfmMessage = $opsLayout->readMetaField();
             $response = new RESTfm\Response($request);
-            $response->setStatus(\Tonic\Response::OK);
+            $response->setStatus(RESTfm\Response::OK);
             $response->setMessage($restfmMessage);
             return $response;
         }
@@ -221,7 +221,7 @@ class uriLayout extends RESTfmResource {
         );
 
 
-        $response->setStatus(\Tonic\Response::OK);
+        $response->setStatus(RESTfm\Response::OK);
         $response->setMessage($restfmMessage);
         return $response;
     }
@@ -301,7 +301,7 @@ class uriLayout extends RESTfmResource {
         }
 
         $response->setMessage($restfmMessage);
-        $response->setStatus(\Tonic\Response::CREATED);
+        $response->setStatus(RESTfm\Response::CREATED);
         return $response;
     }
 

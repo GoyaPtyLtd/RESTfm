@@ -86,7 +86,7 @@ class uriRoot extends RESTfmResource {
             $record->setHref($href);
         }
 
-        $response->setStatus(\Tonic\Response::OK);
+        $response->setStatus(RESTfm\Response::OK);
         $response->setMessage($restfmMessage);
         return $response;
     }

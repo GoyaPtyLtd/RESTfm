@@ -93,7 +93,7 @@ class uriField extends RESTfmResource {
         }
         $resourceData->pushData($recordRow, $href, urldecode($recordID));
 
-        $response->setStatus(\Tonic\Response::OK);
+        $response->setStatus(RESTfm\Response::OK);
         $response->setResourceData($resourceData);
         return $response;
     }

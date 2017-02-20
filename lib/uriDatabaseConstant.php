@@ -75,7 +75,7 @@ class uriDatabaseConstant extends RESTfmResource {
             array('resource' => 'script')
         ));
 
-        $response->setStatus(\Tonic\Response::OK);
+        $response->setStatus(RESTfm\Response::OK);
         $response->setMessage($restfmMessage);
         return $response;
     }

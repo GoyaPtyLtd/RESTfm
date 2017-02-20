@@ -84,7 +84,7 @@ class uriScript extends RESTfmResource {
         }
 
         $response->setMessage($restfmMessage);
-        $response->setStatus(\Tonic\Response::OK);
+        $response->setStatus(RESTfm\Response::OK);
 
         return $response;
     }

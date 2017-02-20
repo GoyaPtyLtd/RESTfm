@@ -91,7 +91,7 @@ class uriBulk extends RESTfmResource {
         if ($restfmMessage->getMultistatusCount() > 0) {
             $response->setStatus(207, 'Multi-status');
         } else {
-            $response->setStatus(\Tonic\Response::OK);
+            $response->setStatus(RESTfm\Response::OK);
         }
 
         return $response;
@@ -126,7 +126,7 @@ class uriBulk extends RESTfmResource {
         if ($restfmMessage->getMultistatusCount() > 0) {
             $response->setStatus(207, 'Multi-status');
         } else {
-            $response->setStatus(\Tonic\Response::OK);
+            $response->setStatus(RESTfm\Response::OK);
         }
 
         return $response;
@@ -194,7 +194,7 @@ class uriBulk extends RESTfmResource {
         if ($restfmMessage->getMultistatusCount() > 0) {
             $response->setStatus(207, 'Multi-status');
         } else {
-            $response->setStatus(\Tonic\Response::OK);
+            $response->setStatus(RESTfm\Response::OK);
         }
 
         return $response;
@@ -229,7 +229,7 @@ class uriBulk extends RESTfmResource {
         if ($restfmMessage->getMultistatusCount() > 0) {
             $response->setStatus(207, 'Multi-status');
         } else {
-            $response->setStatus(\Tonic\Response::OK);
+            $response->setStatus(RESTfm\Response::OK);
         }
 
         return $response;
