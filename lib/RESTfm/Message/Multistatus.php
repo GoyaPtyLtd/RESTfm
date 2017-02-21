@@ -19,6 +19,8 @@
 
 namespace RESTfm\Message;
 
+use RESTfm\MessageInterface\MultistatusInterface;
+
 /**
  * Multistatus interface.
  */

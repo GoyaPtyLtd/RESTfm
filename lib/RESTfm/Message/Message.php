@@ -19,6 +19,12 @@
 
 namespace RESTfm\Message;
 
+use RESTfm\MessageInterface\MessageInterface;
+use RESTfm\MessageInterface\MultistatusInterface;
+use RESTfm\MessageInterface\RecordAbstract;
+use RESTfm\MessageInterface\RowAbstract;
+use RESTfm\MessageInterface\SectionInterface;
+
 /**
  * RESTfm\Message\Message
  *

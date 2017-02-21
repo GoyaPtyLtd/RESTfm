@@ -19,6 +19,8 @@
 
 namespace RESTfm\Message;
 
+use RESTfm\MessageInterface\RecordAbstract;
+
 /**
  * An extension of RESTfm\Message\Row (array-like) with additional record
  * related metadata access methods.

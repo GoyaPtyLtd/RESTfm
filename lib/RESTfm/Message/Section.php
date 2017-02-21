@@ -19,6 +19,8 @@
 
 namespace RESTfm\Message;
 
+use RESTfm\MessageInterface\SectionInterface;
+
 /**
  * Section access interface for export formats.
  */

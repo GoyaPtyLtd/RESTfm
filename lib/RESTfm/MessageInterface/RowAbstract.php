@@ -17,7 +17,7 @@
  *  Gavin Stewart
  */
 
-namespace RESTfm\Message;
+namespace RESTfm\MessageInterface;
 
  /**
   * An array-like object for a single row of fieldName/value pairs.

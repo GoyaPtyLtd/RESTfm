@@ -17,7 +17,7 @@
  *  Gavin Stewart
  */
 
-namespace RESTfm\Message;
+namespace RESTfm\MessageInterface;
 
 /**
  * Multistatus interface.

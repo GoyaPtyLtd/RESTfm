@@ -19,6 +19,8 @@
 
 namespace RESTfm\Message;
 
+use RESTfm\MessageInterface\RowAbstract;
+
  /**
   * An array-like object for a single row of fieldName/value pairs.
   */
