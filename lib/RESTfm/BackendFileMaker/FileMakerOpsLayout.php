@@ -122,9 +122,11 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
 
         // Process records and push data.
         $fieldNames = $result->getFields();
-        if (! empty($selectList)) {     // Empty select list is considered "*".
-            // Only keep fieldNames that are common to both, preserving
-            // $selectList order.
+        // An empty $selectList, or '*' anywhere in $selectList means that
+        // all $fileNames will be returned.
+        if (! empty($selectList) && ! in_array('*', $selectList)) {
+            // Restrict $fieldNames to those that are common with $selectList,
+            // preserving $selectList order.
             $fieldNames = array_intersect($selectList, $fieldNames);
         }
         foreach ($result->getRecords() as $record) {
