@@ -17,7 +17,7 @@
  *  Gavin Stewart
  */
 
-namespace libTests\RESTfm;
+namespace RESTfmTests;
 
 // Manually include Diagnostics.php as autoload can't find Report class.
 include "lib/RESTfm/Diagnostics.php";

@@ -17,7 +17,7 @@
  *  Gavin Stewart
  */
 
-namespace libTests\RESTfm\Message;
+namespace RESTfmTests\Message;
 
 use RESTfm\Message\Multistatus;
 
