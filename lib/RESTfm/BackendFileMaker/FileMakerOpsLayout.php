@@ -123,7 +123,7 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
         // Process records and push data.
         $fieldNames = $result->getFields();
         // An empty $selectList, or '*' anywhere in $selectList means that
-        // all $fileNames will be returned.
+        // all $fieldNames will be returned.
         if (! empty($selectList) && ! in_array('*', $selectList)) {
             // Restrict $fieldNames to those that are common with $selectList,
             // preserving $selectList order.
