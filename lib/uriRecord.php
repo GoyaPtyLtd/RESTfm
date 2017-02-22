@@ -22,7 +22,7 @@
  *
  * @uri /{database}/layout/{layout}/{rawRecordID}
  */
-class uriRecord extends RESTfmResource {
+class uriRecord extends RESTfm\Resource {
 
     const URI = '/{database}/layout/{layout}/{rawRecordID}';
 
@@ -32,7 +32,7 @@ class uriRecord extends RESTfmResource {
      * Query String Parameters:
      *  - RFMcontainer=<encoding> : [default: DEFAULT], BASE64, RAW
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}
      * @param string $layout
@@ -43,14 +43,14 @@ class uriRecord extends RESTfmResource {
      * @return Response
      */
     function get($request, $database, $layout, $rawRecordID) {
-        $database = RESTfmUrl::decode($database);
-        $layout = RESTfmUrl::decode($layout);
-        $rawRecordID = RESTfmUrl::decode($rawRecordID);
+        $database = RESTfm\Url::decode($database);
+        $layout = RESTfm\Url::decode($layout);
+        $rawRecordID = RESTfm\Url::decode($rawRecordID);
 
-        $backend = BackendFactory::make($request, $database);
+        $backend = RESTfm\BackendFactory::make($request, $database);
 
         $opsRecord = $backend->makeOpsRecord($database, $layout);
-        $restfmParameters = $request->getRESTfmParameters();
+        $restfmParameters = $request->getParameters();
 
         // Determine requirements for container encoding.
         if (isset($restfmParameters->RFMcontainer)) {
@@ -76,9 +76,9 @@ class uriRecord extends RESTfmResource {
         foreach($restfmMessage->getRecords() as $record) {
             $record->setHref(
                 $request->baseUri.'/'.
-                        RESTfmUrl::encode($database).'/layout/'.
-                        RESTfmUrl::encode($layout).'/'.
-                        RESTfmUrl::encode($record->getRecordId()).'.'.$format
+                        RESTfm\Url::encode($database).'/layout/'.
+                        RESTfm\Url::encode($layout).'/'.
+                        RESTfm\Url::encode($record->getRecordId()).'.'.$format
             );
         }
 
@@ -104,7 +104,7 @@ class uriRecord extends RESTfmResource {
      *  - RFMelsePOST : If this record does not exist, perform a POST (create)
      *                  instead. aka RFMelseCreate.
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}
      * @param string $layout
@@ -115,15 +115,15 @@ class uriRecord extends RESTfmResource {
      * @return Response
      */
     function put($request, $database, $layout, $rawRecordID) {
-        $database = RESTfmUrl::decode($database);
-        $layout = RESTfmUrl::decode($layout);
-        $rawRecordID = RESTfmUrl::decode($rawRecordID);
+        $database = RESTfm\Url::decode($database);
+        $layout = RESTfm\Url::decode($layout);
+        $rawRecordID = RESTfm\Url::decode($rawRecordID);
 
-        $backend = BackendFactory::make($request, $database);
+        $backend = RESTfm\BackendFactory::make($request, $database);
 
         $opsRecord = $backend->makeOpsRecord($database, $layout);
 
-        $restfmParameters = $request->getRESTfmParameters();
+        $restfmParameters = $request->getParameters();
 
         // Allow script calling and other parameters.
         if (isset($restfmParameters->RFMscript)) {
@@ -159,9 +159,9 @@ class uriRecord extends RESTfmResource {
         foreach($restfmMessage->getRecords() as $record) {
             $record->setHref(
                 $request->baseUri.'/'.
-                        RESTfmUrl::encode($database).'/layout/'.
-                        RESTfmUrl::encode($layout).'/'.
-                        RESTfmUrl::encode($record->getRecordId()).'.'.$format
+                        RESTfm\Url::encode($database).'/layout/'.
+                        RESTfm\Url::encode($layout).'/'.
+                        RESTfm\Url::encode($record->getRecordId()).'.'.$format
             );
         }
 
@@ -183,7 +183,7 @@ class uriRecord extends RESTfmResource {
      *  - RFMpreScriptParam=<string> : (optional) url encoded parameter string
      *                                 to pass to pre-script.
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}
      * @param string $layout
@@ -194,15 +194,15 @@ class uriRecord extends RESTfmResource {
      * @return Response
      */
     function delete($request, $database, $layout, $rawRecordID) {
-        $database = RESTfmUrl::decode($database);
-        $layout = RESTfmUrl::decode($layout);
-        $rawRecordID = RESTfmUrl::decode($rawRecordID);
+        $database = RESTfm\Url::decode($database);
+        $layout = RESTfm\Url::decode($layout);
+        $rawRecordID = RESTfm\Url::decode($rawRecordID);
 
-        $backend = BackendFactory::make($request, $database);
+        $backend = RESTfm\BackendFactory::make($request, $database);
 
         $opsRecord = $backend->makeOpsRecord($database, $layout);
 
-        $restfmParameters = $request->getRESTfmParameters();
+        $restfmParameters = $request->getParameters();
 
         // Allow script calling.
         if (isset($restfmParameters->RFMscript)) {

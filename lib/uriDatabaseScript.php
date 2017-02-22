@@ -22,7 +22,7 @@
  *
  * @uri /{database}/script
  */
-class uriDatabaseScript extends RESTfmResource {
+class uriDatabaseScript extends RESTfm\Resource {
 
     const URI = '/{database}/script';
 
@@ -36,9 +36,9 @@ class uriDatabaseScript extends RESTfmResource {
      * @return Response
      */
     function get($request, $database) {
-        $database = RESTfmUrl::decode($database);
+        $database = RESTfm\Url::decode($database);
 
-        $backend = BackendFactory::make($request, $database);
+        $backend = RESTfm\BackendFactory::make($request, $database);
         $opsDatabase = $backend->makeOpsDatabase($database);
         $restfmMessage = $opsDatabase->readScripts();
 

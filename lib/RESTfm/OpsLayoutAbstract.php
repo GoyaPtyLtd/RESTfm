@@ -17,6 +17,8 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm;
+
 /**
  * OpsLayoutAbstract
  *
@@ -27,7 +29,7 @@
 abstract class OpsLayoutAbstract {
 
     /**
-     * @var BackendAbstract
+     * @var \RESTfm\BackendAbstract
      *  Handle to backend object. Implementation should set this in
      *  constructor.
      */
@@ -36,18 +38,18 @@ abstract class OpsLayoutAbstract {
     /**
      * Construct a new Record-level Operation object.
      *
-     * @param BackendAbstract $backend
+     * @param \RESTfm\BackendAbstract $backend
      *  Implementation must store $this->_backend if a reference is needed in
      *  other methods.
      * @param string $database
      * @param string $layout
      */
-    abstract public function __construct (BackendAbstract $backend, $database, $layout);
+    abstract public function __construct (\RESTfm\BackendAbstract $backend, $database, $layout);
 
     /**
      * Read records in layout in database via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On backend error.
      *
      * @return \RESTfm\Message\Message
@@ -57,7 +59,7 @@ abstract class OpsLayoutAbstract {
     /**
      * Read field metadata in layout in database via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On backend error.
      *
      * @return \RESTfm\Message\Message

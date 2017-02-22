@@ -17,6 +17,8 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm;
+
 /**
  * Format/Format* object factory static class.
  */
@@ -28,7 +30,7 @@ class FormatFactory {
      * @param string $type
      *  Type of formatter object to return.
      *
-     * @throws RESTfmResponseException
+     * @throws ResponseException
      *  When no matching formatter found.
      *
      * @return FormatAbstract
@@ -40,7 +42,7 @@ class FormatFactory {
             $type = self::$_map[$type];
         }
 
-        $formatClassName = 'Format' . ucfirst(strtolower($type));
+        $formatClassName = 'RESTfm\\Format\\Format'.ucfirst(strtolower($type));
         return new $formatClassName();
     }
 

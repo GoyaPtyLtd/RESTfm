@@ -17,6 +17,11 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\Format;
+
+use RESTfm\FormatInterface;
+use RESTfm\Message\Message;
+
 class FormatJson implements FormatInterface {
 
     // --- Interface Implementation --- //
@@ -27,7 +32,7 @@ class FormatJson implements FormatInterface {
      * @param \RESTfm\Message\Message $restfmMessage
      * @param string $data
      */
-    public function parse (\RESTfm\Message\Message $restfmMessage, $data) {
+    public function parse (Message $restfmMessage, $data) {
         $a = json_decode($data, TRUE);
         foreach ($a as $sectionName => $sectionData) {
             $restfmMessage->setSection($sectionName, $sectionData);
@@ -41,8 +46,8 @@ class FormatJson implements FormatInterface {
      *
      * @return string
      */
-    public function write (\RESTfm\Message\Message $restfmMessage) {
-        if (RESTfmConfig::getVar('settings', 'formatNicely')) {
+    public function write (Message $restfmMessage) {
+        if (\RESTfm\Config::getVar('settings', 'formatNicely')) {
             return $this->_json_encode_pretty($restfmMessage->exportArray());
         } else {
             return json_encode($restfmMessage->exportArray());

@@ -32,10 +32,10 @@ error_reporting(E_ALL & ~E_STRICT);   // Dev. level reporting
 // x-debug's html error output makes CLI debugging with cURL a problem.
 ini_set('html_errors', FALSE);
 
-// RESTfm lib classes autoload.
+// RESTfm autoloader for lib classes.
 require_once 'lib/autoload.php';
 
-if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
+if (RESTfm\Config::getVar('settings', 'diagnostics') === TRUE) {
     ini_set('display_errors', '1');
 } else {
     // Don't display errors to end clients.
@@ -60,7 +60,7 @@ require_once 'lib/uriRecord.php';
 require_once 'lib/uriBulk.php';
 
 // Ensure we are using SSL if mandated.
-if (RESTfmConfig::getVar('settings', 'SSLOnly')) {
+if (RESTfm\Config::getVar('settings', 'SSLOnly')) {
     if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ||
             $_SERVER['SERVER_PORT'] == 443) {
         // OK, we are good.
@@ -79,8 +79,8 @@ if (RESTfmConfig::getVar('settings', 'SSLOnly')) {
 
 // Setup tonic config for new request.
 $requestConfig = array(
-    'baseUri' => RESTfmConfig::getVar('settings', 'baseURI'),
-    'acceptFormats' => RESTfmConfig::getVar('settings', 'formats'),
+    'baseUri' => RESTfm\Config::getVar('settings', 'baseURI'),
+    'acceptFormats' => RESTfm\Config::getVar('settings', 'formats'),
 );
 // Work around IIS7 mangling of REQUEST_URI when rewriting URLs.
 if (isset($_SERVER['HTTP_X_ORIGINAL_URL'])) {
@@ -89,9 +89,9 @@ if (isset($_SERVER['HTTP_X_ORIGINAL_URL'])) {
 
 // Handle request.
 $request = new RESTfm\Request($requestConfig);
-//RESTfmDump::requestData($request);
+RESTfm\Dump::requestData($request);
 try {
-    if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
+    if (RESTfm\Config::getVar('settings', 'diagnostics') === TRUE) {
         require_once 'lib/RESTfm/diagnostic_checks.php';
     }
     $request->parse();
@@ -101,13 +101,13 @@ try {
     // Allow the squashing of all 2XX response codes to 200, for clients
     // that can't handle anything else.
     if (preg_match('/^2\d\d$/', $response->code)) {
-        $restfmParameters = $request->getRESTfmParameters();
+        $restfmParameters = $request->getParameters();
         if (isset($restfmParameters->RFMsquash2XX)) {
             $response->code = Tonic\Response::OK;     // 200
         }
     }
 
-    //RESTfmDump::requestParsed($request);
+    RESTfm\Dump::requestParsed($request);
 } catch (Tonic\ResponseException $e) {
     switch ($e->getCode()) {
         case Tonic\Response::UNAUTHORIZED:
@@ -115,9 +115,9 @@ try {
             // data formats handled by applications.
 
             $response = $e->response($request);
-            $format = $request->mostAcceptable(RESTfmConfig::getFormats());
+            $format = $request->mostAcceptable(RESTfm\Config::getFormats());
             if ($format != 'html' && $format != 'txt' &&
-                    RESTfmConfig::getVar('settings', 'forbiddenOnUnauthorized')) {
+                    RESTfm\Config::getVar('settings', 'forbiddenOnUnauthorized')) {
                 $response->code = Response::FORBIDDEN;
                 break;
             }
@@ -130,10 +130,10 @@ try {
     }
 }
 
-if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
+if (RESTfm\Config::getVar('settings', 'diagnostics') === TRUE) {
     // Add profiling information.
     if (is_a($response, 'RESTfm\Response')) {
-        // In some early startup errors, we may not be RESTfmResponse, so we
+        // In some early startup errors, we may not be RESTfm\Response, so we
         // checked.
 
         // Real/wall time (ms)
@@ -159,7 +159,7 @@ if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
 // responses where a username was specified (non-guest).
 if ( is_a($response, 'RESTfm\Response') &&
         preg_match('/^2\d\d$/', $response->code) ) {
-    $requestUsername = $request->getRESTfmCredentials()->getUsername();
+    $requestUsername = $request->getCredentials()->getUsername();
     if (! empty($requestUsername)) {
         // All RESTfm URIs perform a database query to validate credentials,
         // so all RESTfm 2xx responses imply successful authorisation.
@@ -172,7 +172,7 @@ if ( is_a($response, 'RESTfm\Response') &&
 
 // Final response output.
 $response->output();
-//RESTfmDump::responseBody($response);
+RESTfm\Dump::responseBody($response);
 
 exit;
 

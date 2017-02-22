@@ -25,29 +25,29 @@
  *
  * @uri /{database}
  */
-class uriDatabaseConstant extends RESTfmResource {
+class uriDatabaseConstant extends RESTfm\Resource {
 
     const URI = '/{database}';
 
     /**
      * Handle a GET request for this resource
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}
      *
      * @return Response
      */
     function get($request, $database) {
-        $database = RESTfmUrl::decode($database);
+        $database = RESTfm\Url::decode($database);
 
         // Query available layouts. We don't use the results, simply validating
         // the database and credentials.
-        $backend = BackendFactory::make($request, $database);
+        $backend = RESTfm\BackendFactory::make($request, $database);
         $opsDatabase = $backend->makeOpsDatabase($database);
         $restfmDataLayouts = $opsDatabase->readLayouts();
 
-        $queryString = new RESTfmQueryString(TRUE);
+        $queryString = new RESTfm\QueryString(TRUE);
 
         $response = new RESTfm\Response($request);
         $format = $response->format;
@@ -56,21 +56,21 @@ class uriDatabaseConstant extends RESTfmResource {
         $restfmMessage = new \RESTfm\Message\Message();
         $restfmMessage->addRecord(new \RESTfm\Message\Record(
             NULL,
-            $request->baseUri.'/'.RESTfmUrl::encode($database).
+            $request->baseUri.'/'.RESTfm\Url::encode($database).
                     '/layout.'.$format.$queryString->build(),
             array('resource' => 'layout')
         ));
-        if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
+        if (RESTfm\Config::getVar('settings', 'diagnostics') === TRUE) {
             $restfmMessage->addRecord(new \RESTfm\Message\Record(
                 NULL,
-                $request->baseUri.'/'.RESTfmUrl::encode($database).
+                $request->baseUri.'/'.RESTfm\Url::encode($database).
                         '/echo.'.$format.$queryString->build(),
                 array('resource' => 'echo')
             ));
         }
         $restfmMessage->addRecord(new \RESTfm\Message\Record(
             NULL,
-            $request->baseUri.'/'.RESTfmUrl::encode($database).
+            $request->baseUri.'/'.RESTfm\Url::encode($database).
                     '/script.'.$format.$queryString->build(),
             array('resource' => 'script')
         ));

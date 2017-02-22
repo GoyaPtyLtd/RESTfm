@@ -17,8 +17,10 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm;
+
 /**
- * RESTfmParameters
+ * RESTfm\Parameters
  *
  * Class encapsulating all parameters applicable to a RESTfm request.
  * Parameters are populated from multiple sources, in the following lowest
@@ -29,7 +31,7 @@
  *     multipart/form-data.
  *  1) Any RFM* parameters in the URI query string.
  */
-class RESTfmParameters implements Iterator {
+class Parameters implements \Iterator {
 
     /**
      * @var array $_parameters

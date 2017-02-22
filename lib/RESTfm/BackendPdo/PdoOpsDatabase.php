@@ -17,16 +17,18 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\BackendPdo;
+
 /**
  * PdoOpsDatabase
  *
  * PHP PDO specific implementation of OpsDatabaseAbstract.
  */
-class PdoOpsDatabase extends OpsDatabaseAbstract {
+class PdoOpsDatabase extends \RESTfm\OpsDatabaseAbstract {
 
     // --- OpsRecordDatabase implementation ---
 
-    public function __construct (BackendAbstract $backend, $database = NULL) {
+    public function __construct (\RESTfm\BackendAbstract $backend, $database = NULL) {
         $this->_backend = $backend;
         $this->_database = $database;
     }
@@ -45,7 +47,7 @@ class PdoOpsDatabase extends OpsDatabaseAbstract {
     /**
      * Read tables available in database via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On backend error.
      *
      * @return \RESTfm\Message\Message
@@ -55,7 +57,7 @@ class PdoOpsDatabase extends OpsDatabaseAbstract {
         $pdo = $this->_backend->getPDO();
         try {
             // MySQL:
-            $result = $pdo->query('SHOW TABLES', PDO::FETCH_NUM);
+            $result = $pdo->query('SHOW TABLES', \PDO::FETCH_NUM);
         } catch (PDOException $e) {
             throw new PdoResponseException($e);
         }
@@ -83,7 +85,7 @@ class PdoOpsDatabase extends OpsDatabaseAbstract {
     /**
      * Read scripts available in $database via backend. - Not applicable.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On backend error.
      *
      * @return \RESTfm\Message\Message

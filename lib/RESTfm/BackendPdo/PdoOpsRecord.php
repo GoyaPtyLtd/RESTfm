@@ -17,19 +17,21 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\BackendPdo;
+
 /**
  * PdoOpsRecord
  *
  * PHP PDO specific implementation of OpsRecordAbstract.
  */
-class PdoOpsRecord extends OpsRecordAbstract {
+class PdoOpsRecord extends \RESTfm\OpsRecordAbstract {
 
     // --- OpsRecordAbstract implementation ---
 
     /**
      * Construct a new Record-level Operation object.
      *
-     * @param BackendAbstract $backend
+     * @param \RESTfm\BackendAbstract $backend
      *  Implementation must store $this->_backend if a reference is needed in
      *  other methods.
      * @param string $database
@@ -37,7 +39,7 @@ class PdoOpsRecord extends OpsRecordAbstract {
      * @param string $uncleanTable
      *  Possibly malicious table name (this will be validated).
      */
-    public function __construct (BackendAbstract $backend, $database, $uncleanTable) {
+    public function __construct (\RESTfm\BackendAbstract $backend, $database, $uncleanTable) {
         $this->_backend = $backend;
 
         // Validate $uncleanTable by verifying it's existance in table list
@@ -46,7 +48,7 @@ class PdoOpsRecord extends OpsRecordAbstract {
         $pdo = $this->_backend->getPDO();
         try {
             // MySQL:
-            $result = $pdo->query('SHOW TABLES', PDO::FETCH_NUM);
+            $result = $pdo->query('SHOW TABLES', \PDO::FETCH_NUM);
         } catch (PDOException $e) {
             throw new PdoResponseException($e);
         }
@@ -61,7 +63,7 @@ class PdoOpsRecord extends OpsRecordAbstract {
         }
 
         if ($this->_validatedTable === NULL) {
-            throw new RESTfmResponseException(NULL, RESTfmResponseException::NOTFOUND);
+            throw new \RESTfm\ResponseException(NULL, \RESTfm\ResponseException::NOTFOUND);
         }
     }
 
@@ -143,7 +145,7 @@ class PdoOpsRecord extends OpsRecordAbstract {
         } catch (PDOException $e) {
             throw new PdoResponseException($e);
         }
-        $result = $statement->fetch(PDO::FETCH_NUM);
+        $result = $statement->fetch(\PDO::FETCH_NUM);
         $recordID = $result[0];
         $restfmMessage->addRecord(new \RESTfm\Message\Record($recordID));
         $statement->closeCursor();
@@ -180,10 +182,10 @@ class PdoOpsRecord extends OpsRecordAbstract {
             if ($this->_isSingle) {
                 // This is a special case where we actually want to return
                 // 404. ONLY because we are a unique-key-recordID.
-                throw new RESTfmResponseException('Invalid recordID, Not found', RESTfmResponseException::NOTFOUND);
+                throw new \RESTfm\ResponseException('Invalid recordID, Not found', \RESTfm\ResponseException::NOTFOUND);
             }
             $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
-                RESTfmResponseException::NOTFOUND,
+                \RESTfm\ResponseException::NOTFOUND,
                 'Invalid recordID, Not found',
                 $recordID
             ));
@@ -223,10 +225,10 @@ class PdoOpsRecord extends OpsRecordAbstract {
             if ($this->_isSingle) {
                 // This is a special case where we actually want to return
                 // 404. ONLY because we are a unique-key-recordID.
-                throw new RESTfmResponseException(NULL, RESTfmResponseException::NOTFOUND);
+                throw new \RESTfm\ResponseException(NULL, \RESTfm\ResponseException::NOTFOUND);
             }
             $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
-                RESTfmResponseException::NOTFOUND,
+                \RESTfm\ResponseException::NOTFOUND,
                 'Not found',
                 $recordID
             ));
@@ -236,10 +238,10 @@ class PdoOpsRecord extends OpsRecordAbstract {
         if ($fetchCount > 1) {
             // We have to abort if the search query recordID is not unique.
             if ($this->_isSingle) {
-                throw new RESTfmResponseException('Conflicting records found', RESTfmResponseException::CONFLICT);
+                throw new \RESTfm\ResponseException('Conflicting records found', \RESTfm\ResponseException::CONFLICT);
             }
             $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
-                RESTfmResponseException::CONFLICT,
+                \RESTfm\ResponseException::CONFLICT,
                 $fetchCount . ' conflicting records found',
                 $recordID
             ));
@@ -284,10 +286,10 @@ class PdoOpsRecord extends OpsRecordAbstract {
             if ($this->_isSingle) {
                 // This is a special case where we actually want to return
                 // 404. ONLY because we are a unique-key-recordID.
-                throw new RESTfmResponseException('Invalid recordID, Not found', RESTfmResponseException::NOTFOUND);
+                throw new \RESTfm\ResponseException('Invalid recordID, Not found', \RESTfm\ResponseException::NOTFOUND);
             }
             $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
-                RESTfmResponseException::NOTFOUND,
+                \RESTfm\ResponseException::NOTFOUND,
                 'Invalid recordID, Not found',
                 $recordID
             ));
@@ -311,7 +313,7 @@ class PdoOpsRecord extends OpsRecordAbstract {
         // Commit edit back to database.
         $columnSets = array();
         $valueList = array();
-        foreach ($row as $fieldName => $fieldValue) {
+        foreach ($requestRecord as $fieldName => $fieldValue) {
             $this->_validateFieldName($fieldName);
             $columnSets[] = '`' . $fieldName . '`=?';
             $valueList[] = $fieldValue;
@@ -346,10 +348,10 @@ class PdoOpsRecord extends OpsRecordAbstract {
             if ($this->_isSingle) {
                 // This is a special case where we actually want to return
                 // 404. ONLY because we are a unique-key-recordID.
-                throw new RESTfmResponseException(NULL, RESTfmResponseException::NOTFOUND);
+                throw new \RESTfm\ResponseException(NULL, \RESTfm\ResponseException::NOTFOUND);
             }
             $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
-                RESTfmResponseException::NOTFOUND,
+                \RESTfm\ResponseException::NOTFOUND,
                 'Not found',
                 $recordID
             ));
@@ -381,10 +383,10 @@ class PdoOpsRecord extends OpsRecordAbstract {
             if ($this->_isSingle) {
                 // This is a special case where we actually want to return
                 // 404. ONLY because we are a unique-key-recordID.
-                throw new RESTfmResponseException('Invalid recordID, Not found', RESTfmResponseException::NOTFOUND);
+                throw new \RESTfm\ResponseException('Invalid recordID, Not found', \RESTfm\ResponseException::NOTFOUND);
             }
             $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
-                RESTfmResponseException::NOTFOUND,
+                \RESTfm\ResponseException::NOTFOUND,
                 'Invalid recordID, Not found',
                 $recordID
             ));
@@ -425,10 +427,10 @@ class PdoOpsRecord extends OpsRecordAbstract {
             if ($this->_isSingle) {
                 // This is a special case where we actually want to return
                 // 404.
-                throw new RESTfmResponseException(NULL, RESTfmResponseException::NOTFOUND);
+                throw new \RESTfm\ResponseException(NULL, \RESTfm\ResponseException::NOTFOUND);
             }
             $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
-                RESTfmResponseException::NOTFOUND,
+                \RESTfm\ResponseException::NOTFOUND,
                 'Not found',
                 $recordID
             ));
@@ -444,7 +446,7 @@ class PdoOpsRecord extends OpsRecordAbstract {
      * @param string $scriptParameter
      *  Optional parameter to pass to script.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On error
      *
      * @return \RESTfm\Message\Message
@@ -465,7 +467,7 @@ class PdoOpsRecord extends OpsRecordAbstract {
         //       catch the error OK.
         @ $result = $scriptCommand->execute();
 
-        if (FileMaker::isError($result)) {
+        if (\FileMaker::isError($result)) {
             throw new FileMakerResponseException($result);
         }
 
@@ -516,7 +518,7 @@ class PdoOpsRecord extends OpsRecordAbstract {
      * @return integer
      *  Number of records parsed (0 or 1).
      */
-    protected function _parseSingleRecord(\RESTfm\Message\Message $restfmMessage, $recordID, PDOStatement $statement) {
+    protected function _parseSingleRecord(\RESTfm\Message\Message $restfmMessage, $recordID, \PDOStatement $statement) {
         // Only extract field meta data if we haven't done it yet.
         if ($restfmMessage->getMetaFieldCount() < 1) {
             $numColumns = $statement->columnCount();
@@ -561,7 +563,7 @@ class PdoOpsRecord extends OpsRecordAbstract {
      * @return boolean
      *  TRUE on success.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On failure to validate provided $fieldName.
      *
      * @throws PDOException
@@ -599,7 +601,7 @@ class PdoOpsRecord extends OpsRecordAbstract {
         }
 
         error_log('RESTfm PdoOpsRecord::_validateFieldName error: Invalid field name: ' . $fieldName);
-        throw new RESTfmResponseException('Invalid field name', RESTfmResponseException::INTERNALSERVERERROR);
+        throw new \RESTfm\ResponseException('Invalid field name', \RESTfm\ResponseException::INTERNALSERVERERROR);
     }
 
 };

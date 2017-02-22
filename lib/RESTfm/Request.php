@@ -33,16 +33,16 @@ class Request extends \Tonic\Request {
     protected $_Message = NULL;
 
     /*
-     * @var RESTfmParameters
+     * @var \RESTfm\Parameters
      *  Determined parameters for this Request.
      */
-    protected $_RESTfmParameters = NULL;
+    protected $_Parameters = NULL;
 
     /**
-     * @var RESTfmCredentials
+     * @var \RESTfm\Credentials
      *  Determined credentials for this Request.
      */
-    protected $_RESTfmCredentials = NULL;
+    protected $_Credentials = NULL;
 
     /**
      * @var string
@@ -82,20 +82,20 @@ class Request extends \Tonic\Request {
     /**
      * Instantiate the resource class that matches the request URI the best.
      *
-     * Override superclass method to return ResponseException as
-     * RESTfmResponseException.
+     * Override superclass method to return \Tonic\ResponseException as
+     * \RESTfm\ResponseException.
      *
      * @return Resource
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  404 (Not Found) if the resource does not exist.
      */
     public function loadResource () {
         // Call parent class method.
         try {
             return(parent::loadResource());
-        } catch (\ResponseException $e) {
-            throw new \RESTfmResponseException($e->getMessage(), $e->getCode(), $e);
+        } catch (\Tonic\ResponseException $e) {
+            throw new \RESTfm\ResponseException($e->getMessage(), $e->getCode(), $e);
         }
     }
 
@@ -137,14 +137,14 @@ class Request extends \Tonic\Request {
      *  - GET may have data in the query string that is handled automatically
      *    as POST application/x-www-form-urlencoded.
      *
-     * @throws RESTfmResponseException
+     * @throws ResponseException
      *  400 (Bad Request) if data is present but format is unknown.
      */
     public function parse () {
 
         $this->_Message = new Message\Message();
 
-        $this->_RESTfmParameters = new \RESTfmParameters();
+        $this->_Parameters = new Parameters();
 
         $this->_handleGetData();
 
@@ -164,22 +164,22 @@ class Request extends \Tonic\Request {
         $this->_setParameters();
 
         // Set RFMurl encoding format.
-        if (isset($this->_RESTfmParameters->RFMfixFM01)) {
-            \RESTfmUrl::setEncoding(\RESTfmUrl::RFMfixFM01);
+        if (isset($this->_Parameters->RFMfixFM01)) {
+            RFMfixUrl::setEncoding(RFMfixUrl::RFMfixFM01);
         }
-        if (isset($this->_RESTfmParameters->RFMfixFM02)) {
-            \RESTfmUrl::setEncoding(\RESTfmUrl::RFMfixFM02);
+        if (isset($this->_Parameters->RFMfixFM02)) {
+            RFMfixUrl::setEncoding(RFMfixUrl::RFMfixFM02);
         }
 
         // Set requested override method.
-        if (isset($this->_RESTfmParameters->RFMmethod)) {
-            $this->method = strtoupper($this->_RESTfmParameters->RFMmethod);
+        if (isset($this->_Parameters->RFMmethod)) {
+            $this->method = strtoupper($this->_Parameters->RFMmethod);
             if (isset($this->_genericMethodNames[$this->method])) {
                 $this->method = $this->_genericMethodNames[$this->method];
             }
         }
 
-        $this->_RESTfmCredentials = new \RESTfmCredentials($this->_RESTfmParameters);
+        $this->_Credentials = new Credentials($this->_Parameters);
     }
 
     /**
@@ -192,21 +192,21 @@ class Request extends \Tonic\Request {
     }
 
     /**
-     * Returns the RESTfmParameters object with parameters for this request.
+     * Returns the Parameters object with parameters for this request.
      *
-     * @return RESTfmParameters
+     * @return \RESTfm\Parameters
      */
-    public function getRESTfmParameters () {
-        return $this->_RESTfmParameters;
+    public function getParameters () {
+        return $this->_Parameters;
     }
 
     /**
-     * Returns the RESTfmCredentials object with credentials for this request.
+     * Returns the Credentials object with credentials for this request.
      *
-     * @return RESTfmCredentials
+     * @return \RESTfm\Credentials
      */
-    public function getRESTfmCredentials () {
-        return $this->_RESTfmCredentials;
+    public function getCredentials () {
+        return $this->_Credentials;
     }
 
     /**
@@ -228,7 +228,7 @@ class Request extends \Tonic\Request {
      * RFM* parameters from the query string are also determined here.
      */
     protected function _handleGetData () {
-        $queryString = new \RESTfmQueryString(TRUE);
+        $queryString = new RFMfixQueryString(TRUE);
 
         // Identify RFM* query string parameters.
         $this->_parametersQueryString = $queryString->getRegex('/^RFM.*/');
@@ -276,7 +276,7 @@ class Request extends \Tonic\Request {
             return;
         } elseif (stripos($_SERVER['CONTENT_TYPE'], 'application/x-www-form-urlencoded') !== FALSE) {
             // Use our parser, not PHP's.
-            $parser = new \RESTfmQueryString();
+            $parser = new RFMfixQueryString();
             $parser->parse_str($this->data, $postData);
         } elseif (stripos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') !== FALSE ) {
             // At the moment we are at the mercy of PHP's parsing. This
@@ -349,16 +349,16 @@ class Request extends \Tonic\Request {
                 $this->_format = 'application/x-www-form-urlencoded';
             } else {
                 // Determine the most acceptable format using tonic.
-                $this->_format = $this->mostAcceptable(\RESTfmConfig::getFormats());
+                $this->_format = $this->mostAcceptable(Config::getFormats());
             }
         }
 
         // Ensure we have a format.
         if ($this->_format == '') {
             // This is trouble, we have data but in no known format.
-            throw new \RESTfmResponseException(
+            throw new ResponseException(
                         'Unable to determine format for resource ' . $this->uri,
-                        RESTfm\Response::BADREQUEST);
+                        Response::BADREQUEST);
         }
 
         // Check if our format is available through a provided xslt.
@@ -397,9 +397,9 @@ class Request extends \Tonic\Request {
     protected function _setParameters () {
         // Merge in increasing order of priority. i.e. later parameters
         // of the same name will override earlier entries.
-        $this->_RESTfmParameters->merge($this->_parametersData);
-        $this->_RESTfmParameters->merge($this->_parametersPost);
-        $this->_RESTfmParameters->merge($this->_parametersQueryString);
+        $this->_Parameters->merge($this->_parametersData);
+        $this->_Parameters->merge($this->_parametersPost);
+        $this->_Parameters->merge($this->_parametersQueryString);
     }
 
 };

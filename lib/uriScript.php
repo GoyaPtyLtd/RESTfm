@@ -22,7 +22,7 @@
  *
  * @uri /{database}/script/{script}/{layout}
  */
-class uriScript extends RESTfmResource {
+class uriScript extends RESTfm\Resource {
 
     const URI = '/{database}/script/{script}/{layout}';
 
@@ -37,7 +37,7 @@ class uriScript extends RESTfmResource {
      *                              to pass to script.
      *  - RFMsuppressData : set flag to suppress 'data' section from response.
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/script/{script}/{layout}
      * @param string $script
@@ -49,13 +49,13 @@ class uriScript extends RESTfmResource {
      * @return Response
      */
     function get($request, $database, $script, $layout) {
-        $database = RESTfmUrl::decode($database);
-        $script = RESTfmUrl::decode($script);
-        $layout = RESTfmUrl::decode($layout);
+        $database = RESTfm\Url::decode($database);
+        $script = RESTfm\Url::decode($script);
+        $layout = RESTfm\Url::decode($layout);
 
-        $backend = BackendFactory::make($request, $database);
+        $backend = RESTfm\BackendFactory::make($request, $database);
         $opsRecord = $backend->makeOpsRecord($database, $layout);
-        $restfmParameters = $request->getRESTfmParameters();
+        $restfmParameters = $request->getParameters();
 
         $scriptParameter = NULL;
         if (isset($restfmParameters->RFMscriptParam)) {
@@ -77,9 +77,9 @@ class uriScript extends RESTfmResource {
         foreach($restfmMessage->getRecords() as $record) {
             $record->setHref(
                 $request->baseUri.'/'.
-                        RESTfmUrl::encode($database).'/layout/'.
-                        RESTfmUrl::encode($layout).'/'.
-                        RESTfmUrl::encode($record->getRecordId()).'.'.$format
+                        RESTfm\Url::encode($database).'/layout/'.
+                        RESTfm\Url::encode($layout).'/'.
+                        RESTfm\Url::encode($record->getRecordId()).'.'.$format
             );
         }
 

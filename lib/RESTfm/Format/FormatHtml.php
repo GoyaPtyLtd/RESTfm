@@ -17,36 +17,40 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\Format;
+
+use RESTfm\FormatInterface;
+use RESTfm\Message\Message;
+use RESTfm\Message\Record;
+
 class FormatHtml implements FormatInterface {
 
     // --- Interface Implementation --- //
 
-    public function parse (\RESTfm\Message\Message $restfmMessage, $data) {
+    public function parse (Message $restfmMessage, $data) {
         // $data is URL encoded key => value pairs as in a HTTP POST body or
         // HTTP GET query string.
         $a = array();
         $this->_parse_str($data, $a);
 
-        $restfmMessage->addRecord(new \RESTfm\Message\Record(
-            NULL, NULL, $a
-        ));
+        $restfmMessage->addRecord(new Record( NULL, NULL, $a ));
     }
 
     /**
      * @codeCoverageIgnore Not a testable unit.
      */
-    public function write (\RESTfm\Message\Message $restfmMessage) {
+    public function write (Message $restfmMessage) {
 
         //$str = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">' . "\n";
         $str = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">' . "\n";
         $str .= '<html><head>' . "\n";
         $str .= '<meta http-equiv="Content-type" content="text/html; charset=utf-8">' . "\n";
         $str .= "<title>Response</title>\n";
-        $str .= '<link type="text/css" rel="stylesheet" href="' . RESTfmConfig::getVar('settings', 'baseURI') . '/css/RESTfm.css">'."\n";
+        $str .= '<link type="text/css" rel="stylesheet" href="' . \RESTfm\Config::getVar('settings', 'baseURI') . '/css/RESTfm.css">'."\n";
         $str .= "</head><body>\n";
         $str .= '<div id="logo">' .
-                '<a target="_blank" href="http://www.restfm.com"><img width="106" height="36" src="' . RESTfmConfig::getVar('settings', 'baseURI') . '/css/RESTfm.logo.png" alt="RESTfm logo"></a>' .
-                '<span>' . Version::getRelease() . '</span>' .
+                '<a target="_blank" href="http://www.restfm.com"><img width="106" height="36" src="' . \RESTfm\Config::getVar('settings', 'baseURI') . '/css/RESTfm.logo.png" alt="RESTfm logo"></a>' .
+                '<span>' . \RESTfm\Version::getRelease() . '</span>' .
             '</div>' . "\n";
 
         // Credentials in use.
@@ -56,7 +60,7 @@ class FormatHtml implements FormatInterface {
             $displayUser = $this->_username;
         }
         $str .= '<div id="credentials">Username: ' . $displayUser . '<br>'.
-                    '[ <a href="' . RESTfmConfig::getVar('settings', 'baseURI') . '?RFMreauth=' . rawurlencode($this->_username) . '">change user</a> ]'.
+                    '[ <a href="' . \RESTfm\Config::getVar('settings', 'baseURI') . '?RFMreauth=' . rawurlencode($this->_username) . '">change user</a> ]'.
                 '</div>';
 
         $sectionNames = $restfmMessage->getSectionNames();

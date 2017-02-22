@@ -17,6 +17,8 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm;
+
 /**
  * Version static class to hold release version.
  */

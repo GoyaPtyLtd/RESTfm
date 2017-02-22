@@ -17,6 +17,8 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm;
+
 /**
  * OpsRecordAbstract
  *
@@ -27,7 +29,7 @@
 abstract class OpsRecordAbstract {
 
     /**
-     * @var BackendAbstract
+     * @var \RESTfm\BackendAbstract
      *  Handle to backend object. Implementation should set this in
      *  constructor.
      */
@@ -38,13 +40,13 @@ abstract class OpsRecordAbstract {
     /**
      * Construct a new Record-level Operation object.
      *
-     * @param BackendAbstract $backend
+     * @param \RESTfm\BackendAbstract $backend
      *  Implementation must store $this->_backend if a reference is needed in
      *  other methods.
      * @param string $database
      * @param string $layout
      */
-    abstract public function __construct (BackendAbstract $backend, $database, $layout);
+    abstract public function __construct (\RESTfm\BackendAbstract $backend, $database, $layout);
 
     /**
      * Create a new record from the record provided, recording the new
@@ -136,7 +138,7 @@ abstract class OpsRecordAbstract {
      * @param string $scriptParameter
      *  Optional parameter to pass to script.
      *
-     * @throws RESTfmResponseException
+     * @throws ResponseException
      *  On error
      *
      * @return \RESTfm\Message\Message
@@ -153,7 +155,7 @@ abstract class OpsRecordAbstract {
      *
      * @param \RESTfm\Message\Message $requestMessage
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On invalid $requestMessage.
      *
      * @return \RESTfm\Message\Message
@@ -171,7 +173,7 @@ abstract class OpsRecordAbstract {
      * @param \RESTfm\Message\Message $requestMessage
      *  'data' section required with row(s) containing record data.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On invalid $requestMessage.
      *
      * @return \RESTfm\Message\Message
@@ -180,7 +182,7 @@ abstract class OpsRecordAbstract {
      */
     public function createBulk (\RESTfm\Message\Message $requestMessage) {
         if ($requestMessage->getRecordCount() < 1) {
-            throw new RESTfmResponseException('No records found in request.', RESTfmResponseException::BADREQUEST);
+            throw new ResponseException('No records found in request.', ResponseException::BADREQUEST);
         }
 
         $result = new \RESTfm\Message\Message();
@@ -217,7 +219,7 @@ abstract class OpsRecordAbstract {
      * @param \RESTfm\Message\Record $requestRecord
      *  Must have recordID set.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On invalid $requestMessage.
      *
      * @return \RESTfm\Message\Message
@@ -237,7 +239,7 @@ abstract class OpsRecordAbstract {
      * @param \RESTfm\Message\Message $requestMessage
      *  'meta' section required with row(s) containing a 'recordID' field.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On invalid $requestMessage.
      *
      * @return \RESTfm\Message\Message
@@ -246,7 +248,7 @@ abstract class OpsRecordAbstract {
      */
     public function readBulk (\RESTfm\Message\Message $requestMessage) {
         if ($requestMessage->getRecordCount() < 1) {
-            throw new RESTfmResponseException('No records found in request.', RESTfmResponseException::BADREQUEST);
+            throw new ResponseException('No records found in request.', ResponseException::BADREQUEST);
         }
 
         $result = new \RESTfm\Message\Message();
@@ -266,7 +268,7 @@ abstract class OpsRecordAbstract {
      * @param \RESTfm\Message\Message $requestMessage
      *  Must contain row data and recordID
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On invalid $requestRecord.
      *
      * @return \RESTfm\Message\Message
@@ -284,7 +286,7 @@ abstract class OpsRecordAbstract {
      *  'data' section required with row(s) containing record data.
      *  'meta' section required with row(s) containing a 'recordID' field.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On invalid $requestMessage.
      *
      * @return \RESTfm\Message\Message
@@ -292,7 +294,7 @@ abstract class OpsRecordAbstract {
      */
     public function updateBulk (\RESTfm\Message\Message $requestMessage) {
         if ($requestMessage->getRecordCount() < 1) {
-            throw new RESTfmResponseException('No records found in request.', RESTfmResponseException::BADREQUEST);
+            throw new ResponseException('No records found in request.', ResponseException::BADREQUEST);
         }
 
         $result = new \RESTfm\Message\Message();
@@ -329,7 +331,7 @@ abstract class OpsRecordAbstract {
      * @param \RESTfm\Message\Record $requestRecord
      *  Must contain recordID.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On invalid $requestMessage.
      *
      * @return \RESTfm\Message\Message
@@ -348,7 +350,7 @@ abstract class OpsRecordAbstract {
      * @param \RESTfm\Message\Message $requestMessage
      *  'meta' section required with row(s) containing a 'recordID' field.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On invalid $requestMessage.
      *
      * @return \RESTfm\Message\Message
@@ -356,7 +358,7 @@ abstract class OpsRecordAbstract {
      */
     public function deleteBulk (\RESTfm\Message\Message $requestMessage) {
         if ($requestMessage->getRecordCount() < 1) {
-            throw new RESTfmResponseException('No records found in request.', RESTfmResponseException::BADREQUEST);
+            throw new ResponseException('No records found in request.', ResponseException::BADREQUEST);
         }
 
         $result = new \RESTfm\Message\Message();
@@ -472,7 +474,7 @@ abstract class OpsRecordAbstract {
      * Single operation (as opposed to bulk operation) requests should not have
      * a 'multistatus' section. The operation's status code should be in the
      * 'info' section, and should influence the HTTP response status code. This
-     * is done by throwing a RESTfmResponseException during CRUD operation.
+     * is done by throwing a ResponseException during CRUD operation.
      *
      * This is how RESTfm functioned prior to the implementation of a bulk
      * operations interface (and backend abstraction), which is also utilised

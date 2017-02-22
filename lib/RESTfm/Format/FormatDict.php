@@ -17,6 +17,11 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\Format;
+
+use RESTfm\FormatInterface;
+use RESTfm\Message\Message;
+
 class FormatDict implements FormatInterface {
 
     // --- Interface Implementation --- //
@@ -28,7 +33,7 @@ class FormatDict implements FormatInterface {
      * @param \RESTfm\Message\Message $restfmMessage
      * @param string $data
      */
-    public function parse (\RESTfm\Message\Message $restfmMessage, $data) {
+    public function parse (Message $restfmMessage, $data) {
         // Data is key/value pairs and may be two dimensional:
         // <:sectionNameN:=value:><:sectionNameN+1:=value:>
         // OR one dimensional:
@@ -73,7 +78,7 @@ class FormatDict implements FormatInterface {
      *
      * @return string
      */
-    public function write (\RESTfm\Message\Message $restfmMessage) {
+    public function write (Message $restfmMessage) {
         $sectionNames = $restfmMessage->getSectionNames();
 
         // Prioritise some sections above others. This priority is taken
@@ -167,7 +172,7 @@ class FormatDict implements FormatInterface {
         $s .= $this->_escapeFormatChars($value);
         $s .= ':>';
 
-        if (RESTfmConfig::getVar('settings', 'formatNicely')) {
+        if (\RESTfm\Config::getVar('settings', 'formatNicely')) {
             $s .= "\n";
         }
 

@@ -17,10 +17,12 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm;
+
 /**
  * Extends QueryString to include additional encoding.
  */
-class RESTfmQueryString extends QueryString {
+class RFMfixQueryString extends QueryString {
 
     /**
      * Allowed encoding types.

@@ -17,6 +17,8 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm;
+
 /**
  * OpsDatabaseAbstract
  *
@@ -29,7 +31,7 @@
 abstract class OpsDatabaseAbstract {
 
     /**
-     * @var BackendAbstract
+     * @var \RESTfm\BackendAbstract
      *  Handle to backend object. Implementation should set this in
      *  constructor.
      */
@@ -38,17 +40,17 @@ abstract class OpsDatabaseAbstract {
     /**
      * Construct a new Database-level Operation object.
      *
-     * @param BackendAbstract $backend
+     * @param \RESTfm\BackendAbstract $backend
      *  Implementation must store $this->_backend if a reference is needed in
      *  other methods.
      * @param string $database
      */
-    abstract public function __construct (BackendAbstract $backend, $database = NULL);
+    abstract public function __construct (\RESTfm\BackendAbstract $backend, $database = NULL);
 
     /**
      * Read databases available via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTFm\ResponseException
      *  On backend error.
      *
      * @return \RESTfm\Message\Message
@@ -58,7 +60,7 @@ abstract class OpsDatabaseAbstract {
     /**
      * Read layouts available in $database via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTFm\ResponseException
      *  On backend error.
      *
      * @return \RESTfm\Message\Message
@@ -68,7 +70,7 @@ abstract class OpsDatabaseAbstract {
     /**
      * Read scripts available in $database via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTFm\ResponseException
      *  On backend error.
      *
      * @return \RESTfm\Message\Message

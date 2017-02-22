@@ -17,6 +17,8 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm;
+
 /**
  * Defines interface for initialisation of database backend, and factory
  * methods for creating operations objects.

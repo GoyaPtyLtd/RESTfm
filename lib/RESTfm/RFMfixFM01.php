@@ -17,6 +17,8 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm;
+
 /**
  * Static class to handle the pre and post encoding step to work around
  * FileMaker 12 Insert From URL encoding requirements.

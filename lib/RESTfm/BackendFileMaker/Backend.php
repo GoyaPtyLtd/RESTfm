@@ -17,12 +17,14 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\BackendFileMaker;
+
 require_once 'FileMaker.php';
 
 /**
  * FileMaker implementation of BackendAbstract.
  */
-class BackendFileMaker extends BackendAbstract {
+class Backend extends \RESTfm\BackendAbstract {
 
     // -- Private properties --
 
@@ -47,10 +49,10 @@ class BackendFileMaker extends BackendAbstract {
      * @param string $password
      */
     public function __construct ($hostspec, $username, $password) {
-        $this->_fmObject = new FileMaker();
+        $this->_fmObject = new \FileMaker();
 
         $this->_fmObject->setProperty('hostspec', $hostspec);
-        if (RESTfmConfig::getVar('settings', 'strictSSLCertsFMS') === FALSE) {
+        if (\RESTfm\Config::getVar('settings', 'strictSSLCertsFMS') === FALSE) {
             $this->_fmObject->setProperty('curlOptions', array(
                                 CURLOPT_SSL_VERIFYPEER => FALSE,
                                 CURLOPT_SSL_VERIFYHOST => FALSE,

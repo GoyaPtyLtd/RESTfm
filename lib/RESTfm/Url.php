@@ -17,6 +17,8 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm;
+
 /**
  * Static class provides RESTfm specific urlencode/urldecode functions to
  * take into account RFMfixFM01 and RFMfixFM02 flags.
@@ -25,7 +27,7 @@
  * remain compatible with systems that encode spaces as '+'. This combination
  * works well for all cases
  */
-class RESTfmUrl {
+class Url {
 
     /**
      * Allowed encoding types.

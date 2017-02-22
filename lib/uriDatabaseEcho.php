@@ -24,14 +24,14 @@
  *
  * @uri /{database}/echo
  */
-class uriDatabaseEcho extends RESTfmResource {
+class uriDatabaseEcho extends RESTfm\Resource {
 
     const URI = '/{database}/echo';
 
     /**
      * Handle a GET request for this resource
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/echo
      *
@@ -44,7 +44,7 @@ class uriDatabaseEcho extends RESTfmResource {
     /**
      * Handle a POST request for this resource
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/echo
      *
@@ -57,7 +57,7 @@ class uriDatabaseEcho extends RESTfmResource {
     /**
      * Handle a PUT request for this resource
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/echo
      *
@@ -70,7 +70,7 @@ class uriDatabaseEcho extends RESTfmResource {
     /**
      * Handle a delete request for this resource
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/echo
      *
@@ -83,19 +83,19 @@ class uriDatabaseEcho extends RESTfmResource {
     /**
      * Echo everything we can find about this session and exit.
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *  From URI parsing: /{database}/echo
      *
-     * @throws RESTfmResponseException
+     * @throws RESTfm\ResponseException
      *  If authentication fails.
      *
      * @return NEVER RETURNS!
      */
     function _echo($request, $database) {
-        $database = RESTfmUrl::decode($database);
+        $database = RESTfm\Url::decode($database);
 
-        if (RESTfmConfig::getVar('settings', 'diagnostics') !== TRUE) {
+        if (RESTfm\Config::getVar('settings', 'diagnostics') !== TRUE) {
             header('HTTP/1.1 200 OK');
             header('Content-Type: text/plain; charset=utf-8');
             echo "Diagnostics disabled.\n";
@@ -103,14 +103,14 @@ class uriDatabaseEcho extends RESTfmResource {
         }
 
         // Ensure we are authenticated by making a trivial query.
-        $backend = BackendFactory::make($request, $database);
+        $backend = RESTfm\BackendFactory::make($request, $database);
         $opsDatabase = $backend->makeOpsDatabase($database);
         $restfmDataLayouts = $opsDatabase->readLayouts();
 
         // Only needed to determine response format.
         $response = new RESTfm\Response($request);
 
-        $restfmParameters = $request->getRESTfmParameters();
+        $restfmParameters = $request->getParameters();
 
         // Basic text response.
         header('HTTP/1.1 200 OK');

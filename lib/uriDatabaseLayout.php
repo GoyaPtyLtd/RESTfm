@@ -22,27 +22,27 @@
  *
  * @uri /{database}/layout
  */
-class uriDatabaseLayout extends RESTfmResource {
+class uriDatabaseLayout extends RESTfm\Resource {
 
     const URI = '/{database}/layout';
 
     /**
      * Handle a GET request for this resource
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/layout
      *
      * @return Response
      */
     function get($request, $database) {
-        $database = RESTfmUrl::decode($database);
+        $database = RESTfm\Url::decode($database);
 
-        $backend = BackendFactory::make($request, $database);
+        $backend = RESTfm\BackendFactory::make($request, $database);
         $opsDatabase = $backend->makeOpsDatabase($database);
         $restfmMessage = $opsDatabase->readLayouts();
 
-        $queryString = new QueryString(TRUE);
+        $queryString = new RESTfm\QueryString(TRUE);
 
         $response = new RESTfm\Response($request);
         $format = $response->format;
@@ -53,8 +53,8 @@ class uriDatabaseLayout extends RESTfmResource {
         foreach($restfmMessageRecords as $record) {
             $record->setHref(
                 $request->baseUri.'/'.
-                        RESTfmUrl::encode($database).'/layout/'.
-                        RESTfmUrl::encode($record['layout']).'.'.
+                        RESTfm\Url::encode($database).'/layout/'.
+                        RESTfm\Url::encode($record['layout']).'.'.
                         $format.$queryString->build()
             );
         }

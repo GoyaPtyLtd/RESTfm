@@ -23,7 +23,7 @@
 // The RFMversion query string simply returns the RESTfm version
 // and nothing else.
 if (strpos($_SERVER['QUERY_STRING'], 'RFMversion') !== FALSE) {
-    throw new Tonic\ResponseException(Version::getVersion(), Tonic\Response::OK);
+    throw new Tonic\ResponseException(RESTfm\Version::getVersion(), Tonic\Response::OK);
 }
 
 // The RFMcheckFMAPI query string returns the determined FMS PHP API version

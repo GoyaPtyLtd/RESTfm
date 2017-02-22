@@ -17,6 +17,8 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\SQLParser;
+
  /*
   * References:
   *   EBNF, grammar, left-recursion and precedence:

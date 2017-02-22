@@ -22,7 +22,7 @@
  *
  * @uri /{database}/layout/{layout}
  */
-class uriLayout extends RESTfmResource {
+class uriLayout extends RESTfm\Resource {
 
     const URI = '/{database}/layout/{layout}';
 
@@ -59,21 +59,21 @@ class uriLayout extends RESTfmResource {
      *  - RFMfind=<SQL query> : An SQL subset syntax that may include
      *                          SELECT, WHERE, ORDER BY, OFFSET, LIMIT
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/layout/{layout}
      * @param string $layout
      *   From URI parsing: /{database}/layout/{layout}
      *
-     * @return RESTfmResponse
+     * @return RESTfm\Response
      */
     function get($request, $database, $layout) {
-        $database = RESTfmUrl::decode($database);
-        $layout = RESTfmUrl::decode($layout);
+        $database = RESTfm\Url::decode($database);
+        $layout = RESTfm\Url::decode($layout);
 
-        $backend = BackendFactory::make($request, $database);
+        $backend = RESTfm\BackendFactory::make($request, $database);
         $opsLayout = $backend->makeOpsLayout($database, $layout);
-        $restfmParameters = $request->getRESTfmParameters();
+        $restfmParameters = $request->getParameters();
 
         if (isset($restfmParameters->RFMmetaFieldOnly)) {
             $restfmMessage = $opsLayout->readMetaField();
@@ -161,10 +161,10 @@ class uriLayout extends RESTfmResource {
 
         $response = new RESTfm\Response($request);
         $format = $response->format;
-        $queryString = new RESTfmQueryString(TRUE);
+        $queryString = new RESTfm\QueryString(TRUE);
 
-        $databaseEnc = RESTfmUrl::encode($database);
-        $layoutEnc = RESTfmUrl::encode($layout);
+        $databaseEnc = RESTfm\Url::encode($database);
+        $layoutEnc = RESTfm\Url::encode($layout);
 
         // Meta section.
         // Iterate records and set navigation hrefs.
@@ -176,7 +176,7 @@ class uriLayout extends RESTfmResource {
             $record->setHref(
                 $request->baseUri.'/'.
                         $databaseEnc.'/layout/'.$layoutEnc.'/'.
-                        RESTfmUrl::encode($record->getRecordId()).'.'.$format
+                        RESTfm\Url::encode($record->getRecordId()).'.'.$format
             );
         }
 
@@ -242,23 +242,23 @@ class uriLayout extends RESTfmResource {
      *                                 to pass to pre-script.
      *  - RFMsuppressData : set flag to suppress 'data' section from response.
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/layout/{layout}
      * @param string $layout
      *   From URI parsing: /{database}/layout/{layout}
      *
-     * @return RESTfmResponse
+     * @return RESTfm\Response
      */
     function post($request, $database, $layout) {
-        $database = RESTfmUrl::decode($database);
-        $layout = RESTfmUrl::decode($layout);
+        $database = RESTfm\Url::decode($database);
+        $layout = RESTfm\Url::decode($layout);
 
-        $backend = BackendFactory::make($request, $database);
+        $backend = RESTfm\BackendFactory::make($request, $database);
 
         $opsRecord = $backend->makeOpsRecord($database, $layout);
 
-        $restfmParameters = $request->getRESTfmParameters();
+        $restfmParameters = $request->getParameters();
 
         // Allow script calling.
         if (isset($restfmParameters->RFMscript)) {
@@ -294,9 +294,9 @@ class uriLayout extends RESTfmResource {
             }
             $record->setHref(
                 $request->baseUri.'/'.
-                        RESTfmUrl::encode($database).'/layout/'.
-                        RESTfmUrl::encode($layout).'/'.
-                        RESTfmUrl::encode($record->getRecordId()).'.'.$format
+                        RESTfm\Url::encode($database).'/layout/'.
+                        RESTfm\Url::encode($layout).'/'.
+                        RESTfm\Url::encode($record->getRecordId()).'.'.$format
             );
         }
 

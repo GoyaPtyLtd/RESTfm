@@ -17,23 +17,25 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\BackendFileMaker;
+
 /**
  * FileMakerOpsRecord
  *
  * FileMaker specific implementation of OpsRecordAbstract.
  */
-class FileMakerOpsRecord extends OpsRecordAbstract {
+class FileMakerOpsRecord extends \RESTfm\OpsRecordAbstract {
 
     // --- OpsRecordAbstract implementation ---
 
     /**
      * Construct a new Record-level Operation object.
      *
-     * @param BackendAbstract $backend
+     * @param \RESTfm\BackendAbstract $backend
      * @param string $database
      * @param string $layout
      */
-    public function __construct (BackendAbstract $backend, $database, $layout) {
+    public function __construct (\RESTfm\BackendAbstract $backend, $database, $layout) {
         $this->_backend = $backend;
         $this->_database = $database;
         $this->_layout = $layout;
@@ -81,7 +83,7 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
         //       the error OK.
         $result = @ $addCommand->execute();
 
-        if (FileMaker::isError($result)) {
+        if (\FileMaker::isError($result)) {
             if ($this->_isSingle) {
                 throw new FileMakerResponseException($result);
             }
@@ -141,13 +143,13 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
             $findCommand->addFindCriterion($searchField, $searchValue);
             $result = $findCommand->execute();
 
-            if (FileMaker::isError($result)) {
+            if (\FileMaker::isError($result)) {
                 if ($this->_isSingle) {
                     if ($result->getCode() == 401) {
                         // "No records match the request"
                         // This is a special case where we actually want to return
                         // 404. ONLY because we are a unique-key-recordID.
-                        throw new RESTfmResponseException(NULL, RESTfmResponseException::NOTFOUND);
+                        throw new \RESTfm\ResponseException(NULL, \RESTfm\ResponseException::NOTFOUND);
                     } else {
                         throw new FileMakerResponseException($result);
                     }
@@ -163,8 +165,8 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
             if ($result->getFetchCount() > 1) {
                 // We have to abort if the search query recordID is not unique.
                 if ($this->_isSingle) {
-                    throw new RESTfmResponseException($result->getFetchCount() .
-                            ' conflicting records found', RESTfmResponseException::CONFLICT);
+                    throw new \RESTfm\ResponseException($result->getFetchCount() .
+                            ' conflicting records found', \RESTfm\ResponseException::CONFLICT);
                 }
                 $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
                     42409,                      // Made up status value.
@@ -181,7 +183,7 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
         } else {
             $record = $FM->getRecordById($this->_layout, $recordID);
 
-            if (FileMaker::isError($record)) {
+            if (\FileMaker::isError($record)) {
                 if ($this->_isSingle) {
                     throw new FileMakerResponseException($record);
                 }
@@ -235,9 +237,9 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
             // $this->_readRecord() will throw an exception if $this->_isSingle.
             try {
                 $this->_readRecord($readMessage, new \RESTfm\Message\Record($recordID));
-            } catch (RESTfmResponseException $e) {
+            } catch (\RESTfm\ResponseException $e) {
                 // Check for 404 Not Found in exception.
-                if ($e->getCode() == RESTfmResponseException::NOTFOUND && $this->_updateElseCreate) {
+                if ($e->getCode() == \RESTfm\ResponseException::NOTFOUND && $this->_updateElseCreate) {
                     // No record matching this unique-key-recordID,
                     // create new record instead.
                     return $this->_createRecord($restfmMessage, $requestRecord, $index);
@@ -322,7 +324,7 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
         //       PHP API when non-existent fields are provided. We still catch
         //       the error OK.
         $result = @ $editCommand->execute();
-        if (FileMaker::isError($result)) {
+        if (\FileMaker::isError($result)) {
             // Check for FileMaker error 401: No records match the request
             if ($result->getCode() == 401 && $this->_updateElseCreate) {
                 // No record matching this recordID, create new record instead.
@@ -396,7 +398,7 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
 
         $result = $deleteCommand->execute();
 
-        if (FileMaker::isError($result)) {
+        if (\FileMaker::isError($result)) {
             if ($this->_isSingle) {
                 throw new FileMakerResponseException($result);
             }
@@ -417,7 +419,7 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
      * @param string $scriptParameter
      *  Optional parameter to pass to script.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On error
      *
      * @return \RESTfm\Message\Message
@@ -440,7 +442,7 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
         //       catch the error OK.
         @ $result = $scriptCommand->execute();
 
-        if (FileMaker::isError($result)) {
+        if (\FileMaker::isError($result)) {
             throw new FileMakerResponseException($result);
         }
 
@@ -477,9 +479,9 @@ class FileMakerOpsRecord extends OpsRecordAbstract {
      * Parse FileMaker record into \RESTfm\Message\Message format.
      *
      * @param[out] \RESTfm\Message\Message $restfmMessage
-     * @param[in] FileMaker_Record $record
+     * @param[in] \FileMaker_Record $record
      */
-    protected function _parseRecord (\RESTfm\Message\Message $restfmMessage, FileMaker_Record $record) {
+    protected function _parseRecord (\RESTfm\Message\Message $restfmMessage, \FileMaker_Record $record) {
         $fieldNames = $record->getFields();
 
         // Only extract field meta data if we haven't done it yet.

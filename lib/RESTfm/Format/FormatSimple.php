@@ -17,6 +17,11 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\Format;
+
+use RESTfm\FormatInterface;
+use RESTfm\Message\Message;
+
 /**
  * .simple format data parser and writer class.
  *
@@ -41,7 +46,7 @@ class FormatSimple implements FormatInterface {
      * @param \RESTfm\Message\Message $restfmMessage
      * @param string $data
      */
-    public function parse (\RESTfm\Message\Message $restfmMessage, $data) {
+    public function parse (Message $restfmMessage, $data) {
 
         // Each section delimited by \n\n, allow for \r\n\r\n, \r\r
         $sections = preg_split('/\n\n|\r\n\r\n|\r\r/', $data, -1, PREG_SPLIT_NO_EMPTY);
@@ -62,7 +67,7 @@ class FormatSimple implements FormatInterface {
      *
      * @return string
      */
-    public function write (\RESTfm\Message\Message $restfmMessage) {
+    public function write (Message $restfmMessage) {
         $s = '';    // Final .simple output.
 
         foreach ($restfmMessage->getSectionNames() as $sectionName) {

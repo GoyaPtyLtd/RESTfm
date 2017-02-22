@@ -17,7 +17,9 @@
  *  Gavin Stewart
  */
 
-class SQLParserException extends Exception {
+namespace RESTfm\SQLParser;
+
+class SQLParserException extends \Exception {
     /* ParserSQL Exception codes.*/
 
     // Lexer errors.

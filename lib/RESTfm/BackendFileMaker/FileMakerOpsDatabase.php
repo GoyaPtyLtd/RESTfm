@@ -17,16 +17,18 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\BackendFileMaker;
+
 /**
  * FileMakerOpsDatabase
  *
  * FileMaker specific implementation of OpsDatabaseAbstract.
  */
-class FileMakerOpsDatabase extends OpsDatabaseAbstract {
+class FileMakerOpsDatabase extends \RESTfm\OpsDatabaseAbstract {
 
     // --- OpsRecordDatabase implementation ---
 
-    public function __construct (BackendAbstract $backend, $database = NULL) {
+    public function __construct (\RESTfm\BackendAbstract $backend, $database = NULL) {
         $this->_backend = $backend;
         if ($database != NULL) {
             $this->_backend->getFileMaker()->setProperty('database', $database);
@@ -45,7 +47,7 @@ class FileMakerOpsDatabase extends OpsDatabaseAbstract {
     public function readDatabases () {
         $FM = $this->_backend->getFileMaker();
         $result = $FM->listDatabases();
-        if (FileMaker::isError($result)) {
+        if (\FileMaker::isError($result)) {
             throw new FileMakerResponseException($result);
         }
         natsort($result);
@@ -63,7 +65,7 @@ class FileMakerOpsDatabase extends OpsDatabaseAbstract {
     /**
      * Read layouts available in $database via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On backend error.
      *
      * @return \RESTfm\Message\Message
@@ -71,7 +73,7 @@ class FileMakerOpsDatabase extends OpsDatabaseAbstract {
     public function readLayouts () {
         $FM = $this->_backend->getFileMaker();
         $result = $FM->listLayouts();
-        if (FileMaker::isError($result)) {
+        if (\FileMaker::isError($result)) {
             throw new FileMakerResponseException($result);
         }
         natsort($result);
@@ -90,7 +92,7 @@ class FileMakerOpsDatabase extends OpsDatabaseAbstract {
     /**
      * Read scripts available in $database via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On backend error.
      *
      * @return \RESTfm\Message\Message
@@ -98,7 +100,7 @@ class FileMakerOpsDatabase extends OpsDatabaseAbstract {
     public function readScripts () {
         $FM = $this->_backend->getFileMaker();
         $result = $FM->listScripts();
-        if (FileMaker::isError($result)) {
+        if (\FileMaker::isError($result)) {
             throw new FileMakerResponseException($result);
         }
         natsort($result);

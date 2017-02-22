@@ -17,6 +17,8 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\SQLParser;
+
 class SQLToken {
     /* Token types. */
     const   TOK_NULL        =  0,

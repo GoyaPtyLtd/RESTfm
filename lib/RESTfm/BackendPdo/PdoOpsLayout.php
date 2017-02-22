@@ -17,19 +17,21 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\BackendPdo;
+
 /**
  * PdoOpsLayout
  *
  * PHP PDO specific implementation of OpsLayoutAbstract.
  */
-class PdoOpsLayout extends OpsLayoutAbstract {
+class PdoOpsLayout extends \RESTfm\OpsLayoutAbstract {
 
     // --- OpsRecordLayout implementation ---
 
     /**
      * Construct a new Layout-level Operation object.
      *
-     * @param BackendAbstract $backend
+     * @param \RESTfm\BackendAbstract $backend
      *  Implementation must store $this->_backend if a reference is needed in
      *  other methods.
      * @param string $database
@@ -37,7 +39,7 @@ class PdoOpsLayout extends OpsLayoutAbstract {
      * @param string $uncleanTable
      *  Possibly malicious table name (this will be validated).
      */
-    public function __construct (BackendAbstract $backend, $database, $uncleanTable) {
+    public function __construct (\RESTfm\BackendAbstract $backend, $database, $uncleanTable) {
         $this->_backend = $backend;
 
         // Validate $uncleanTable by verifying it's existence in table list
@@ -46,7 +48,7 @@ class PdoOpsLayout extends OpsLayoutAbstract {
         $pdo = $this->_backend->getPDO();
         try {
             // MySQL:
-            $result = $pdo->query('SHOW TABLES', PDO::FETCH_NUM);
+            $result = $pdo->query('SHOW TABLES', \PDO::FETCH_NUM);
         } catch (PDOException $e) {
             throw new PdoResponseException($e);
         }
@@ -61,14 +63,14 @@ class PdoOpsLayout extends OpsLayoutAbstract {
         }
 
         if ($this->_validatedTable === NULL) {
-            throw new RESTfmResponseException(NULL, RESTfmResponseException::NOTFOUND);
+            throw new \RESTfm\ResponseException(NULL, \RESTfm\ResponseException::NOTFOUND);
         }
     }
 
     /**
      * Read records in table in database via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On backend error.
      *
      * @return \RESTfm\Message\Message
@@ -110,7 +112,7 @@ class PdoOpsLayout extends OpsLayoutAbstract {
         } catch (PDOException $e) {
             throw new PdoResponseException($e);
         }
-        $result = $statement->fetch(PDO::FETCH_NUM);
+        $result = $statement->fetch(\PDO::FETCH_NUM);
         $tableRecordCount = $result[0];
         $statement->closeCursor();
 
@@ -122,8 +124,8 @@ class PdoOpsLayout extends OpsLayoutAbstract {
 
         // Query.
         $statement = $pdo->prepare('SELECT * FROM `'. $this->_validatedTable . '` LIMIT ? OFFSET ?');
-        $statement->bindParam(1, intval($findMax), PDO::PARAM_INT);
-        $statement->bindParam(2, intval($findSkip), PDO::PARAM_INT);
+        $statement->bindParam(1, intval($findMax), \PDO::PARAM_INT);
+        $statement->bindParam(2, intval($findSkip), \PDO::PARAM_INT);
         try {
             $statement->execute();
         } catch (PDOException $e) {
@@ -163,7 +165,7 @@ class PdoOpsLayout extends OpsLayoutAbstract {
     /**
      * Read field metadata in layout in database via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On backend error.
      *
      * @return \RESTfm\Message\Message
@@ -209,7 +211,7 @@ class PdoOpsLayout extends OpsLayoutAbstract {
      * @param \RESTfm\Message\Message $restfmMessage
      * @param PDOStatement $statement
      */
-    protected function _parseMetaField(\RESTfm\Message\Message $restfmMessage, PDOStatement $statement) {
+    protected function _parseMetaField(\RESTfm\Message\Message $restfmMessage, \PDOStatement $statement) {
         $numColumns = $statement->columnCount();
         for ($i=0; $i < $numColumns; $i++) {
             $allFieldMeta = $statement->getColumnMeta($i);

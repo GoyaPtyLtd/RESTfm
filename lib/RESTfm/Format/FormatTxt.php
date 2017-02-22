@@ -17,6 +17,11 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\Format;
+
+use RESTfm\FormatInterface;
+use RESTfm\Message\Message;
+
 class FormatTxt implements FormatInterface {
 
     // --- Interface Implementation --- //
@@ -28,8 +33,8 @@ class FormatTxt implements FormatInterface {
      * @param \RESTfm\Message\Message $restfmMessage
      * @param string $data
      */
-    public function parse (\RESTfm\Message\Message $restfmMessage, $data) {
-        throw new RESTfmResponseException('No input parser available for txt format.', 500);
+    public function parse (Message $restfmMessage, $data) {
+        throw new \RESTfm\ResponseException('No input parser available for txt format.', 500);
     }
 
     /**
@@ -41,7 +46,7 @@ class FormatTxt implements FormatInterface {
      *
      * @return string
      */
-    public function write (\RESTfm\Message\Message $restfmMessage) {
+    public function write (Message $restfmMessage) {
 
         // Extensions like xdebug will reformat var_dump output if
         // html_errors is set.

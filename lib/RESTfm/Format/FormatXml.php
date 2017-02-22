@@ -17,7 +17,9 @@
  *  Gavin Stewart
  */
 
-class FormatXml implements FormatInterface {
+namespace RESTfm\Format;
+
+class FormatXml implements \RESTfm\FormatInterface {
 
     // --- Interface Implementation --- //
 
@@ -73,7 +75,7 @@ class FormatXml implements FormatInterface {
     public function write (\RESTfm\Message\Message $restfmMessage) {
         $xml = new XmlWriter();
         $xml->openMemory();
-        if (RESTfmConfig::getVar('settings', 'formatNicely')) {
+        if (\RESTfm\Config::getVar('settings', 'formatNicely')) {
             $xml->setIndent(TRUE);
         }
         $xml->startDocument('1.0', 'UTF-8');

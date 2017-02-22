@@ -17,6 +17,8 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\SQLParser;
+
 /**
  * SQL-like syntax lexer.
  */

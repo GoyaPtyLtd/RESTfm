@@ -361,7 +361,7 @@ class Request {
         // load definitions of already loaded resource classes
         //$resourceClassName = class_exists('Tonic\\Resource') ? 'Tonic\\Resource' : 'Resource';
         // GOYA - this cannot be cleanly overridden.
-        $resourceClassName = class_exists('Tonic\\Resource') ? 'Tonic\\Resource' : 'RESTfmResource';
+        $resourceClassName = class_exists('Tonic\\Resource') ? 'Tonic\\Resource' : 'RESTfm\\Resource';
         foreach (get_declared_classes() as $className) {
             if (is_subclass_of($className, $resourceClassName)) {
 

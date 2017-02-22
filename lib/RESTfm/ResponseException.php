@@ -17,10 +17,12 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm;
+
 /**
  * Exception class for HTTP response errors
  */
-class RESTfmResponseException extends \Tonic\ResponseException {
+class ResponseException extends \Tonic\ResponseException {
 
     /**
      * HTTP response code constant
@@ -62,7 +64,7 @@ class RESTfmResponseException extends \Tonic\ResponseException {
             parent::__construct($exceptionMessage, $exceptionCode);
         }
 
-        if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
+        if (Config::getVar('settings', 'diagnostics') === TRUE) {
             $this->addInfo('X-RESTfm-Trace', $this->__toSTring());
         }
     }
@@ -70,13 +72,13 @@ class RESTfmResponseException extends \Tonic\ResponseException {
     /**
      * Generate a default response for this exception
      *
-     * @param RESTfmRequest request
+     * @param \RESTfm\Request request
      *
-     * @return Response
+     * @return \RESTfm\Response
      */
     public function response($request) {
 
-        $response = new RESTfm\Response($request);
+        $response = new Response($request);
 
         foreach ($this->_addHeader as $name => $value) {
             $response->addHeader($name, $value);
@@ -110,7 +112,7 @@ class RESTfmResponseException extends \Tonic\ResponseException {
     /**
      * Additional HTTP header to be included in response.
      *
-     * RESTfmResponse will inject all headers matching /^X-RESTfm-/i into the
+     * \RESTfm\Response will inject all headers matching /^X-RESTfm-/i into the
      * 'info' section automatically.
      *
      * @var string $header

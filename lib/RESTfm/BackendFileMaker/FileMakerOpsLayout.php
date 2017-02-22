@@ -17,25 +17,27 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\BackendFileMaker;
+
 /**
  * FileMakerOpsLayout
  *
  * FileMaker specific implementation of OpsLayoutAbstract.
  */
-class FileMakerOpsLayout extends OpsLayoutAbstract {
+class FileMakerOpsLayout extends \RESTfm\OpsLayoutAbstract {
 
     // --- OpsRecordLayout implementation ---
 
     /**
      * Construct a new Record-level Operation object.
      *
-     * @param BackendAbstract $backend
+     * @param \RESTfm\BackendAbstract $backend
      *  Implementation must store $this->_backend if a reference is needed in
      *  other methods.
      * @param string $database
      * @param string $layout
      */
-    public function __construct (BackendAbstract $backend, $database, $layout) {
+    public function __construct (\RESTfm\BackendAbstract $backend, $database, $layout) {
         $this->_backend = $backend;
         $this->_database = $database;
         $this->_layout = $layout;
@@ -44,7 +46,7 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
     /**
      * Read records in layout in database via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On backend error.
      *
      * @return \RESTfm\Message\Message
@@ -111,7 +113,7 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
         // Query FileMaker
         $result = $findCommand->execute();
 
-        if (FileMaker::isError($result)) {
+        if (\FileMaker::isError($result)) {
             throw new FileMakerResponseException($result);
         }
 
@@ -192,7 +194,7 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
     /**
      * Read field metadata in layout in database via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On backend error.
      *
      * @return \RESTfm\Message\Message
@@ -202,7 +204,7 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
         $FM->setProperty('database', $this->_database);
 
         $layoutResult = $FM->getLayout($this->_layout);
-        if (FileMaker::isError($layoutResult)) {
+        if (\FileMaker::isError($layoutResult)) {
             throw new FileMakerResponseException($layoutResult);
         }
 
