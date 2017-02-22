@@ -116,7 +116,7 @@ class uriDatabaseEcho extends RESTfm\Resource {
         header('HTTP/1.1 200 OK');
         header('Content-Type: text/plain; charset=utf-8');
 
-        echo '        RESTfm ' . Version::getVersion() . ' Echo Service' . "\n";
+        echo '        RESTfm ' . RESTfm\Version::getVersion() . ' Echo Service' . "\n";
         echo '=========================================================' . "\n";
 
         echo "\n" . '------------ Parameters -------------' . "\n";
