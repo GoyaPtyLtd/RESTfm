@@ -52,6 +52,7 @@
         // Not namespaced, so find php file by matching $class against filename
         // no matter where the file is located under lib.
 
+        /* Everything we autoload is now correctly namespaced. - GAV
         static $libPhpFiles = NULL; // @var array Basenames of lib php files.
         if ($libPhpFiles === NULL) {
             $libPhpFiles = array();
@@ -84,6 +85,7 @@
             require_once $libPhpFiles[$class];
             return;
         }
+        */
 
         // We never found the right php file :(
         error_log("RESTfm autoload failed for class: $class");
