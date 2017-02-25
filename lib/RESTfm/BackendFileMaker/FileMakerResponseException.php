@@ -30,7 +30,7 @@ class FileMakerResponseException extends \RESTfm\ResponseException {
      * @param FileMaker_Error $fileMakerError
      *   The error object as returned from the failed FileMaker command.
      */
-    function __construct(FileMaker_Error $fileMakerError) {
+    function __construct(\FileMaker_Error $fileMakerError) {
         require_once 'FileMaker.php' ;
 
         $code = 500;                // Default status code. Overridden below.
