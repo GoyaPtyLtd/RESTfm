@@ -38,7 +38,7 @@ class FormatXml implements \RESTfm\FormatInterface {
             foreach(libxml_get_errors() as $e) {
                 $error .= $e->message."\n";
             }
-            throw new ResponseException($error, Response::BADREQUEST);
+            throw new \RESTfm\ResponseException($error, Response::BADREQUEST);
         }
 
         // Convert XML Record Names back into arrays.
@@ -73,7 +73,7 @@ class FormatXml implements \RESTfm\FormatInterface {
      * @return string
      */
     public function write (\RESTfm\Message\Message $restfmMessage) {
-        $xml = new XmlWriter();
+        $xml = new \XmlWriter();
         $xml->openMemory();
         if (\RESTfm\Config::getVar('settings', 'formatNicely')) {
             $xml->setIndent(TRUE);
@@ -102,14 +102,14 @@ class FormatXml implements \RESTfm\FormatInterface {
     /**
      * Write the named section into the provided XmlWriter object.
      *
-     * @param[out] XmlWriter $xml
+     * @param[out] \XmlWriter $xml
      *  An initialised XmlWriter object ref.
      * @param[in] \RESTfm\Message\Section $messageSection
      *  Section data object.
      * @param string $sectionName.
      *  Name of section to render.
      */
-    protected function _writeSection(XMLWriter $xml, \RESTfm\Message\Section $messageSection) {
+    protected function _writeSection(\XMLWriter $xml, \RESTfm\Message\Section $messageSection) {
         if ($messageSection->getDimensions() == 2) {
             foreach ($messageSection->getRows() as $row) {
                 // We inject a "Record Name" for XML representations of
@@ -131,12 +131,12 @@ class FormatXml implements \RESTfm\FormatInterface {
      * Convert a one-dimensional associative array (a single row) into XML in
      * the provided XMLWriter document.
      *
-     * @param[out] XMLWriter $xml
+     * @param[out] \XMLWriter $xml
      *   XMLWriter object identifier.
      * @param[in] array $assoc
      *   Associative array to convert.
      */
-    protected function _row2xml(XMLWriter $xml, array $assoc) {
+    protected function _row2xml(\XMLWriter $xml, array $assoc) {
         foreach($assoc as $key => $val) {
             $xml->startElement('field');
                 $xml->writeAttribute('name', $key);
@@ -152,12 +152,12 @@ class FormatXml implements \RESTfm\FormatInterface {
     /**
      * Convert an array into XML in the provided XMLWriter document.
      *
-     * @param[out] XMLWriter $xml
+     * @param[out] \XMLWriter $xml
      *   XMLWriter object identifier.
      * @param[in] array $a
      *   Array to convert.
      */
-    protected function _array2xml(XMLWriter $xml, array $a) {
+    protected function _array2xml(\XMLWriter $xml, array $a) {
         foreach($a as $val) {
             $xml->startElement('field');
                 $xml->writeAttribute('name', $val);

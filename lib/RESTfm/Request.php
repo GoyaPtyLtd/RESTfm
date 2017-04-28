@@ -373,7 +373,7 @@ class Request extends \Tonic\Request {
         }
 
         // Parse submitted data through formatter.
-        $dataFormatter = \FormatFactory::makeFormatter($this->_format);
+        $dataFormatter = \RESTfm\FormatFactory::makeFormatter($this->_format);
         $dataFormatter->parse($this->_Message, $this->data);
 
         // Identify RFM* parameters in 'info' section, store as request
