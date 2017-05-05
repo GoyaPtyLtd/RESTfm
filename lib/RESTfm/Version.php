@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -23,7 +23,7 @@ namespace RESTfm;
  * Version static class to hold release version.
  */
 class Version {
-    private static $_release     = 'dev';
+    private static $_release     = '5.0.0beta';
     private static $_revision    = '%%REVISION%%';
     private static $_protocol    = '6';     // Bump this when REST API changes.
 
