@@ -23,10 +23,10 @@
  */
 
 require_once('lib/RESTfm/Diagnostics.php');
-require_once('lib/RESTfm/RESTfmConfig.php');
+require_once('lib/RESTfm/Config.php');
 require_once('lib/RESTfm/Version.php');
 
-$diagnostics = new Diagnostics();
+$diagnostics = new RESTfm\Diagnostics();
 $diagnostics->setCallingFilename('report.php');
 $diagnostics->setDocumentRoot(dirname($_SERVER['SCRIPT_FILENAME']));
 
@@ -76,10 +76,10 @@ $diagnostics->setDocumentRoot(dirname($_SERVER['SCRIPT_FILENAME']));
         </style>
     </head>
     <body>
-<?php if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE): // Diagnostics enabled. ?>
+<?php if (RESTfm\Config::getVar('settings', 'diagnostics') === TRUE): // Diagnostics enabled. ?>
         <div id="logo">
             <a target="_blank" href="http://www.restfm.com"><img width="106" height="36" src="css/RESTfm.logo.png" alt="RESTfm logo"></a>
-            <span><?php echo Version::getRelease() ?></span>
+            <span><?php echo RESTfm\Version::getRelease() ?></span>
         </div>
         <h2>RESTfm report</h2>
 <?php
@@ -97,7 +97,7 @@ $diagnostics->setDocumentRoot(dirname($_SERVER['SCRIPT_FILENAME']));
                 # User agent string has 'Safari' in it, but not 'Chrome'
                 $safariNoCache = "?safariNoCache=" . md5(uniqid());
             }
-            echo '<h3>RESTfm is working! Click <a href="' . RESTfmConfig::getVar('settings', 'baseURI') . $safariNoCache . '">here</a> to start browsing with RESTfm.</h3>' . "\n";
+            echo '<h3>RESTfm is working! Click <a href="' . RESTfm\Config::getVar('settings', 'baseURI') . $safariNoCache . '">here</a> to start browsing with RESTfm.</h3>' . "\n";
         }
             $report = $diagnostics->getReport();
             echo $report;

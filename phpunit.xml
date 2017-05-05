@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit colors="true">
+  <testsuites>
+    <testsuite name="RESTfm-lib">
+      <directory>libTests</directory>
+    </testsuite>
+  </testsuites>
+  <filter>
+    <whitelist processUncoveredFilesFromWhitelist="false">
+      <directory suffix=".php">lib</directory>
+      <exclude>
+        <directory suffix=".php">lib/tonic</directory>
+      </exclude>
+    </whitelist>
+  </filter>
+</phpunit>

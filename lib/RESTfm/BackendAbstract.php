@@ -17,9 +17,7 @@
  *  Gavin Stewart
  */
 
-require 'OpsDatabaseAbstract.php';
-require 'OpsLayoutAbstract.php';
-require 'OpsRecordAbstract.php';
+namespace RESTfm;
 
 /**
  * Defines interface for initialisation of database backend, and factory

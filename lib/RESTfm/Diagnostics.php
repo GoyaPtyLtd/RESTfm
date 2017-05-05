@@ -17,10 +17,12 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfmConfig.php';
+namespace RESTfm;
 
 /**
  * Diagnostics class.
+ *
+ * @codeCoverageIgnore Not a testable unit.
  */
 class Diagnostics {
 
@@ -129,7 +131,6 @@ class Diagnostics {
 
     public function test_version($reportItem) {
         $reportItem->name = 'RESTfm version';
-        require_once 'Version.php';
         $reportItem->details = Version::getVersion();
     }
 
@@ -150,7 +151,7 @@ class Diagnostics {
             return;
         }
 
-        $pdoDrivers = PDO::getAvailableDrivers();
+        $pdoDrivers = \PDO::getAvailableDrivers();
 
         if (count($pdoDrivers) <= 0) {
             $reportItem->details = "none";
@@ -193,8 +194,8 @@ class Diagnostics {
     }
 
     public function test_baseURI($reportItem) {
-        $configBaseURI = RESTfmConfig::getVar('settings', 'baseURI');
-        $reportItem->name = 'baseURI (' . RESTfmConfig::CONFIG_INI . ')';
+        $configBaseURI = Config::getVar('settings', 'baseURI');
+        $reportItem->name = 'baseURI (' . Config::CONFIG_INI . ')';
 
         $calculatedBaseURI = $this->_calculatedBaseURI();
 
@@ -202,7 +203,7 @@ class Diagnostics {
             $reportItem->status = ReportItem::ERROR;
             $reportItem->details .= "\n* Does not match URI determined from web server: $calculatedBaseURI\n\n";
             $reportItem->details .= "Instructions:\n\n";
-            $reportItem->details .= "- Edit " . RESTfmConfig::CONFIG_INI . " and update 'baseURI' to: $calculatedBaseURI\n\n";
+            $reportItem->details .= "- Edit " . Config::CONFIG_INI . " and update 'baseURI' to: $calculatedBaseURI\n\n";
         }
 
         if ($this->_isApache()) {
@@ -274,7 +275,7 @@ class Diagnostics {
         curl_setopt($ch, CURLOPT_HEADER, 0);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        if (RESTfmConfig::getVar('settings', 'strictSSLCertsReport') === FALSE) {
+        if (Config::getVar('settings', 'strictSSLCertsReport') === FALSE) {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
         }
@@ -297,11 +298,11 @@ class Diagnostics {
                                         '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting">SSL Troubleshooting</a>' .
                                         ' in the RESTfm manual for further details.' . "\n";
                 $reportItem->details .= "\n";
-                $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsReport" to FALSE in ' . RESTfmConfig::CONFIG_INI ."\n";
+                $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsReport" to FALSE in ' . Config::CONFIG_INI ."\n";
             } elseif (curl_errno($ch) == 35 && strpos(curl_error($ch), 'CA certificate set, but certificate verification is disabled') !== FALSE) {
                 // OSX Secure Transport bug.
                 $reportItem->details .= "\n";
-                $reportItem->details .= 'Unable to disable strict SSL certificate checking in ' . RESTfmConfig::CONFIG_INI . ' (\'strictSSLCertsReport\' => FALSE)' ."\n";
+                $reportItem->details .= 'Unable to disable strict SSL certificate checking in ' . Config::CONFIG_INI . ' (\'strictSSLCertsReport\' => FALSE)' ."\n";
                 $reportItem->details .= 'while curl.cainfo is set in php.ini due to a compatibility bug in Apple\'s OS X Secure Transport library.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'Please consult ' .
@@ -363,7 +364,7 @@ class Diagnostics {
         curl_setopt($ch, CURLOPT_HEADER, 0);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        if (RESTfmConfig::getVar('settings', 'strictSSLCertsReport') === FALSE) {
+        if (Config::getVar('settings', 'strictSSLCertsReport') === FALSE) {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
         }
@@ -401,7 +402,7 @@ class Diagnostics {
             return;
         }
 
-        $hostspec = RESTfmConfig::getVar('database', 'hostspec');
+        $hostspec = Config::getVar('database', 'hostspec');
         $reportItem->details .= $hostspec . "\n";
 
         // Probe hostspec for fmi/xml/fmresultset.xml path using cURL, this
@@ -413,7 +414,7 @@ class Diagnostics {
         $ch = curl_init($hostspec . '/fmi/xml/fmresultset.xml');
         curl_setopt($ch, CURLOPT_HEADER, FALSE);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        if (RESTfmConfig::getVar('settings', 'strictSSLCertsFMS') === FALSE) {
+        if (Config::getVar('settings', 'strictSSLCertsFMS') === FALSE) {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
         }
@@ -436,11 +437,11 @@ class Diagnostics {
                                         '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting">SSL Troubleshooting</a>' .
                                         ' in the RESTfm manual for further details.' . "\n";
                 $reportItem->details .= "\n";
-                $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsFMS" to FALSE in ' . RESTfmConfig::CONFIG_INI ."\n";
+                $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsFMS" to FALSE in ' . Config::CONFIG_INI ."\n";
             } elseif (curl_errno($ch) == 35 && strpos(curl_error($ch), 'CA certificate set, but certificate verification is disabled') !== FALSE) {
                 // OSX Secure Transport bug.
                 $reportItem->details .= "\n";
-                $reportItem->details .= 'Unable to disable strict SSL certificate checking in ' . RESTfmConfig::CONFIG_INI . ' (\'strictSSLCertsFMS\' => FALSE)' ."\n";
+                $reportItem->details .= 'Unable to disable strict SSL certificate checking in ' . Config::CONFIG_INI . ' (\'strictSSLCertsFMS\' => FALSE)' ."\n";
                 $reportItem->details .= 'while curl.cainfo is set in php.ini due to a compatibility bug in Apple\'s OS X Secure Transport library.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'Please consult ' .
@@ -462,9 +463,9 @@ class Diagnostics {
         require_once 'init_paths.php';
         require_once 'FileMaker.php';
 
-        $FM = new FileMaker();
+        $FM = new \FileMaker();
         $FM->setProperty('hostspec', $hostspec);
-        if (RESTfmConfig::getVar('settings', 'strictSSLCertsFMS') === FALSE) {
+        if (Config::getVar('settings', 'strictSSLCertsFMS') === FALSE) {
             $FM->setProperty('curlOptions', array(
                                 CURLOPT_SSL_VERIFYPEER => FALSE,
                                 CURLOPT_SSL_VERIFYHOST => FALSE,
@@ -473,7 +474,7 @@ class Diagnostics {
 
         $fileMakerResult = $FM->listDatabases();
         $unauthorised = FALSE;
-        if (FileMaker::isError($fileMakerResult)) {
+        if (\FileMaker::isError($fileMakerResult)) {
             // These response codes and why we use them are documented in:
             // RESTfm/FileMakerResponseException.php
             $fmCode = $fileMakerResult->getCode();
@@ -503,13 +504,13 @@ class Diagnostics {
     }
 
     public function test_sslEnforced($reportItem) {
-        $reportItem->name = 'SSL enforced (' . RESTfmConfig::CONFIG_INI . ')';
+        $reportItem->name = 'SSL enforced (' . Config::CONFIG_INI . ')';
 
-        if (RESTfmConfig::getVar('settings', 'SSLOnly') === TRUE) {
-            $reportItem->details .= 'SSLOnly is TRUE in ' . RESTfmConfig::CONFIG_INI . "\n";
+        if (Config::getVar('settings', 'SSLOnly') === TRUE) {
+            $reportItem->details .= 'SSLOnly is TRUE in ' . Config::CONFIG_INI . "\n";
         } else {
             $reportItem->status = ReportItem::WARN;
-            $reportItem->details .= "SSLOnly not TRUE in " . RESTfmConfig::CONFIG_INI . "\n";
+            $reportItem->details .= "SSLOnly not TRUE in " . Config::CONFIG_INI . "\n";
             $reportItem->details .= 'SSL is highly recommended to protect data, usernames and passwords from eavesdropping.' . "\n";
         }
     }
@@ -603,7 +604,7 @@ class Diagnostics {
      * connect. (Some diagnostic tests would fail in this case.)
      */
     private function _isSSLOnlyAndNotHTTPS() {
-        if (RESTfmConfig::getVar('settings', 'SSLOnly') && ! $this->_isHTTPS()) {
+        if (Config::getVar('settings', 'SSLOnly') && ! $this->_isHTTPS()) {
             return TRUE;
         }
         return FALSE;
@@ -951,7 +952,7 @@ class Diagnostics {
 /**
  * Iterable class of ReportItems.
  */
-class Report implements Iterator {
+class Report implements \Iterator {
 
     private $_items;
     private $_format = 'html';
@@ -984,6 +985,8 @@ class Report implements Iterator {
      * Set the output format of a Report instance.
      *
      * @param string $format One of: html, text
+     *
+     * @codeCoverageIgnore
      */
     function setFormat($format) {
         $this->_format = $format;
@@ -997,6 +1000,9 @@ class Report implements Iterator {
         return $this->_items[$key];
     }
 
+    /**
+     * @codeCoverageIgnore
+     */
     function __toString() {
         $s = "";        // String to populate and return.
 

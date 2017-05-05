@@ -17,21 +17,21 @@
  *  Gavin Stewart
  */
 
-require_once 'PdoResponseException.php';
+namespace RESTfm\BackendPdo;
 
 /**
  * PdoOpsLayout
  *
  * PHP PDO specific implementation of OpsLayoutAbstract.
  */
-class PdoOpsLayout extends OpsLayoutAbstract {
+class PdoOpsLayout extends \RESTfm\OpsLayoutAbstract {
 
     // --- OpsRecordLayout implementation ---
 
     /**
      * Construct a new Layout-level Operation object.
      *
-     * @param BackendAbstract $backend
+     * @param \RESTfm\BackendAbstract $backend
      *  Implementation must store $this->_backend if a reference is needed in
      *  other methods.
      * @param string $database
@@ -39,7 +39,7 @@ class PdoOpsLayout extends OpsLayoutAbstract {
      * @param string $uncleanTable
      *  Possibly malicious table name (this will be validated).
      */
-    public function __construct (BackendAbstract $backend, $database, $uncleanTable) {
+    public function __construct (\RESTfm\BackendAbstract $backend, $database, $uncleanTable) {
         $this->_backend = $backend;
 
         // Validate $uncleanTable by verifying it's existence in table list
@@ -48,7 +48,7 @@ class PdoOpsLayout extends OpsLayoutAbstract {
         $pdo = $this->_backend->getPDO();
         try {
             // MySQL:
-            $result = $pdo->query('SHOW TABLES', PDO::FETCH_NUM);
+            $result = $pdo->query('SHOW TABLES', \PDO::FETCH_NUM);
         } catch (PDOException $e) {
             throw new PdoResponseException($e);
         }
@@ -63,17 +63,17 @@ class PdoOpsLayout extends OpsLayoutAbstract {
         }
 
         if ($this->_validatedTable === NULL) {
-            throw new RESTfmResponseException(NULL, RESTfmResponseException::NOTFOUND);
+            throw new \RESTfm\ResponseException(NULL, \RESTfm\ResponseException::NOTFOUND);
         }
     }
 
     /**
      * Read records in table in database via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
+     * @return \RESTfm\Message\Message
      *  - 'data', 'meta', 'metaField' sections.
      */
     public function read () {
@@ -112,7 +112,7 @@ class PdoOpsLayout extends OpsLayoutAbstract {
         } catch (PDOException $e) {
             throw new PdoResponseException($e);
         }
-        $result = $statement->fetch(PDO::FETCH_NUM);
+        $result = $statement->fetch(\PDO::FETCH_NUM);
         $tableRecordCount = $result[0];
         $statement->closeCursor();
 
@@ -124,17 +124,17 @@ class PdoOpsLayout extends OpsLayoutAbstract {
 
         // Query.
         $statement = $pdo->prepare('SELECT * FROM `'. $this->_validatedTable . '` LIMIT ? OFFSET ?');
-        $statement->bindParam(1, intval($findMax), PDO::PARAM_INT);
-        $statement->bindParam(2, intval($findSkip), PDO::PARAM_INT);
+        $statement->bindParam(1, intval($findMax), \PDO::PARAM_INT);
+        $statement->bindParam(2, intval($findSkip), \PDO::PARAM_INT);
         try {
             $statement->execute();
         } catch (PDOException $e) {
             throw new PdoResponseException($e);
         }
 
-        $restfmData = new RESTfmDataSimple();
+        $restfmMessage = new \RESTfm\Message\Message();
 
-        $this->_parseMetaField($restfmData, $statement);
+        $this->_parseMetaField($restfmMessage, $statement);
 
         $fetchCount = 0;
         foreach ($statement->fetchAll() as $record) {
@@ -144,27 +144,31 @@ class PdoOpsLayout extends OpsLayoutAbstract {
                 $recordID = $this->_uniqueKey . '===' . $record[$this->_uniqueKey];
             }
 
-            $restfmData->pushDataRow($record, $recordID, NULL);
+            $restfmMessage->addRecord(new \RESTfm\Message\Record(
+                $recordID,
+                NULL,
+                $record
+            ));
             $fetchCount++;
         }
 
         $statement->closeCursor();
 
         // Info.
-        $restfmData->pushInfo('tableRecordCount', $tableRecordCount);
-        $restfmData->pushInfo('foundSetCount', $tableRecordCount);
-        $restfmData->pushInfo('fetchCount', $fetchCount);
+        $restfmMessage->setInfo('tableRecordCount', $tableRecordCount);
+        $restfmMessage->setInfo('foundSetCount', $tableRecordCount);
+        $restfmMessage->setInfo('fetchCount', $fetchCount);
 
-        return $restfmData;
+        return $restfmMessage;
     }
 
     /**
      * Read field metadata in layout in database via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
+     * @return \RESTfm\Message\Message
      *  - 'metaField' section.
      */
     public function readMetaField () {
@@ -177,13 +181,13 @@ class PdoOpsLayout extends OpsLayoutAbstract {
             throw new PdoResponseException($e);
         }
 
-        $restfmData = new RESTfmDataSimple();
+        $restfmMessage = new \RESTfm\Message\Message();
 
-        $this->_parseMetaField($restfmData, $statement);
+        $this->_parseMetaField($restfmMessage, $statement);
 
         $statement->closeCursor();
 
-        return $restfmData;
+        return $restfmMessage;
     }
 
     // --- Protected ---
@@ -202,12 +206,12 @@ class PdoOpsLayout extends OpsLayoutAbstract {
 
     /**
      * Parse field meta data out of provided PDO statement object into
-     * provided RESTfmData object.
+     * provided \RESTfm\Message\Message object.
      *
-     * @param RESTfmDataSimple $restfmData
+     * @param \RESTfm\Message\Message $restfmMessage
      * @param PDOStatement $statement
      */
-    protected function _parseMetaField(RESTfmDataSimple $restfmData, PDOStatement $statement) {
+    protected function _parseMetaField(\RESTfm\Message\Message $restfmMessage, \PDOStatement $statement) {
         $numColumns = $statement->columnCount();
         for ($i=0; $i < $numColumns; $i++) {
             $allFieldMeta = $statement->getColumnMeta($i);
@@ -215,7 +219,7 @@ class PdoOpsLayout extends OpsLayoutAbstract {
 
             // Keep only required fields.
             $requiredFields = array('native_type', 'flags', 'len', 'precision');
-            $fieldMeta = array();
+            $restfmMessageRow = new \RESTfm\Message\Row();
             foreach($requiredFields as $requiredField) {
                 if ($requiredField == 'flags') {
                     // Mysql:
@@ -225,13 +229,13 @@ class PdoOpsLayout extends OpsLayoutAbstract {
                         }
                     }
                     // Join flags field array into a string.
-                    $fieldMeta[$requiredField] = join(', ', $allFieldMeta['flags']);
+                    $restfmMessageRow[$requiredField] = join(', ', $allFieldMeta['flags']);
                 } else {
-                    $fieldMeta[$requiredField] = $allFieldMeta[$requiredField];
+                    $restfmMessageRow[$requiredField] = $allFieldMeta[$requiredField];
                 }
             }
 
-            $restfmData->pushFieldMeta($fieldName, $fieldMeta);
+            $restfmMessage->setMetaField($fieldName, $restfmMessageRow);
         }
     }
 

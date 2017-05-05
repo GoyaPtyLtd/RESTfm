@@ -17,6 +17,11 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\Format;
+
+use RESTfm\FormatInterface;
+use RESTfm\Message\Message;
+
 /**
  * .simple format data parser and writer class.
  *
@@ -32,47 +37,43 @@
  *      - value chars \ ¶ " escaped with        : \
  *      - value char \n translated to           : ¶
  */
-class FormatSimple extends FormatAbstract {
+class FormatSimple implements FormatInterface {
 
     /**
-     * Parse the provided data string into the provided RESTfmDataAbstract
+     * Parse the provided data string into the provided \RESTfm\Message\Message
      * implementation object.
      *
-     * @param RESTfmDataAbstract $restfmData
-     *
+     * @param \RESTfm\Message\Message $restfmMessage
      * @param string $data
      */
-    public function parse (RESTfmDataAbstract $restfmData, $data) {
+    public function parse (Message $restfmMessage, $data) {
 
         // Each section delimited by \n\n, allow for \r\n\r\n, \r\r
         $sections = preg_split('/\n\n|\r\n\r\n|\r\r/', $data, -1, PREG_SPLIT_NO_EMPTY);
         foreach($sections as $section) {
-            $this->_parseSection($restfmData, $section);
+            $this->_parseSection($restfmMessage, $section);
         }
 
         // Debugging.
         //ini_set('html_errors', FALSE);
-        //var_dump($restfmData);
+        //var_dump($restfmMessage);
         //exit();
     }
 
     /**
-     * Write the provided RESTfmData object into a formatted string.
+     * Write the provided \RESTfm\Message\Message object into a formatted string.
      *
-     * @param RESTfmDataAbstract $restfmData
+     * @param \RESTfm\Message\Message $restfmMessage
      *
      * @return string
      */
-    public function write (RESTfmDataAbstract $restfmData){
+    public function write (Message $restfmMessage) {
         $s = '';    // Final .simple output.
 
-        foreach ($restfmData->getSectionNames() as $sectionName) {
+        foreach ($restfmMessage->getSectionNames() as $sectionName) {
+            $section = $restfmMessage->getSection($sectionName);
             $s .= $sectionName."\n";
-            if ($restfmData->getSectionDimensions($sectionName) == 2) {
-                $s .= $this->_encodeRows($restfmData->getSection($sectionName));
-            } else {
-                $s .= $this->_encodeSingle($restfmData->getSection($sectionName)) . "\n";
-            }
+            $s .= $this->_encodeRows($section->getRows());
             $s .= "\n";
         }
 
@@ -114,34 +115,23 @@ class FormatSimple extends FormatAbstract {
     /**
      * Parse out a single intact section.
      *
-     * @param RESTfmDataAbstract $restfmData
-     *  RestfmData object to store section data.
+     * @param \RESTfm\Message\Message $restfmMessage
+     *  Object to store section data.
      * @param string $section
      *  .simple encoded string of section including name.
      */
-    protected function _parseSection (RESTfmDataAbstract $restfmData, $section) {
+    protected function _parseSection (\RESTfm\Message\Message $restfmMessage, $section) {
         // Allow various line endings.
         $rows = preg_split('/\n|\r\n|\r/', $section, -1, PREG_SPLIT_NO_EMPTY);
 
         $sectionName = array_shift($rows);  // First line is always the name.
 
-        // We can't determine section dimensions from the .simple format
-        // so we need assistance.
-        $sectionDimensions = $this->_getCommonDimension($sectionName);
-
-        $restfmData->addSection($sectionName, $sectionDimensions);
-
+        $sectionData = array();
         foreach ($rows as $row) {
-            $a = $this->_parseRow($row);
-            if ($sectionDimensions == 2) {
-                $restfmData->setSectionData($sectionName, NULL, $a);
-            } else {
-                // Break up row into individual fields.
-                foreach ($a as $fieldName => $value) {
-                    $restfmData->setSectionData($sectionName, $fieldName, $value);
-                }
-            }
+            $sectionData[] = $this->_parseRow($row);
         }
+
+        $restfmMessage->setSection($sectionName, $sectionData);
     }
 
     /**

@@ -17,13 +17,15 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm;
+
 /**
  * Version static class to hold release version.
  */
 class Version {
-    private static $_release     = '4.0.9';
+    private static $_release     = 'dev';
     private static $_revision    = '%%REVISION%%';
-    private static $_protocol    = '5';     // Bump this when REST API changes.
+    private static $_protocol    = '6';     // Bump this when REST API changes.
 
     public static function getRelease() {
         return self::$_release;
@@ -36,7 +38,7 @@ class Version {
     public static function getVersion() {
         $revision = self::$_revision;
         if (strpos($revision, 'REVISION') !== FALSE) {
-            $revision = 'UNKNOWN';
+            $revision = 'GIT';
         }
 
         return self::$_release . '/' . $revision;
@@ -53,6 +55,7 @@ if (php_sapi_name() == "cli") {
     global $argv;
 
     if (count($argv) > 1) {
+        // @codeCoverageIgnoreStart
         switch($argv[1]) {
             case '-r':
                 echo Version::getRelease();
@@ -62,6 +65,7 @@ if (php_sapi_name() == "cli") {
                 echo Version::getProtocol();
                 return;
         }
+        // @codeCoverageIgnoreEnd
     }
 
     echo Version::getVersion();

@@ -17,9 +17,7 @@
  *  Gavin Stewart
  */
 
-require_once 'QueryString.php';
-require_once 'RFMfixFM01.php';
-require_once 'RFMfixFM02.php';
+namespace RESTfm;
 
 /**
  * Static class provides RESTfm specific urlencode/urldecode functions to
@@ -29,7 +27,7 @@ require_once 'RFMfixFM02.php';
  * remain compatible with systems that encode spaces as '+'. This combination
  * works well for all cases
  */
-class RESTfmUrl {
+class Url {
 
     /**
      * Allowed encoding types.

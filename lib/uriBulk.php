@@ -17,12 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfm/RESTfmResource.php';
-require_once 'RESTfm/RESTfmResponse.php';
-require_once 'RESTfm/RESTfmParameters.php';
-require_once 'RESTfm/RESTfmData.php';
-require_once 'RESTfm/BackendFactory.php';
-
 /**
  * Bulk record CRUD operations resource class.
  *
@@ -31,7 +25,7 @@ require_once 'RESTfm/BackendFactory.php';
  *
  * @uri /{database}/bulk/{layout}
  */
-class uriBulk extends RESTfmResource {
+class uriBulk extends RESTfm\Resource {
 
     const URI = '/{database}/bulk/{layout}';
 
@@ -50,23 +44,23 @@ class uriBulk extends RESTfmResource {
      *                                 to pass to pre-script.
      *  - RFMsuppressData : set flag to suppress 'data' section from response.
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/bulk/{layout}
      * @param string $layout
      *   From URI parsing: /{database}/bulk/{layout}
      *
-     * @return RESTfmResponse
+     * @return RESTfm\Response
      */
     function post($request, $database, $layout) {
-        $database = RESTfmUrl::decode($database);
-        $layout = RESTfmUrl::decode($layout);
+        $database = RESTfm\Url::decode($database);
+        $layout = RESTfm\Url::decode($layout);
 
-        $backend = BackendFactory::make($request, $database);
+        $backend = RESTfm\BackendFactory::make($request, $database);
 
         $opsRecord = $backend->makeOpsRecord($database, $layout);
 
-        $restfmParameters = $request->getRESTfmParameters();
+        $restfmParameters = $request->getParameters();
 
         // Allow script calling.
         if (isset($restfmParameters->RFMscript)) {
@@ -88,16 +82,16 @@ class uriBulk extends RESTfmResource {
             $opsRecord->setSuppressData(TRUE);
         }
 
-        $restfmData = $opsRecord->createBulk($request->getRESTfmData());
+        $restfmMessage = $opsRecord->createBulk($request->getMessage());
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
 
-        $response->setData($restfmData);
+        $response->setMessage($restfmMessage);
 
-        if ($restfmData->sectionExists('multistatus')) {
+        if ($restfmMessage->getMultistatusCount() > 0) {
             $response->setStatus(207, 'Multi-status');
         } else {
-            $response->setStatus(Response::OK);
+            $response->setStatus(RESTfm\Response::OK);
         }
 
         return $response;
@@ -107,32 +101,32 @@ class uriBulk extends RESTfmResource {
      * Read bulk recordIDs as specified in 'meta' section of submitted
      * document.
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/bulk/{layout}
      * @param string $layout
      *   From URI parsing: /{database}/bulk/{layout}
      *
-     * @return RESTfmResponse
+     * @return RESTfm\Response
      */
     function get($request, $database, $layout) {
-        $database = RESTfmUrl::decode($database);
-        $layout = RESTfmUrl::decode($layout);
+        $database = RESTfm\Url::decode($database);
+        $layout = RESTfm\Url::decode($layout);
 
-        $backend = BackendFactory::make($request, $database);
+        $backend = RESTfm\BackendFactory::make($request, $database);
 
         $opsRecord = $backend->makeOpsRecord($database, $layout);
 
-        $restfmData = $opsRecord->readBulk($request->getRESTfmData());
+        $restfmMessage = $opsRecord->readBulk($request->getMessage());
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
 
-        $response->setData($restfmData);
+        $response->setMessage($restfmMessage);
 
-        if ($restfmData->sectionExists('multistatus')) {
+        if ($restfmMessage->getMultistatusCount() > 0) {
             $response->setStatus(207, 'Multi-status');
         } else {
-            $response->setStatus(Response::OK);
+            $response->setStatus(RESTfm\Response::OK);
         }
 
         return $response;
@@ -154,23 +148,23 @@ class uriBulk extends RESTfmResource {
      *  - RFMelsePOST : If this record does not exist, perform a POST (create)
      *                  instead. aka RFMelseCreate.
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/bulk/{layout}
      * @param string $layout
      *   From URI parsing: /{database}/bulk/{layout}
      *
-     * @return RESTfmResponse
+     * @return RESTfm\Response
      */
     function put($request, $database, $layout) {
-        $database = RESTfmUrl::decode($database);
-        $layout = RESTfmUrl::decode($layout);
+        $database = RESTfm\Url::decode($database);
+        $layout = RESTfm\Url::decode($layout);
 
-        $backend = BackendFactory::make($request, $database);
+        $backend = RESTfm\BackendFactory::make($request, $database);
 
         $opsRecord = $backend->makeOpsRecord($database, $layout);
 
-        $restfmParameters = $request->getRESTfmParameters();
+        $restfmParameters = $request->getParameters();
 
         // Allow script calling and other parameters.
         if (isset($restfmParameters->RFMscript)) {
@@ -191,16 +185,16 @@ class uriBulk extends RESTfmResource {
             $opsRecord->setUpdateElseCreate();
         }
 
-        $restfmData = $opsRecord->updateBulk($request->getRESTfmData());
+        $restfmMessage = $opsRecord->updateBulk($request->getMessage());
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
 
-        $response->setData($restfmData);
+        $response->setMessage($restfmMessage);
 
-        if ($restfmData->sectionExists('multistatus')) {
+        if ($restfmMessage->getMultistatusCount() > 0) {
             $response->setStatus(207, 'Multi-status');
         } else {
-            $response->setStatus(Response::OK);
+            $response->setStatus(RESTfm\Response::OK);
         }
 
         return $response;
@@ -210,32 +204,32 @@ class uriBulk extends RESTfmResource {
      * Delete bulk recordIDs as specified in 'meta' section of submitted
      * document.
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/bulk/{layout}
      * @param string $layout
      *   From URI parsing: /{database}/bulk/{layout}
      *
-     * @return RESTfmResponse
+     * @return RESTfm\Response
      */
     function delete($request, $database, $layout) {
-        $database = RESTfmUrl::decode($database);
-        $layout = RESTfmUrl::decode($layout);
+        $database = RESTfm\Url::decode($database);
+        $layout = RESTfm\Url::decode($layout);
 
-        $backend = BackendFactory::make($request, $database);
+        $backend = RESTfm\BackendFactory::make($request, $database);
 
         $opsRecord = $backend->makeOpsRecord($database, $layout);
 
-        $restfmData = $opsRecord->deleteBulk($request->getRESTfmData());
+        $restfmMessage = $opsRecord->deleteBulk($request->getMessage());
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
 
-        $response->setData($restfmData);
+        $response->setMessage($restfmMessage);
 
-        if ($restfmData->sectionExists('multistatus')) {
+        if ($restfmMessage->getMultistatusCount() > 0) {
             $response->setStatus(207, 'Multi-status');
         } else {
-            $response->setStatus(Response::OK);
+            $response->setStatus(RESTfm\Response::OK);
         }
 
         return $response;

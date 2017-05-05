@@ -17,18 +17,20 @@
  *  Gavin Stewart
  */
 
-class FormatXml extends FormatAbstract {
+namespace RESTfm\Format;
+
+class FormatXml implements \RESTfm\FormatInterface {
 
     // --- Interface Implementation --- //
 
     /**
-     * Parse the provided data string into the provided RESTfmDataAbstract
+     * Parse the provided data string into the provided \RESTfm\Message\Message
      * implementation object.
      *
-     * @param RESTfmDataAbstract $restfmData
+     * @param \RESTfm\Message\Message $restfmMessage
      * @param string $data
      */
-    public function parse (RESTfmDataAbstract $restfmData, $data) {
+    public function parse (\RESTfm\Message\Message $restfmMessage, $data) {
         libxml_use_internal_errors(TRUE);
         $resourceXML = simplexml_load_string($data);
         if (!$resourceXML) {
@@ -36,13 +38,14 @@ class FormatXml extends FormatAbstract {
             foreach(libxml_get_errors() as $e) {
                 $error .= $e->message."\n";
             }
-            throw new ResponseException($error, Response::BADREQUEST);
+            throw new \RESTfm\ResponseException($error, Response::BADREQUEST);
         }
 
         // Convert XML Record Names back into arrays.
         // Our specification is that Record Names are always "row".
         //  @see FormatXml::_writeSection()
         foreach ($resourceXML as $sectionXML) {
+            $sectionData = array();
             foreach ($sectionXML as $childElement) {
                 if (strtolower($childElement->getName()) == 'row') {
                     // Two dimensional section of rows.
@@ -50,30 +53,29 @@ class FormatXml extends FormatAbstract {
                     foreach ($childElement as $field) {
                         $rowData[(string) $field['name']] = (string) $field;
                     }
-                    $restfmData->setSectionData($sectionXML->getName(),
-                                                (string) $childElement['name'],
-                                                $rowData);
+                    $sectionData[] = $rowData;
                 } elseif (strtolower($childElement->getName()) == 'field') {
                     // Single dimensional section of name=>value pairs.
-                    $restfmData->setSectionData($sectionXML->getName(),
-                                                (string) $childElement['name'],
-                                                (string) $childElement);
+                    $sectionData[(string) $childElement['name']] =
+                                                        (string) $childElement;
                 }
             }
+
+            $restfmMessage->setSection($sectionXML->getName(), $sectionData);
         }
     }
 
     /**
-     * Write the provided RESTfmData object into a formatted string.
+     * Write the provided \RESTfm\Message\Message object into a formatted string.
      *
-     * @param RESTfmDataAbstract $restfmData
+     * @param \RESTfm\Message\Message $restfmMessage
      *
      * @return string
      */
-    public function write (RESTfmDataAbstract $restfmData) {
-        $xml = new XmlWriter();
+    public function write (\RESTfm\Message\Message $restfmMessage) {
+        $xml = new \XmlWriter();
         $xml->openMemory();
-        if (RESTfmConfig::getVar('settings', 'formatNicely')) {
+        if (\RESTfm\Config::getVar('settings', 'formatNicely')) {
             $xml->setIndent(TRUE);
         }
         $xml->startDocument('1.0', 'UTF-8');
@@ -84,9 +86,9 @@ class FormatXml extends FormatAbstract {
         // meta entities.
         //$xml->writeAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
 
-        foreach ($restfmData->getSectionNames() as $sectionName) {
+        foreach ($restfmMessage->getSectionNames() as $sectionName) {
             $xml->startElement($sectionName);
-            $this->_writeSection($xml, $restfmData, $sectionName);
+            $this->_writeSection($xml, $restfmMessage->getSection($sectionName));
             $xml->endElement();
         }
 
@@ -100,17 +102,16 @@ class FormatXml extends FormatAbstract {
     /**
      * Write the named section into the provided XmlWriter object.
      *
-     * @param[out] XmlWriter $xml
+     * @param[out] \XmlWriter $xml
      *  An initialised XmlWriter object ref.
-     * @param[in] RESTfmDataAbstract $restfmData
-     *  Input data object.
+     * @param[in] \RESTfm\Message\Section $messageSection
+     *  Section data object.
      * @param string $sectionName.
      *  Name of section to render.
      */
-    protected function _writeSection(XMLWriter $xml, RESTfmDataAbstract $restfmData, $sectionName) {
-        if ($restfmData->getSectionDimensions($sectionName) == 2) {
-            $restfmData->setIteratorSection($sectionName);
-            foreach ($restfmData as $row) {
+    protected function _writeSection(\XMLWriter $xml, \RESTfm\Message\Section $messageSection) {
+        if ($messageSection->getDimensions() == 2) {
+            foreach ($messageSection->getRows() as $row) {
                 // We inject a "Record Name" for XML representations of
                 // tables. We use "row" as the Record Name.
                 // http://www.w3.org/XML/RDB.html
@@ -119,7 +120,10 @@ class FormatXml extends FormatAbstract {
                 $xml->endElement();
             }
         } else {
-            self::_row2xml($xml, $restfmData->getSection($sectionName));
+            foreach ($messageSection->getRows() as $onlyRow) {
+                self::_row2xml($xml, $onlyRow);
+                break;  // Only row.
+            }
         }
     }
 
@@ -127,12 +131,12 @@ class FormatXml extends FormatAbstract {
      * Convert a one-dimensional associative array (a single row) into XML in
      * the provided XMLWriter document.
      *
-     * @param[out] XMLWriter $xml
+     * @param[out] \XMLWriter $xml
      *   XMLWriter object identifier.
      * @param[in] array $assoc
      *   Associative array to convert.
      */
-    protected function _row2xml(XMLWriter $xml, array $assoc) {
+    protected function _row2xml(\XMLWriter $xml, array $assoc) {
         foreach($assoc as $key => $val) {
             $xml->startElement('field');
                 $xml->writeAttribute('name', $key);
@@ -148,12 +152,12 @@ class FormatXml extends FormatAbstract {
     /**
      * Convert an array into XML in the provided XMLWriter document.
      *
-     * @param[out] XMLWriter $xml
+     * @param[out] \XMLWriter $xml
      *   XMLWriter object identifier.
      * @param[in] array $a
      *   Array to convert.
      */
-    protected function _array2xml(XMLWriter $xml, array $a) {
+    protected function _array2xml(\XMLWriter $xml, array $a) {
         foreach($a as $val) {
             $xml->startElement('field');
                 $xml->writeAttribute('name', $val);

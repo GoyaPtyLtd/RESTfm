@@ -17,28 +17,27 @@
  *  Gavin Stewart
  */
 
-require_once 'FileMakerResponseException.php';
-require_once 'FileMakerSQLParser.php';
+namespace RESTfm\BackendFileMaker;
 
 /**
  * FileMakerOpsLayout
  *
  * FileMaker specific implementation of OpsLayoutAbstract.
  */
-class FileMakerOpsLayout extends OpsLayoutAbstract {
+class FileMakerOpsLayout extends \RESTfm\OpsLayoutAbstract {
 
     // --- OpsRecordLayout implementation ---
 
     /**
      * Construct a new Record-level Operation object.
      *
-     * @param BackendAbstract $backend
+     * @param \RESTfm\BackendAbstract $backend
      *  Implementation must store $this->_backend if a reference is needed in
      *  other methods.
      * @param string $database
      * @param string $layout
      */
-    public function __construct (BackendAbstract $backend, $database, $layout) {
+    public function __construct (\RESTfm\BackendAbstract $backend, $database, $layout) {
         $this->_backend = $backend;
         $this->_database = $database;
         $this->_layout = $layout;
@@ -47,11 +46,10 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
     /**
      * Read records in layout in database via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
-     *  - 'data', 'meta', 'metaField' sections.
+     * @return \RESTfm\Message\Message
      */
     public function read () {
         $FM = $this->_backend->getFileMaker();
@@ -115,31 +113,35 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
         // Query FileMaker
         $result = $findCommand->execute();
 
-        if (FileMaker::isError($result)) {
+        if (\FileMaker::isError($result)) {
             throw new FileMakerResponseException($result);
         }
 
-        $restfmData = new RESTfmDataSimple();
+        $restfmMessage = new \RESTfm\Message\Message();
 
-        $this->_parseMetaField($restfmData, $result);
+        $this->_parseMetaField($restfmMessage, $result);
+        $metaFields = $restfmMessage->getMetaFields();
 
         // Process records and push data.
         $fieldNames = $result->getFields();
-        if (! empty($selectList)) {     // Empty select list is considered "*".
-            // Only keep fieldNames that are common to both, preserving
-            // $selectList order.
+        // An empty $selectList, or '*' anywhere in $selectList means that
+        // all $fieldNames will be returned.
+        if (! empty($selectList) && ! in_array('*', $selectList)) {
+            // Restrict $fieldNames to those that are common with $selectList,
+            // preserving $selectList order.
             $fieldNames = array_intersect($selectList, $fieldNames);
         }
         foreach ($result->getRecords() as $record) {
-            // @todo This code is duplicated in FileMakerOpsRecord, should be
-            //       moved into a static FileMakerParser::record($restfmData, $record).
-            $recordRow = array();
-            $recordID = $record->getRecordId();
+            // @TODO This code is duplicated in FileMakerOpsRecord, could be
+            //       moved into a static FileMakerParser::record($restfmMessage, $record).
+            $restfmMessageRecord = new \RESTfm\Message\Record($record->getRecordId());
             foreach ($fieldNames as $fieldName) {
+                $metaFieldRow = NULL; // @var \RESTfm\Message\Row
+                $metaFieldRow = $metaFields[$fieldName];
+
                 // Field repetitions are expanded into multiple fields with
                 // an index operator suffix; fieldName[0], fieldName[1] ...
-                $fieldRepeat = $restfmData->getFieldMetaValue($fieldName, 'maxRepeat');
-
+                $fieldRepeat = $metaFieldRow['maxRepeat'];
                 for ($repetition = 0; $repetition < $fieldRepeat; $repetition++) {
                     $fieldNameRepeat = $fieldName;
 
@@ -152,7 +154,7 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
                     $fieldData = $record->getFieldUnencoded($fieldName, $repetition);
 
                     // Handle container types differently.
-                    if ($restfmData->getFieldMetaValue($fieldName, 'resultType') == 'container') {
+                    if ($metaFieldRow['resultType'] == 'container') {
                         switch ($this->_containerEncoding) {
                             case self::CONTAINER_BASE64:
                                 $filename = '';
@@ -175,43 +177,42 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
                     }
 
                     // Store this field's data for this row.
-                    $recordRow[$fieldNameRepeat] = $fieldData;
+                    $restfmMessageRecord[$fieldNameRepeat] = $fieldData;
                 }
             }
-            $restfmData->pushDataRow($recordRow, $recordID, NULL);
+            $restfmMessage->addRecord($restfmMessageRecord);
         }
 
         // Info.
-        $restfmData->pushInfo('tableRecordCount', $result->getTableRecordCount());
-        $restfmData->pushInfo('foundSetCount', $result->getFoundSetCount());
-        $restfmData->pushInfo('fetchCount', $result->getFetchCount());
+        $restfmMessage->setInfo('tableRecordCount', $result->getTableRecordCount());
+        $restfmMessage->setInfo('foundSetCount', $result->getFoundSetCount());
+        $restfmMessage->setInfo('fetchCount', $result->getFetchCount());
 
-        return $restfmData;
+        return $restfmMessage;
     }
 
     /**
      * Read field metadata in layout in database via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
-     *  - 'metaField' section.
+     * @return \RESTfm\Message\Message
      */
     public function readMetaField () {
         $FM = $this->_backend->getFileMaker();
         $FM->setProperty('database', $this->_database);
 
         $layoutResult = $FM->getLayout($this->_layout);
-        if (FileMaker::isError($layoutResult)) {
+        if (\FileMaker::isError($layoutResult)) {
             throw new FileMakerResponseException($layoutResult);
         }
 
-        $restfmData = new RESTfmDataSimple();
+        $restfmMessage = new \RESTfm\Message\Message();
 
-        $this->_parseMetaField($restfmData, $layoutResult);
+        $this->_parseMetaField($restfmMessage, $layoutResult);
 
-        return $restfmData;
+        return $restfmMessage;
     }
 
     // --- Protected ---
@@ -230,15 +231,15 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
 
     /**
      * Parse field meta data out of provided FileMaker result object into
-     * provided RESTfmData object.
+     * provided \RESTfm\Message\Message object.
      *
-     * @todo This code is duplicated in FileMakerOpsRecord, should be
-     *       moved into a static FileMakerParser::metaField($restfmData, $result).
+     * @TODO This code is duplicated in FileMakerOpsRecord, could be
+     *       moved into a static FileMakerParser::metaField($restfmMessage, $result).
      *
-     * @param RESTfmDataSimple $restfmData
+     * @param \RESTfm\Message\Message $restfmMessage
      * @param FileMaker_Result|FileMaker_Layout $result
      */
-    protected function _parseMetaField(RESTfmDataSimple $restfmData, $result) {
+    protected function _parseMetaField(\RESTfm\Message\Message $restfmMessage, $result) {
 
         if (is_a($result, 'FileMaker_Result')) {
             $layoutResult = $result->getLayout();
@@ -252,16 +253,18 @@ class FileMakerOpsLayout extends OpsLayoutAbstract {
         // by result object!
         $fieldNames = $layoutResult->listFields();
         foreach ($fieldNames as $fieldName) {
-            $fieldMeta = array();
             $fieldResult = $layoutResult->getField($fieldName);
 
-            $fieldMeta['autoEntered'] = $fieldResult->isAutoEntered() ? 1 : 0;
-            $fieldMeta['global'] = $fieldResult->isGlobal() ? 1 : 0;
-            $fieldMeta['maxRepeat'] = $fieldResult->getRepetitionCount();
-            $fieldMeta['resultType'] = $fieldResult->getResult();
-            //$fieldMeta['type'] = $fieldResult->getType();
+            $restfmMessageRow = new \RESTfm\Message\Row();
 
-            $restfmData->pushFieldMeta($fieldName, $fieldMeta);
+            $restfmMessageRow['name'] = $fieldName;
+            $restfmMessageRow['autoEntered'] = $fieldResult->isAutoEntered() ? 1 : 0;
+            $restfmMessageRow['global'] = $fieldResult->isGlobal() ? 1 : 0;
+            $restfmMessageRow['maxRepeat'] = $fieldResult->getRepetitionCount();
+            $restfmMessageRow['resultType'] = $fieldResult->getResult();
+            //$restfmMessageRow['type'] = $fieldResult->getType();
+
+            $restfmMessage->setMetaField($fieldName, $restfmMessageRow);
         }
     }
 

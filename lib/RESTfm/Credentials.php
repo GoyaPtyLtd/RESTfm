@@ -17,13 +17,13 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfmConfig.php' ;
+namespace RESTfm;
 
 /**
  * RESTfm credentials class identifies and holds authentication/authorisation
  * credentials for request.
  */
-class RESTfmCredentials {
+class Credentials {
 
     /**
      * @var string
@@ -38,25 +38,25 @@ class RESTfmCredentials {
     /**
      * Work out credentials from request parameters and config.
      *
-     * @param RESTfmParameters $parameters
+     * @param Parameters $parameters
      *  Parameters for this request.
      */
-    public function __construct (RESTfmParameters $parameters) {
+    public function __construct (Parameters $parameters) {
 
         $username = '';
         $password = '';
 
         // Check for default authentication fall-back
-        if (RESTfmConfig::getVar('database', 'useDefaultAuthentication') === TRUE) {
-            $username = RESTfmConfig::getVar('database', 'defaultUsername');
-            $password = RESTfmConfig::getVar('database', 'defaultPassword');
+        if (Config::getVar('database', 'useDefaultAuthentication') === TRUE) {
+            $username = Config::getVar('database', 'defaultUsername');
+            $password = Config::getVar('database', 'defaultPassword');
         }
 
         // Check for API key in parameters
         $RFMkey = $parameters->RFMkey;
-        if (isset($RFMkey) && RESTfmConfig::checkVar('keys', $RFMkey)) {
-            $username = RESTfmConfig::getVar('keys', $RFMkey, 0);
-            $password = RESTfmConfig::getVar('keys', $RFMkey, 1);
+        if (isset($RFMkey) && Config::checkVar('keys', $RFMkey)) {
+            $username = Config::getVar('keys', $RFMkey, 0);
+            $password = Config::getVar('keys', $RFMkey, 1);
         }
 
         // Work around for HTTP Basic Auth for Apache CGI/FCGI/suExec server modes.
@@ -73,9 +73,9 @@ class RESTfmCredentials {
         // Check for API key or username/password in HTTP basic authentication.
         if (isset($_SERVER['PHP_AUTH_USER'])) {
             $RFMkey = $_SERVER['PHP_AUTH_USER'];
-            if (isset($RFMkey) && RESTfmConfig::checkVar('keys', $RFMkey)) {
-                $username = RESTfmConfig::getVar('keys', $RFMkey, 0);
-                $password = RESTfmConfig::getVar('keys', $RFMkey, 1);
+            if (isset($RFMkey) && Config::checkVar('keys', $RFMkey)) {
+                $username = Config::getVar('keys', $RFMkey, 0);
+                $password = Config::getVar('keys', $RFMkey, 1);
             } else {
                 $username = $_SERVER['PHP_AUTH_USER'];
                 if (isset($_SERVER['PHP_AUTH_PW'])) {

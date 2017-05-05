@@ -17,15 +17,12 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfmConfig.php';
-require_once 'RESTfmQueryString.php';
-require_once 'FormatFactory.php';
-require_once 'RESTfmDataSimple.php';
+namespace RESTfm;
 
 /**
- * RESTfmResponse class.
+ * RESTfm Response class.
  */
-class RESTfmResponse extends Response {
+class Response extends \Tonic\Response {
 
     /**
      * @var string
@@ -75,21 +72,21 @@ class RESTfmResponse extends Response {
     /**
      * Override superclass constructor.
      *
-     * @param RESTfmRequest $request
+     * @param \RESTfm\Request $request
      *  The request object generating this response.
      * @param string $uri
      *  The URL of the actual resource being used to build the response.
      */
     public function __construct($request, $uri = NULL) {
         parent::__construct($request, $uri);
-        $this->format = $request->mostAcceptable(RESTfmConfig::getFormats());
+        $this->format = $request->mostAcceptable(Config::getFormats());
 
         // If we have an RFMreauth query string, then we need to force a
         // change of authorisation credentials. We only expect this when
         // using the html format.
-        $queryString = new RESTfmQueryString(TRUE);
+        $queryString = new RFMfixQueryString(TRUE);
         if(isset($queryString->RFMreauth)) {
-            $currentUsername = $request->getRESTfmCredentials()->getUsername();
+            $currentUsername = $request->getCredentials()->getUsername();
             // Only send unauthorised if username hasn't been set to something
             // different yet.
             // This is peculiar to the html format, we needed a way to elicit
@@ -97,8 +94,8 @@ class RESTfmResponse extends Response {
             // query string does not change, we can only detect that a
             // different username has been entered.
             if ($currentUsername == urldecode($queryString->RFMreauth) && $queryString->RFMreauth != '') {
-                header('Refresh:0;url=' . RESTfmConfig::getVar('settings', 'baseURI'));
-                throw new ResponseException("User requested re-authorisation.", Response::UNAUTHORIZED);
+                header('Refresh:0;url=' . Config::getVar('settings', 'baseURI'));
+                throw new \ResponseException("User requested re-authorisation.", Response::UNAUTHORIZED);
             }
 
             // Remove RFMreauth from server querystring.
@@ -134,7 +131,7 @@ class RESTfmResponse extends Response {
         $this->addHeader('X-RESTfm-Method', $this->request->method);
 
         // Check if we need to authorise this origin (CORS)
-        $configOrigins = RESTfmConfig::getVar('allowed_origins');
+        $configOrigins = Config::getVar('allowed_origins');
         if (isset($_SERVER["HTTP_ORIGIN"]) && is_array($configOrigins)) {
             $request_origin = $_SERVER['HTTP_ORIGIN'];
             $allow_origin = null;
@@ -154,20 +151,20 @@ class RESTfmResponse extends Response {
         }
 
         // Ensure we have response data!
-        if ($this->_restfmData == NULL) {
-            $this->_restfmData = new RESTfmData();
+        if ($this->_Message == NULL) {
+            $this->_Message = new Message\Message();
         }
 
         // Inject X-RESTfm headers into 'info' section.
         foreach ($this->headers as $header => $value) {
             if (preg_match('/^X-RESTfm-/i', $header)) {
-                $this->_restfmData->setSectionData('info', $header, $value);
+                $this->_Message->setInfo($header, $value);
             }
         }
 
         // Inject additional info into 'info' section.
         foreach ($this->_info as $name => $value) {
-            $this->_restfmData->setSectionData('info', $name, $value);
+            $this->_Message->setInfo($name, $value);
         }
 
         // Build the message body of this response.
@@ -194,10 +191,10 @@ class RESTfmResponse extends Response {
     /**
      * Store response data.
      *
-     * @param RESTfmDataAbstract $restfmData
+     * @param \RESTfm\Message\Message $restfmMessage
      */
-    public function setData(RESTfmDataAbstract $restfmData) {
-        $this->_restfmData = $restfmData;
+    public function setMessage(Message\Message $restfmMessage) {
+        $this->_Message = $restfmMessage;
     }
 
     /**
@@ -237,10 +234,10 @@ class RESTfmResponse extends Response {
     protected $reason = '';
 
     /**
-     * @var RESTfmDataAbstract
+     * @var \RESTfm\Message\Message
      *  The data associated with this response.
      */
-    protected $_restfmData = NULL;
+    protected $_Message = NULL;
 
     /**
      * @var array
@@ -264,15 +261,15 @@ class RESTfmResponse extends Response {
         }
 
         // Build a formatter. We fall back to text, because we also format
-        // errors via RESTfmResponseException. No output would be bad!
+        // errors via \RESTfm\ResponseException. No output would be bad!
         try {
             $formatter = FormatFactory::makeFormatter($formatAs);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             // Fallback
             $formatAs = 'txt';
             try {
                 $formatter = FormatFactory::makeFormatter($formatAs);
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 // Fatal error, we should never get here.
                 $this->code = $e->getCode();
                 $this->reason = $e->getMessage();
@@ -285,21 +282,21 @@ class RESTfmResponse extends Response {
         // username for the browser UI.
         if ($formatAs == 'html') {
             $formatter->setUsername(
-                    $this->request->getRESTfmCredentials()->getUsername() );
+                    $this->request->getCredentials()->getUsername() );
         }
 
         $this->addHeader('Content-type', $this->contentType($formatAs));
-        $this->body = $formatter->write($this->_restfmData);
+        $this->body = $formatter->write($this->_Message);
 
         // Use XSLT to produce final format.
         if (isset($useXSLT)) {
             $xsltFile = file_get_contents($useXSLT);
-            $xsltProcessor = new XSLTProcessor();
-            $xsltXML = new SimpleXMLElement($xsltFile);
+            $xsltProcessor = new \XSLTProcessor();
+            $xsltXML = new \SimpleXMLElement($xsltFile);
             $outputMethod = $xsltXML->xpath('xsl:output/@method');
             $this->addHeader('Content-type', $this->contentType((string)$outputMethod[0]));
             $xsltProcessor->importStyleSheet($xsltXML);
-            $this->body = $xsltProcessor->transformToXml(new SimpleXMLElement($this->body));
+            $this->body = $xsltProcessor->transformToXml(new \SimpleXMLElement($this->body));
         }
     }
 

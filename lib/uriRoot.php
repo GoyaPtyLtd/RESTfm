@@ -17,18 +17,14 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfm/RESTfmResource.php';
-require_once 'RESTfm/RESTfmResponse.php';
-require_once 'RESTfm/QueryString.php';
-
 /**
  * RESTfm database collection (Root URI) handler for Tonic.
  *
  * @uri
  */
-class uriRoot extends RESTfmResource {
+class uriRoot extends RESTfm\Resource {
 
-    const URI = '';
+    const URI = '/';
 
     /**
      * Handle a GET request for this resource
@@ -39,18 +35,18 @@ class uriRoot extends RESTfmResource {
      *          static page with seperate layout and script links, to maintain
      *          the REST URI hierarchy.
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      *
      * @return Response
      */
     function get($request) {
-        $backend = BackendFactory::make($request);
+        $backend = RESTfm\BackendFactory::make($request);
         $opsDatabase = $backend->makeOpsDatabase();
-        $restfmData = $opsDatabase->readDatabases();
+        $restfmMessage = $opsDatabase->readDatabases();
 
-        $queryString = new RESTfmQueryString(TRUE);
+        $queryString = new RESTfm\QueryString(TRUE);
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
         $format = $response->format;
 
         $RFMlink = NULL;
@@ -62,32 +58,36 @@ class uriRoot extends RESTfmResource {
         // Inject local PDO databases if any.
         // If we get this far then FM authentication was successfull so this
         // list wont be open access with FM guest access disabled.
-        if (RESTfmConfig::checkVar('databasePDOMap')) {
-            $pdos = RESTfmConfig::getVar('databasePDOMap');
+        if (RESTfm\Config::checkVar('databasePDOMap')) {
+            $pdos = RESTfm\Config::getVar('databasePDOMap');
             foreach ($pdos as $dbMapName => $dsn) {
-                $restfmData->pushDataRow( array('database' => $dbMapName), NULL, NULL );
+                $restfmMessage->addRecord(new \RESTfm\Message\Record(
+                    NULL, NULL, array('database' => $dbMapName)
+                ));
             }
         }
 
-        // Iterate 'data' section rows and insert navigation hrefs into
-        // matching 'meta' section row.
-        $restfmData->setIteratorSection('data');
-        foreach($restfmData as $index => $row) {
-            $database = $row['database'];
-            $href = $request->baseUri.'/'.RESTfmUrl::encode($database).'.'.$format.$queryString->build();
+        // Iterate records and set navigation hrefs.
+        $restfmMessageRecords = $restfmMessage->getRecords();
+        $record = NULL;         // @var \RESTfm\Message\Record
+        foreach($restfmMessageRecords as $record) {
+            $database = $record['database'];
+            $href = $request->baseUri.'/'.RESTfm\Url::encode($database).
+                    '.'.$format.$queryString->build();
             if (isset($RFMlink)) {
                 if ($RFMlink == 'layout') {
-                    $href = $request->baseUri.'/'.RESTfmUrl::encode($database).'/layout.'.$format.$queryString->build();
+                    $href = $request->baseUri.'/'.RESTfm\Url::encode($database).
+                            '/layout.'.$format.$queryString->build();
                 } elseif ($RFMlink == 'script') {
-                    $href = $request->baseUri.'/'.RESTfmUrl::encode($database).'/script.'.$format.$queryString->build();
+                    $href = $request->baseUri.'/'.RESTfm\Url::encode($database).
+                            '/script.'.$format.$queryString->build();
                 }
             }
-
-            $restfmData->setSectionData2nd('meta', $index, 'href', $href);
+            $record->setHref($href);
         }
 
-        $response->setStatus(Response::OK);
-        $response->setData($restfmData);
+        $response->setStatus(RESTfm\Response::OK);
+        $response->setMessage($restfmMessage);
         return $response;
     }
 

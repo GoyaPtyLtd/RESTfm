@@ -17,8 +17,7 @@
  *  Gavin Stewart
  */
 
-require_once('SQLParserException.php');
-require_once('SQLToken.php');
+namespace RESTfm\SQLParser;
 
 /**
  * SQL-like syntax lexer.

@@ -17,7 +17,10 @@
  *  Gavin Stewart
  */
 
-require_once(__DIR__.'/../SQLParser/SQLParser.php');
+namespace RESTfm\BackendFileMaker;
+
+use RESTfm\SQLParser;
+use RESTfm\ResponseException;
 
 /**
  * FileMaker specific implementation of SQLParser class.
@@ -46,15 +49,15 @@ class FileMakerSQLParser extends SQLParser {
     /**
      * Override parent class parse() method.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *   On error.
      */
     public function parse() {
       try {
         parent::parse();
       } catch (SQLParserException $e) {
-         // Re-throw as a RESTfmResponseException.
-         throw new RESTfmResponseException('RFMfind SQL error: '.$e->getMessage(), RESTfmResponseException::BADREQUEST, $e);
+         // Re-throw as a \RESTfm\ResponseException.
+         throw new ResponseException('RFMfind SQL error: '.$e->getMessage(), ResponseException::BADREQUEST, $e);
       }
     }
 

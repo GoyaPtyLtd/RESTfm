@@ -8,11 +8,25 @@
 <configuration>
     <system.webServer>
 
-        <!-- Rewrite all URLs to RESTfm.php (converted from .htaccess RewriteRules). -->
+         <security>
+            <requestFiltering>
+                <hiddenSegments>
+                    <!-- Block access to .git directories. -->
+                   <add segment=".git" />
+                    <!-- Block access to .svn directories. -->
+                   <add segment=".svn" />
+                </hiddenSegments>
+            </requestFiltering>
+        </security>
+
+        <!-- 
+            This <rewrite> section requires the URL rewrite module available from Microsoft:
+            http://www.iis.net/download/urlrewrite
+        -->
         <rewrite>
             <rules>
 
-            <!-- Uncomment to enforce SSL with redirect.
+            <!-- Uncomment block to enforce SSL with redirect.
                 <rule name="Redirect to https" stopProcessing="true">
                     <match url="(.*)" />
                     <conditions>
@@ -22,6 +36,7 @@
                 </rule>
             -->
 
+                <!-- Rewrite all URLs to RESTfm.php -->
                 <rule name="RESTfm root rewrite rules" stopProcessing="true">
                     <match url=".*" ignoreCase="false" />
                     <conditions>
@@ -30,6 +45,7 @@
                     </conditions>
                     <action type="Rewrite" url="RESTfm.php" appendQueryString="true" />
                 </rule>
+
             </rules>
         </rewrite>
 

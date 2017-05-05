@@ -17,11 +17,6 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfm/RESTfmResource.php';
-require_once 'RESTfm/RESTfmResponse.php';
-require_once 'RESTfm/RESTfmQueryString.php';
-require_once 'RESTfm/RESTfmDataSimple.php';
-
 /**
  * RESTfm database element handler for Tonic.
  *
@@ -30,46 +25,58 @@ require_once 'RESTfm/RESTfmDataSimple.php';
  *
  * @uri /{database}
  */
-class uriDatabaseConstant extends RESTfmResource {
+class uriDatabaseConstant extends RESTfm\Resource {
 
     const URI = '/{database}';
 
     /**
      * Handle a GET request for this resource
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}
      *
      * @return Response
      */
     function get($request, $database) {
-        $database = RESTfmUrl::decode($database);
+        $database = RESTfm\Url::decode($database);
 
         // Query available layouts. We don't use the results, simply validating
         // the database and credentials.
-        $backend = BackendFactory::make($request, $database);
+        $backend = RESTfm\BackendFactory::make($request, $database);
         $opsDatabase = $backend->makeOpsDatabase($database);
         $restfmDataLayouts = $opsDatabase->readLayouts();
 
-        $queryString = new RESTfmQueryString(TRUE);
+        $queryString = new RESTfm\QueryString(TRUE);
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
         $format = $response->format;
 
-        // Build static hrefs for navigation.
-        $restfmData = new RESTfmDataSimple();
-        $restfmData->pushDataRow( array('resource'    =>  'layout'), NULL,
-            $request->baseUri.'/'.RESTfmUrl::encode($database).'/layout.'.$format.$queryString->build() );
-        if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
-            $restfmData->pushDataRow( array('resource'    =>  'echo'), NULL,
-                $request->baseUri.'/'.RESTfmUrl::encode($database).'/echo.'.$format.$queryString->build() );
+        // Create virtual records with static hrefs purely for navigation.
+        $restfmMessage = new \RESTfm\Message\Message();
+        $restfmMessage->addRecord(new \RESTfm\Message\Record(
+            NULL,
+            $request->baseUri.'/'.RESTfm\Url::encode($database).
+                    '/layout.'.$format.$queryString->build(),
+            array('resource' => 'layout')
+        ));
+        if (RESTfm\Config::getVar('settings', 'diagnostics') === TRUE) {
+            $restfmMessage->addRecord(new \RESTfm\Message\Record(
+                NULL,
+                $request->baseUri.'/'.RESTfm\Url::encode($database).
+                        '/echo.'.$format.$queryString->build(),
+                array('resource' => 'echo')
+            ));
         }
-        $restfmData->pushDataRow( array('resource'    =>  'script'), NULL,
-            $request->baseUri.'/'.RESTfmUrl::encode($database).'/script.'.$format.$queryString->build() );
+        $restfmMessage->addRecord(new \RESTfm\Message\Record(
+            NULL,
+            $request->baseUri.'/'.RESTfm\Url::encode($database).
+                    '/script.'.$format.$queryString->build(),
+            array('resource' => 'script')
+        ));
 
-        $response->setStatus(Response::OK);
-        $response->setData($restfmData);
+        $response->setStatus(RESTfm\Response::OK);
+        $response->setMessage($restfmMessage);
         return $response;
     }
 

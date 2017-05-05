@@ -17,10 +17,12 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\BackendFileMaker;
+
 /**
  * FileMakerResponseException class.
  */
-class FileMakerResponseException extends RESTfmResponseException {
+class FileMakerResponseException extends \RESTfm\ResponseException {
 
     /**
      * Override superclass constructor.
@@ -28,7 +30,7 @@ class FileMakerResponseException extends RESTfmResponseException {
      * @param FileMaker_Error $fileMakerError
      *   The error object as returned from the failed FileMaker command.
      */
-    function __construct(FileMaker_Error $fileMakerError) {
+    function __construct(\FileMaker_Error $fileMakerError) {
         require_once 'FileMaker.php' ;
 
         $code = 500;                // Default status code. Overridden below.
@@ -40,23 +42,23 @@ class FileMakerResponseException extends RESTfmResponseException {
             // 101: Record is missing
             // 104: Script is missing
             // 105: Layout is missing
-            $code = RESTfmResponseException::NOTFOUND;
+            $code = \RESTfm\ResponseException::NOTFOUND;
         } elseif ($fmCode == 22 && stripos($fmMessage, 'password') !== FALSE) {
             // FileMaker Server 11 authorisation required response.
             // "Communication Error: (22) The requested URL returned error:
             //  401 - This can be due to an invalid username or password,
             //  or if the FMPHP privilege is not enabled for that user."
-            $code = RESTfmResponseException::UNAUTHORIZED;
+            $code = \RESTfm\ResponseException::UNAUTHORIZED;
         } elseif ($fmCode == 18 && stripos($fmMessage, 'account') !== FALSE) {
             // FileMaker Server 12 authorisation required response.
             // "Client must provide account information to proceed"
-            $code = RESTfmResponseException::UNAUTHORIZED;
+            $code = \RESTfm\ResponseException::UNAUTHORIZED;
         } elseif ($fmCode == 9 && stripos($fmMessage, 'privileges') !== FALSE) {
             // FileMaker Server 12 - Sometimes occurs when user account is
             //  correct, but with incorrect password. Does _not_ occur when
             //  trying to write record with read only access.
             // "Insufficient privileges"
-            $code = RESTfmResponseException::UNAUTHORIZED;
+            $code = \RESTfm\ResponseException::UNAUTHORIZED;
         }
 
         // Additional headers for this exception.

@@ -17,6 +17,8 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\SQLParser;
+
  /*
   * References:
   *   EBNF, grammar, left-recursion and precedence:
@@ -66,10 +68,6 @@ limit:              'LIMIT' string
 offset:             'OFFSET' string
 
  */
-
-require_once('SQLParserException.php');
-require_once('SQLToken.php');
-require_once('SQLLexer.php');
 
 /**
  * SQLParser Class.

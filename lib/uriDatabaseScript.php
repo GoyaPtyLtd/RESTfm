@@ -17,15 +17,12 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfm/RESTfmResource.php';
-require_once 'RESTfm/RESTfmResponse.php';
-
 /**
  * RESTfm script collection handler for Tonic
  *
  * @uri /{database}/script
  */
-class uriDatabaseScript extends RESTfmResource {
+class uriDatabaseScript extends RESTfm\Resource {
 
     const URI = '/{database}/script';
 
@@ -38,17 +35,17 @@ class uriDatabaseScript extends RESTfmResource {
      *
      * @return Response
      */
-    function get(Request $request, $database) {
-        $database = RESTfmUrl::decode($database);
+    function get($request, $database) {
+        $database = RESTfm\Url::decode($database);
 
-        $backend = BackendFactory::make($request, $database);
+        $backend = RESTfm\BackendFactory::make($request, $database);
         $opsDatabase = $backend->makeOpsDatabase($database);
-        $restfmData = $opsDatabase->readScripts();
+        $restfmMessage = $opsDatabase->readScripts();
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
 
-        $response->setStatus(Response::OK);
-        $response->setData($restfmData);
+        $response->setStatus(RESTfm\Response::OK);
+        $response->setMessage($restfmMessage);
         return $response;
     }
 

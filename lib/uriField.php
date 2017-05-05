@@ -22,25 +22,19 @@
  *** WARNING: No repetitions support.
  ***/
 
-require_once 'RESTfm/RESTfmResource.php';
-require_once 'RESTfm/RESTfmResponse.php';
-require_once 'RESTfm/FileMakerResponseException.php';
-require_once 'RESTfm/RESTfmRecordID.php';
-require_once 'RESTfm/RESTfmQueryString.php';
-
 /**
  * RESTfm Field handler for Tonic
  *
  * @uri /{database}/layout/{layout}/{rawRecordID}/{field}
  */
-class uriField extends RESTfmResource {
+class uriField extends RESTfm\Resource {
 
     const URI = '/{database}/layout/{layout}/{rawRecordID}/{field}';
 
     /**
      * Handle a GET request for this resource
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}
      * @param string $layout
@@ -54,12 +48,12 @@ class uriField extends RESTfmResource {
      */
     function get($request, $database, $layout, $rawRecordID, $field) {
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
         $recordID = new RESTfmRecordID($rawRecordID);
 
         $record = $recordID->getRecord(urldecode($database), urldecode($layout));
 
-        if (FileMaker::isError($record)) {
+        if (\FileMaker::isError($record)) {
             throw new FileMakerResponseException($record);
         }
 
@@ -74,7 +68,7 @@ class uriField extends RESTfmResource {
         $layoutResult = $record->getLayout();
         $fieldMeta = array();
         $fieldResult = $layoutResult->getField($urldecodeField);
-        if (FileMaker::isError($fieldResult)) {
+        if (\FileMaker::isError($fieldResult)) {
             throw new FileMakerResponseException($fieldResult);
         }
         $fieldMeta['autoEntered'] = $fieldResult->isAutoEntered() ? 1 : 0;
@@ -99,7 +93,7 @@ class uriField extends RESTfmResource {
         }
         $resourceData->pushData($recordRow, $href, urldecode($recordID));
 
-        $response->setStatus(Response::OK);
+        $response->setStatus(RESTfm\Response::OK);
         $response->setResourceData($resourceData);
         return $response;
     }
@@ -119,7 +113,7 @@ class uriField extends RESTfmResource {
      *  - RFMappend : Append submitted data to existing field data instead of
      *                the default overwrite.
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}
      * @param string $layout
@@ -152,7 +146,7 @@ class uriField extends RESTfmResource {
      *  - RFMpreScriptParam=<string> : (optional) url encoded parameter string
      *                                 to pass to pre-script.
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}
      * @param string $layout
