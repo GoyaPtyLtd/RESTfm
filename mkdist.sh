@@ -5,7 +5,7 @@
 # RESTfm - FileMaker RESTful Web Service
 #
 # @copyright
-#  Copyright (c) 2011-2016 Goya Pty Ltd.
+#  Copyright (c) 2011-2017 Goya Pty Ltd.
 #
 # @license
 #  Licensed under The MIT License. For full copyright and license information,

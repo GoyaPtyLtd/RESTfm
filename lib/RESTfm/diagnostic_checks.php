@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -39,7 +39,7 @@ if (strpos($_SERVER['QUERY_STRING'], 'RFMcheckFMAPI') !== FALSE) {
     // Note: Files are carefully selected to capture changes from the
     //       version preceding it.
     $fmsFileMap = array (
-        'FileMaker/Error/sv.php' => '82ac207c77fb95ead1d9fbdcd49c28ff:14, 15',
+        'FileMaker/Error/sv.php' => '82ac207c77fb95ead1d9fbdcd49c28ff:14, 15, 16',
         'FileMaker/Implementation/Command/EditImpl.php' => 'e55064465260f2a4e1c0049abc77e90d:13',
         'FileMaker/Implementation/FileMakerImpl.php' => '344a84eafa71167103dbfa3927f3d13e:12',
         'FileMaker/Implementation/FileMakerImpl.php' => '5a526472505610de33affefc5df92f6a:11',

@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -49,7 +49,7 @@ class FormatHtml implements FormatInterface {
         $str .= '<link type="text/css" rel="stylesheet" href="' . \RESTfm\Config::getVar('settings', 'baseURI') . '/css/RESTfm.css">'."\n";
         $str .= "</head><body>\n";
         $str .= '<div id="logo">' .
-                '<a target="_blank" href="http://www.restfm.com"><img width="106" height="36" src="' . \RESTfm\Config::getVar('settings', 'baseURI') . '/css/RESTfm.logo.png" alt="RESTfm logo"></a>' .
+                '<a target="_blank" href="http://www.restfm.com"><img width="106" height="33" src="' . \RESTfm\Config::getVar('settings', 'baseURI') . '/css/RESTfm.logo.png" alt="RESTfm logo"></a>' .
                 '<span>' . \RESTfm\Version::getRelease() . '</span>' .
             '</div>' . "\n";
 
