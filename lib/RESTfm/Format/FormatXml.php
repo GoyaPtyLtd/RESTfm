@@ -38,7 +38,7 @@ class FormatXml implements \RESTfm\FormatInterface {
             foreach(libxml_get_errors() as $e) {
                 $error .= $e->message."\n";
             }
-            throw new \RESTfm\ResponseException($error, Response::BADREQUEST);
+            throw new \RESTfm\ResponseException($error, \RESTfm\Response::BADREQUEST);
         }
 
         // Convert XML Record Names back into arrays.
