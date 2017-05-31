@@ -750,7 +750,7 @@ class Diagnostics {
      *  (Apple OSX)
      */
     private function _darwinFMS13InstallerInstructions() {
-        $s = "\nFileMaker Server 13/14 on Apple OSX instructions:\n\n";
+        $s = "\nFileMaker Server 13/14/15/16 on Apple OSX instructions:\n\n";
 
         if (strcasecmp(dirname($this->_RESTfmDocumentRoot), '/Library/FileMaker Server/HTTPServer/htdocs') != 0) {
             $s .= '* Custom document root outside of FMS detected. Please contact Goya support: http://www.restfm.com/help' . "\n";

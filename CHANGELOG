@@ -1,4 +1,5 @@
 ### 5.0.0beta ###
+ - Update Mac OS X installer for FMS 16.
 Protocol changes:
  - Simplified nav section.
 Internal:
