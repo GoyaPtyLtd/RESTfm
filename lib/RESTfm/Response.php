@@ -95,7 +95,7 @@ class Response extends \Tonic\Response {
             // different username has been entered.
             if ($currentUsername == urldecode($queryString->RFMreauth) && $queryString->RFMreauth != '') {
                 header('Refresh:0;url=' . Config::getVar('settings', 'baseURI'));
-                throw new \ResponseException("User requested re-authorisation.", Response::UNAUTHORIZED);
+                throw new \Tonic\ResponseException("User requested re-authorisation.", \Tonic\Response::UNAUTHORIZED);
             }
 
             // Remove RFMreauth from server querystring.

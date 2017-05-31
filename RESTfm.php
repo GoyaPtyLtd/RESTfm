@@ -118,7 +118,7 @@ try {
             $format = $request->mostAcceptable(RESTfm\Config::getFormats());
             if ($format != 'html' && $format != 'txt' &&
                     RESTfm\Config::getVar('settings', 'forbiddenOnUnauthorized')) {
-                $response->code = Response::FORBIDDEN;
+                $response->code = Tonic\Response::FORBIDDEN;
                 break;
             }
 
