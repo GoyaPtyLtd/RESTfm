@@ -87,10 +87,36 @@ class FileMakerDataApi {
     /**
      * Cleanup.
      */
-    public function __destruct () {
-        if ($this->_token !== NULL) {
-            // disconnect.
+    public function close () {
+        if ($this->_token == NULL) {
+            return;
         }
+
+        $ch = $this->_curlHandle;
+
+        $options = array(
+            CURLOPT_URL         => $this->_hostspec . '/fmi/rest/api/auth/' . $this->_solution,
+            CURLOPT_SSL_VERIFYPEER  => FALSE,        // FIXME
+            CURLOPT_FAILONERROR     => FALSE,
+            CURLOPT_HEADER          => FALSE,
+            CURLOPT_RETURNTRANSFER  => TRUE,
+            CURLOPT_FOLLOWLOCATION  => FALSE,   // Redirects don't work.
+                                                // Must use https in hostspec.
+            CURLOPT_CUSTOMREQUEST   => 'DELETE',
+            CURLOPT_HTTPHEADER => array(
+                        'FM-Data-token: ' . $this->_token,
+            ),
+        );
+
+        // Apply options.
+        curl_setopt_array($ch, $options);
+
+        // Submit the requested operation to FileMaker Data API Server.
+        $result = curl_exec($ch);
+
+        //echo "Closing result: ";
+        //echo $result;
+
         curl_close($this->_curlHandle);
     }
 
@@ -112,10 +138,10 @@ class FileMakerDataApi {
 
         $options = array(
             CURLOPT_URL         => $this->_hostspec . '/fmi/rest/api/auth/' . $this->_solution,
-            CURLOPT_SSL_VERIFYPEER => FALSE,        // FIXME
-            CURLOPT_FAILONERROR => FALSE,
-            CURLOPT_HEADER      => TRUE,
-            CURLOPT_RETURNTRANSFER  => FALSE,
+            CURLOPT_SSL_VERIFYPEER  => FALSE,        // FIXME
+            CURLOPT_FAILONERROR     => FALSE,
+            CURLOPT_HEADER          => FALSE,
+            CURLOPT_RETURNTRANSFER  => TRUE,
             CURLOPT_FOLLOWLOCATION  => FALSE,   // Redirects don't work.
                                                 // Must use https in hostspec.
         );
@@ -127,8 +153,6 @@ class FileMakerDataApi {
         );
 
         $json = json_encode($data);
-
-        var_dump($json);
 
         $options = $options + array(
                 CURLOPT_HTTPHEADER => array(
@@ -144,9 +168,6 @@ class FileMakerDataApi {
         // Submit the requested operation to FileMaker Data API Server.
         $result = curl_exec($ch);
 
-        echo "Raw result:\n";
-        var_dump($result);
-
         // Throw an exception if cURL has errors.
         if(curl_errno($ch)) {
             $curlError = curl_error($ch);
@@ -157,8 +178,6 @@ class FileMakerDataApi {
 
         // Decode JSON response into $response reference variable.
         $response = json_decode($result, TRUE);
-
-        var_dump($response);
 
         // Throw an exception if JSON decoding has errors.
         if (json_last_error() !== JSON_ERROR_NONE) {
@@ -185,5 +204,17 @@ class FileMakerDataApi {
             throw new FileMakerDataApiResponseException($jsonError . ":\n" . $result, '9999');
         }
 
+        // Throw an exception if FileMaker Data API Server has errors.
+        if (isset($response['errorCode']) && $response['errorCode'] !== '0') {
+            $errorMessage = "Unknown FileMaker Data API Server error.";
+            if (isset($response['result'])) {
+                $errorMessage = $response['result'];
+            }
+            throw new FileMakerDataApiResponseException($errorMessage, $response['errorCode']);
+        }
+
+        $this->_token = $response['token'];
+
+        $this->close();
     }
 };
