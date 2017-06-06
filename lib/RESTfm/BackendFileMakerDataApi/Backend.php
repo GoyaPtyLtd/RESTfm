@@ -22,7 +22,18 @@ namespace RESTfm\BackendFileMakerDataApi;
 /**
  * FileMaker Data API implementation of BackendAbstract.
  */
-class BackendAbstract implements \RESTfm\BackendAbstract{
+class Backend extends \RESTfm\BackendAbstract {
+
+    /**
+     * @var FileMakerDataApi
+     *      Connection object to FileMaker Data API Server.
+     */
+    private $_FileMakerDataApi;
+
+    /**
+     * @var array Database map from RESTfm.ini.php.
+     */
+    private $_dbMap = '';
 
     /**
      * Instantiate backend.
@@ -32,8 +43,12 @@ class BackendAbstract implements \RESTfm\BackendAbstract{
      * @param string $username
      * @param string $password
      */
-    public function __construct ($host, $username, $password) {
-
+    public function __construct ($dbMap, $username, $password) {
+        $this->_FileMakerDataApi = new FileMakerDataApi(
+                                        $dbMap['hostspec'],
+                                        $dbMap['solution'],
+                                        $username, $password);
+        $this->_dbMap = $dbMap;
     }
 
     /**
@@ -45,7 +60,7 @@ class BackendAbstract implements \RESTfm\BackendAbstract{
      * @return OpsDatabaseAbstract;
      */
     public function makeOpsDatabase ($database = NULL) {
-
+        return new OpsDatabase($this, $database);
     }
 
     /**
@@ -58,7 +73,7 @@ class BackendAbstract implements \RESTfm\BackendAbstract{
      * @return OpsLayoutAbstract;
      */
     public function makeOpsLayout ($database, $layout) {
-
+        return new OpsLayout($this, $database, $layout);
     }
 
     /**
@@ -71,7 +86,22 @@ class BackendAbstract implements \RESTfm\BackendAbstract{
      * @return OpsRecordAbstract
      */
     public function makeOpsRecord ($database, $layout) {
-       
+        return new OpsRecord($this, $database, $layout);
     }
 
+    // -- Public Functions -- //
+
+    /**
+     * @return FileMakerDataApi
+     */
+    public function getFileMakerDataApi () {
+        return $this->_FileMakerDataApi;
+    }
+
+    /**
+     * @return array
+     */
+    public function getDbMap () {
+        return $this->_dbMap;
+    }
 }

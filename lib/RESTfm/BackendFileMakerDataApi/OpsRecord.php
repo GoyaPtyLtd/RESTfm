@@ -22,7 +22,7 @@ namespace RESTfm\BackendFileMakerDataApi;
 /**
  * FileMaker Data API implementation of OpsLayoutAbstract.
  */
-class OpsRecordAbstract implements \RESTfm\OpsRecordAbstract {
+class OpsRecord extends \RESTfm\OpsRecordAbstract {
 
     /**
      * Construct a new Record-level Operation object.
@@ -34,7 +34,7 @@ class OpsRecordAbstract implements \RESTfm\OpsRecordAbstract {
      * @param string $layout
      */
     public function __construct (\RESTfm\BackendAbstract $backend, $database, $layout) {
-       
+
     }
 
     /**

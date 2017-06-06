@@ -28,22 +28,19 @@ class FileMakerDataApiResponseException extends \RESTfm\ResponseException {
      * Override superclass constructor.
      *
      */
-    function __construct() {
-
-        $code = 500;                // Default status code. Overridden below.
-        $reason = '';
+    function __construct ($reason, $code = 500, \Exception $previous = null) {
 
         // Additional headers for this exception.
         $this->addHeader('X-RESTfm-FMDataAPI-Status', $code);
         $this->addHeader('X-RESTfm-FMDataAPI-Reason', $reason);
 
-        // Set a generic PDO reason for status 500 if not already set.
+        // Set a generic reason for status 500 if not already set.
         if ($code == 500 && empty($reason)) {
             $reason = 'FileMaker Data API Error';
         }
 
         // Finally call superclass constructor.
-        parent::__construct($reason, $code);
+        parent::__construct($reason, $code, $previous);
     }
 
 }

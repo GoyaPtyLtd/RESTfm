@@ -22,7 +22,7 @@ namespace RESTfm\BackendFileMakerDataApi;
 /**
  * FileMaker Data API implementation of OpsLayoutAbstract.
  */
-class OpsLayoutAbstract implements \RESTfm\OpsLayoutAbstract {
+class OpsLayout extends \RESTfm\OpsLayoutAbstract {
 
     /**
      * Construct a new Record-level Operation object.
@@ -30,11 +30,14 @@ class OpsLayoutAbstract implements \RESTfm\OpsLayoutAbstract {
      * @param \RESTfm\BackendAbstract $backend
      *  Implementation must store $this->_backend if a reference is needed in
      *  other methods.
-     * @param string $database
+     * @param string $mapName
      * @param string $layout
      */
-    public function __construct (\RESTfm\BackendAbstract $backend, $database, $layout) {
+    public function __construct (\RESTfm\BackendAbstract $backend, $mapName, $layout) {
+        $this->_backend = $backend;
 
+        $fmDataApi = $backend->getFileMakerDataApi(); // @var FileMakerDataApi
+        $fmDataApi->connect($layout);
     }
 
     /**
@@ -58,7 +61,7 @@ class OpsLayoutAbstract implements \RESTfm\OpsLayoutAbstract {
      * @return \RESTfm\Message\Message
      */
     public function readMetaField () {
-       
+
     }
 
 };
