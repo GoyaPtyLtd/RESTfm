@@ -95,6 +95,18 @@ $config['database'] = array (
 );
 
 /*
+ * Optional list of FileMaker Data API solution:layout names that map to
+ * hostspecs.
+ *
+ * The solution name on the left-hand side may be customised to any name
+ * if an explicit solution is provided on the right-hand side.
+ */
+$config['databaseFMDataAPIMap'] = array (
+    // 'example1:myLayout' => 'http://127.0.0.1:80',
+    // 'example2:myLayout' => 'http://127.0.0.1:80;solution=example3',
+);
+
+/*
  * EXPERIMENTAL:
  * Optional list of database names that map to DSNs as supported by PHP's PDO
  * interface drivers.
