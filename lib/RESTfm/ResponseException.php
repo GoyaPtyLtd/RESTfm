@@ -56,7 +56,7 @@ class ResponseException extends \Tonic\ResponseException {
      *  HTTP Response code.
      * @param Exception $previous
      */
-    public function  __construct ($exceptionMessage, $exceptionCode = 0, Exception $previous = null) {
+    public function  __construct ($exceptionMessage, $exceptionCode = 0, \Exception $previous = null) {
         // Call parent constructor.
         if (version_compare(phpversion(), '5.3.0', '>=')) {
             parent::__construct($exceptionMessage, $exceptionCode, $previous);

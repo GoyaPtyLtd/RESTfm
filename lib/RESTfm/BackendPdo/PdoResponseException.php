@@ -27,7 +27,7 @@ class PdoResponseException extends \RESTfm\ResponseException {
     /**
      * Override superclass constructor.
      *
-     * @param PDOException $e
+     * @param \PDOException $e
      *   The exception object as returned from the failed PDO command.
      */
     function __construct(\PDOException $e) {

@@ -58,7 +58,7 @@ class PdoOpsDatabase extends \RESTfm\OpsDatabaseAbstract {
         try {
             // MySQL:
             $result = $pdo->query('SHOW TABLES', \PDO::FETCH_NUM);
-        } catch (PDOException $e) {
+        } catch (\PDOException $e) {
             throw new PdoResponseException($e);
         }
 

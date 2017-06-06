@@ -49,7 +49,7 @@ class PdoOpsRecord extends \RESTfm\OpsRecordAbstract {
         try {
             // MySQL:
             $result = $pdo->query('SHOW TABLES', \PDO::FETCH_NUM);
-        } catch (PDOException $e) {
+        } catch (\PDOException $e) {
             throw new PdoResponseException($e);
         }
 
@@ -115,7 +115,7 @@ class PdoOpsRecord extends \RESTfm\OpsRecordAbstract {
         $statement = $pdo->prepare('INSERT INTO `'. $this->_validatedTable . '` (' . $columnNamesStr .') VALUES (' . $bindValuesStr .  ')');
         try {
             $statement->execute($valueList);
-        } catch (PDOException $e) {
+        } catch (\PDOException $e) {
             if ($this->_isSingle) {
                 throw new PdoResponseException($e);
             }
@@ -142,7 +142,7 @@ class PdoOpsRecord extends \RESTfm\OpsRecordAbstract {
         $statement = $pdo->prepare('SELECT LAST_INSERT_ID()');
         try {
             $statement->execute();
-        } catch (PDOException $e) {
+        } catch (\PDOException $e) {
             throw new PdoResponseException($e);
         }
         $result = $statement->fetch(\PDO::FETCH_NUM);
@@ -198,7 +198,7 @@ class PdoOpsRecord extends \RESTfm\OpsRecordAbstract {
         $statement = $pdo->prepare('SELECT * FROM `'. $this->_validatedTable . '` WHERE `' . $searchField . '` = ? LIMIT 2');
         try {
             $statement->execute(array($searchValue));
-        } catch (PDOException $e) {
+        } catch (\PDOException $e) {
             if ($this->_isSingle) {
                 throw new PdoResponseException($e);
             }
@@ -326,7 +326,7 @@ class PdoOpsRecord extends \RESTfm\OpsRecordAbstract {
         $valueList[] = $searchValue;
         try {
             $statement->execute($valueList);
-        } catch (PDOException $e) {
+        } catch (\PDOException $e) {
             if ($this->_isSingle) {
                 throw new PdoResponseException($e);
             }
@@ -410,7 +410,7 @@ class PdoOpsRecord extends \RESTfm\OpsRecordAbstract {
         $statement = $pdo->prepare('DELETE FROM `'. $this->_validatedTable . '` WHERE `' .$searchField. '` = ?');
         try {
             $statement->execute(array($searchValue));
-        } catch (PDOException $e) {
+        } catch (\PDOException $e) {
             if ($this->_isSingle) {
                 throw new PdoResponseException($e);
             }
@@ -566,7 +566,7 @@ class PdoOpsRecord extends \RESTfm\OpsRecordAbstract {
      * @throws \RESTfm\ResponseException
      *  On failure to validate provided $fieldName.
      *
-     * @throws PDOException
+     * @throws \PDOException
      *  On failure to retrieve field/column names from database.
      */
     protected function _validateFieldName ($fieldName) {
@@ -576,7 +576,7 @@ class PdoOpsRecord extends \RESTfm\OpsRecordAbstract {
             $statement = $pdo->prepare('SELECT * FROM `'. $this->_validatedTable . '` LIMIT 1');
             try {
                 $statement->execute();
-            } catch (PDOException $e) {
+            } catch (\PDOException $e) {
                 throw new PdoResponseException($e);
             }
 
