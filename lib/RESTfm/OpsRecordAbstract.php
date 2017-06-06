@@ -138,7 +138,7 @@ abstract class OpsRecordAbstract {
      * @param string $scriptParameter
      *  Optional parameter to pass to script.
      *
-     * @throws ResponseException
+     * @throws \RESTfm\ResponseException
      *  On error
      *
      * @return \RESTfm\Message\Message

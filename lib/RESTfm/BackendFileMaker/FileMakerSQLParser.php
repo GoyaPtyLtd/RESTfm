@@ -19,7 +19,9 @@
 
 namespace RESTfm\BackendFileMaker;
 
-use RESTfm\SQLParser;
+use RESTfm\SQLParser\SQLParser;
+use RESTfm\SQLParser\SQLToken;
+use RESTfm\SQLParser\SQLParserException;
 use RESTfm\ResponseException;
 
 /**
