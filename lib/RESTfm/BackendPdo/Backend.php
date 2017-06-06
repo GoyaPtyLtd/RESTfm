@@ -86,7 +86,7 @@ class Backend extends \RESTfm\BackendAbstract {
         // Create and store PDO.
         try {
             $this->_pdoObject = new \PDO($dsn, $username, $password, $options);
-        } catch (PDOException $e) {
+        } catch (\PDOException $e) {
             throw new PdoResponseException($e);
         }
     }

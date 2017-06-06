@@ -49,7 +49,7 @@ class PdoOpsLayout extends \RESTfm\OpsLayoutAbstract {
         try {
             // MySQL:
             $result = $pdo->query('SHOW TABLES', \PDO::FETCH_NUM);
-        } catch (PDOException $e) {
+        } catch (\PDOException $e) {
             throw new PdoResponseException($e);
         }
 
@@ -109,7 +109,7 @@ class PdoOpsLayout extends \RESTfm\OpsLayoutAbstract {
         $statement = $pdo->prepare('SELECT COUNT(*) FROM `'. $this->_validatedTable);
         try {
             $statement->execute();
-        } catch (PDOException $e) {
+        } catch (\PDOException $e) {
             throw new PdoResponseException($e);
         }
         $result = $statement->fetch(\PDO::FETCH_NUM);
@@ -128,7 +128,7 @@ class PdoOpsLayout extends \RESTfm\OpsLayoutAbstract {
         $statement->bindParam(2, intval($findSkip), \PDO::PARAM_INT);
         try {
             $statement->execute();
-        } catch (PDOException $e) {
+        } catch (\PDOException $e) {
             throw new PdoResponseException($e);
         }
 
@@ -177,7 +177,7 @@ class PdoOpsLayout extends \RESTfm\OpsLayoutAbstract {
         $statement = $pdo->prepare('SELECT * FROM `'. $this->_validatedTable . '` LIMIT 1 OFFSET 0');
         try {
             $statement->execute();
-        } catch (PDOException $e) {
+        } catch (\PDOException $e) {
             throw new PdoResponseException($e);
         }
 
