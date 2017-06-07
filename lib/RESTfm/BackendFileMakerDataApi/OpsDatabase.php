@@ -57,7 +57,7 @@ class OpsDatabase extends \RESTfm\OpsDatabaseAbstract {
      */
     public function readLayouts () {
         $message = new \RESTfm\Message\Message();
-        $map = $this->_backend->getMap();
+        $map = $this->_backend->getDbMap();
         if (isset($map['layouts'])) {
             foreach ($map['layouts'] as $layout) {
                 $message->addRecord(new \RESTfm\Message\Record(

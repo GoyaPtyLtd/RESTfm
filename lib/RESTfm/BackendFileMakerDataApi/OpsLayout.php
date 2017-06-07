@@ -35,9 +35,7 @@ class OpsLayout extends \RESTfm\OpsLayoutAbstract {
      */
     public function __construct (\RESTfm\BackendAbstract $backend, $mapName, $layout) {
         $this->_backend = $backend;
-
-        $fmDataApi = $backend->getFileMakerDataApi(); // @var FileMakerDataApi
-        $fmDataApi->connect($layout);
+        $this->_layout = $layout;
     }
 
     /**
@@ -49,7 +47,45 @@ class OpsLayout extends \RESTfm\OpsLayoutAbstract {
      * @return \RESTfm\Message\Message
      */
     public function read () {
+        $fmDataApi = $this->_backend->getFileMakerDataApi(); // @var FileMakerDataApi
+        $fmDataApi->connect($this->_layout);
 
+
+        $findSkip = $this->_readOffset;
+        $findMax = $this->_readCount;
+
+        if ($findSkip == -1) {
+            // If we are to skip to the end ...
+            // ... not possible with this backend.
+        }
+
+        // Query.
+        $response = $fmDataApi->getRecords($findMax, $findSkip + 1);
+
+        $restfmMessage = new \RESTfm\Message\Message();
+
+        $fetchCount = 0;
+        foreach ($response['data'] as $record) {
+            $restfmMessage->addRecord(new \RESTfm\Message\Record(
+                $record['recordId'],
+                NULL,
+                $record['fieldData']
+            ));
+            $fetchCount++;
+        }
+
+        // Calculate the number of records in this query till here
+        // (ensures we get "next" navigation link).
+        $recordCount = $findSkip + $fetchCount + 1;
+
+        // Info.
+        //$restfmMessage->setInfo('tableRecordCount', $recordCount);
+        $restfmMessage->setInfo('foundSetCount', $recordCount);
+        $restfmMessage->setInfo('fetchCount', $fetchCount);
+
+        $fmDataApi->close();
+
+        return $restfmMessage;
     }
 
     /**
@@ -61,7 +97,12 @@ class OpsLayout extends \RESTfm\OpsLayoutAbstract {
      * @return \RESTfm\Message\Message
      */
     public function readMetaField () {
-
+        return new \RESTfm\Message\Message;
     }
 
+    /**
+     * @var string
+     *  Layout name.
+     */
+    protected $_layout;
 };
