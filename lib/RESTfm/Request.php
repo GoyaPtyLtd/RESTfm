@@ -165,10 +165,10 @@ class Request extends \Tonic\Request {
 
         // Set RFMurl encoding format.
         if (isset($this->_Parameters->RFMfixFM01)) {
-            RFMfixUrl::setEncoding(RFMfixUrl::RFMfixFM01);
+            Url::setEncoding(Url::RFMfixFM01);
         }
         if (isset($this->_Parameters->RFMfixFM02)) {
-            RFMfixUrl::setEncoding(RFMfixUrl::RFMfixFM02);
+            Url::setEncoding(Url::RFMfixFM02);
         }
 
         // Set requested override method.
