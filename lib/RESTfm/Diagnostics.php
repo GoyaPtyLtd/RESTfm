@@ -141,6 +141,7 @@ class Diagnostics {
             $reportItem->status = ReportItem::ERROR;
             $reportItem->details .= "Minimum supported PHP version is: 5.3\n";
         }
+        $reportItem->details .= php_ini_loaded_file() . "\n";
     }
 
     public function test_phpPdoDrivers($reportItem) {
