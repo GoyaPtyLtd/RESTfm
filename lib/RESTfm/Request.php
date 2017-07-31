@@ -296,8 +296,8 @@ class Request extends \Tonic\Request {
                 isset($this->_parametersQueryString['RFMfixFM02'])) {
             $decodedData = array();
             foreach ($postData as $key => $value) {
-                $decodedData[\RFMfixFM02::postDecode($key)] =
-                        \RFMfixFM02::postDecode($value);
+                $decodedData[RFMfixFM02::postDecode($key)] =
+                        RFMfixFM02::postDecode($value);
             }
             $postData = $decodedData;
         }
