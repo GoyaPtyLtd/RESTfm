@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -26,14 +26,16 @@
 $startTimeUs = microtime(TRUE);
 
 // Ensure E_STRICT is removed for PHP 5.4+
-error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
-//error_reporting(E_ALL & ~E_STRICT);   // Dev. level reporting
+//error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
+error_reporting(E_ALL & ~E_STRICT);   // Dev. level reporting
 
-// x-debug's html error output makes CLI debugging with cURL a PITA.
+// x-debug's html error output makes CLI debugging with cURL a problem.
 ini_set('html_errors', FALSE);
 
-require_once 'lib/RESTfm/RESTfmConfig.php';
-if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
+// RESTfm autoloader for lib classes.
+require_once 'lib/autoload.php';
+
+if (RESTfm\Config::getVar('settings', 'diagnostics') === TRUE) {
     ini_set('display_errors', '1');
 } else {
     // Don't display errors to end clients.
@@ -42,12 +44,10 @@ if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
 
 require_once 'lib/RESTfm/init_paths.php';
 
+// Tonic library
 require_once 'lib/tonic/lib/tonic.php';
 
-require_once 'lib/RESTfm/Version.php';
-require_once 'lib/RESTfm/RESTfmRequest.php';
-require_once 'lib/RESTfm/RESTfmDump.php';
-
+// Tonic URI resources:
 require_once 'lib/uriRoot.php';
 require_once 'lib/uriDatabaseConstant.php';
 require_once 'lib/uriDatabaseLayout.php';
@@ -59,12 +59,8 @@ require_once 'lib/uriRecord.php';
 //require_once 'lib/uriField.php';
 require_once 'lib/uriBulk.php';
 
-// For testing and debugging.
-//require_once 'lib/uriTest.php';
-
-
 // Ensure we are using SSL if mandated.
-if (RESTfmConfig::getVar('settings', 'SSLOnly')) {
+if (RESTfm\Config::getVar('settings', 'SSLOnly')) {
     if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ||
             $_SERVER['SERVER_PORT'] == 443) {
         // OK, we are good.
@@ -83,8 +79,8 @@ if (RESTfmConfig::getVar('settings', 'SSLOnly')) {
 
 // Setup tonic config for new request.
 $requestConfig = array(
-    'baseUri' => RESTfmConfig::getVar('settings', 'baseURI'),
-    'acceptFormats' => RESTfmConfig::getVar('settings', 'formats'),
+    'baseUri' => RESTfm\Config::getVar('settings', 'baseURI'),
+    'acceptFormats' => RESTfm\Config::getVar('settings', 'formats'),
 );
 // Work around IIS7 mangling of REQUEST_URI when rewriting URLs.
 if (isset($_SERVER['HTTP_X_ORIGINAL_URL'])) {
@@ -92,10 +88,10 @@ if (isset($_SERVER['HTTP_X_ORIGINAL_URL'])) {
 }
 
 // Handle request.
-$request = new RESTfmRequest($requestConfig);
-RESTfmDump::requestData($request);
+$request = new RESTfm\Request($requestConfig);
+RESTfm\Dump::requestData($request);
 try {
-    if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
+    if (RESTfm\Config::getVar('settings', 'diagnostics') === TRUE) {
         require_once 'lib/RESTfm/diagnostic_checks.php';
     }
     $request->parse();
@@ -105,24 +101,24 @@ try {
     // Allow the squashing of all 2XX response codes to 200, for clients
     // that can't handle anything else.
     if (preg_match('/^2\d\d$/', $response->code)) {
-        $restfmParameters = $request->getRESTfmParameters();
+        $restfmParameters = $request->getParameters();
         if (isset($restfmParameters->RFMsquash2XX)) {
-            $response->code = Response::OK;     // 200
+            $response->code = Tonic\Response::OK;     // 200
         }
     }
 
-    RESTfmDump::requestParsed($request);
-} catch (ResponseException $e) {
+    RESTfm\Dump::requestParsed($request);
+} catch (Tonic\ResponseException $e) {
     switch ($e->getCode()) {
-        case Response::UNAUTHORIZED:
+        case Tonic\Response::UNAUTHORIZED:
             // Modify the response code from Unauthorized to Forbidden for
             // data formats handled by applications.
 
             $response = $e->response($request);
-            $format = $request->mostAcceptable(RESTfmConfig::getFormats());
+            $format = $request->mostAcceptable(RESTfm\Config::getFormats());
             if ($format != 'html' && $format != 'txt' &&
-                    RESTfmConfig::getVar('settings', 'forbiddenOnUnauthorized')) {
-                $response->code = Response::FORBIDDEN;
+                    RESTfm\Config::getVar('settings', 'forbiddenOnUnauthorized')) {
+                $response->code = Tonic\Response::FORBIDDEN;
                 break;
             }
 
@@ -134,10 +130,10 @@ try {
     }
 }
 
-if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
+if (RESTfm\Config::getVar('settings', 'diagnostics') === TRUE) {
     // Add profiling information.
-    if (is_a($response, 'RESTfmResponse')) {
-        // In some early startup errors, we may not be RESTfmResponse, so we
+    if (is_a($response, 'RESTfm\Response')) {
+        // In some early startup errors, we may not be RESTfm\Response, so we
         // checked.
 
         // Real/wall time (ms)
@@ -161,9 +157,9 @@ if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
 
 // Add maximum POST size and memory limit information for all RESTfm 2xx
 // responses where a username was specified (non-guest).
-if ( is_a($response, 'RESTfmResponse') &&
+if ( is_a($response, 'RESTfm\Response') &&
         preg_match('/^2\d\d$/', $response->code) ) {
-    $requestUsername = $request->getRESTfmCredentials()->getUsername();
+    $requestUsername = $request->getCredentials()->getUsername();
     if (! empty($requestUsername)) {
         // All RESTfm URIs perform a database query to validate credentials,
         // so all RESTfm 2xx responses imply successful authorisation.
@@ -176,7 +172,7 @@ if ( is_a($response, 'RESTfmResponse') &&
 
 // Final response output.
 $response->output();
-RESTfmDump::responseBody($response);
+RESTfm\Dump::responseBody($response);
 
 exit;
 

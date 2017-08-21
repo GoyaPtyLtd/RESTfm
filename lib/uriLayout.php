@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -17,17 +17,12 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfm/RESTfmResource.php';
-require_once 'RESTfm/RESTfmResponse.php';
-require_once 'RESTfm/RESTfmQueryString.php';
-require_once 'RESTfm/RESTfmDataSimple.php';
-
 /**
  * RESTfm layout element handler.
  *
  * @uri /{database}/layout/{layout}
  */
-class uriLayout extends RESTfmResource {
+class uriLayout extends RESTfm\Resource {
 
     const URI = '/{database}/layout/{layout}';
 
@@ -64,27 +59,27 @@ class uriLayout extends RESTfmResource {
      *  - RFMfind=<SQL query> : An SQL subset syntax that may include
      *                          SELECT, WHERE, ORDER BY, OFFSET, LIMIT
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/layout/{layout}
      * @param string $layout
      *   From URI parsing: /{database}/layout/{layout}
      *
-     * @return RESTfmResponse
+     * @return RESTfm\Response
      */
     function get($request, $database, $layout) {
-        $database = RESTfmUrl::decode($database);
-        $layout = RESTfmUrl::decode($layout);
+        $database = RESTfm\Url::decode($database);
+        $layout = RESTfm\Url::decode($layout);
 
-        $backend = BackendFactory::make($request, $database);
+        $backend = RESTfm\BackendFactory::make($request, $database);
         $opsLayout = $backend->makeOpsLayout($database, $layout);
-        $restfmParameters = $request->getRESTfmParameters();
+        $restfmParameters = $request->getParameters();
 
         if (isset($restfmParameters->RFMmetaFieldOnly)) {
-            $restfmData = $opsLayout->readMetaField();
-            $response = new RESTfmResponse($request);
-            $response->setStatus(Response::OK);
-            $response->setData($restfmData);
+            $restfmMessage = $opsLayout->readMetaField();
+            $response = new RESTfm\Response($request);
+            $response->setStatus(RESTfm\Response::OK);
+            $response->setMessage($restfmMessage);
             return $response;
         }
 
@@ -146,9 +141,9 @@ class uriLayout extends RESTfmResource {
         $opsLayout->setLimit($findSkip, $findMax);
 
         // Read data from layout.
-        $restfmData = $opsLayout->read();
+        $restfmMessage = $opsLayout->read();
 
-        $foundSetCount = $restfmData->getSectionData('info', 'foundSetCount');
+        $foundSetCount = $restfmMessage->getInfo('foundSetCount');
 
         // Adjust findSkip if we skipped to the end.
         if ($findSkip == -1) {
@@ -162,26 +157,27 @@ class uriLayout extends RESTfmResource {
         }
 
         // Info section.
-        $restfmData->pushInfo('skip', $findSkip);
+        $restfmMessage->setInfo('skip', $findSkip);
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
         $format = $response->format;
-        $queryString = new RESTfmQueryString(TRUE);
+        $queryString = new RESTfm\QueryString(TRUE);
 
-        $databaseEnc = RESTfmUrl::encode($database);
-        $layoutEnc = RESTfmUrl::encode($layout);
+        $databaseEnc = RESTfm\Url::encode($database);
+        $layoutEnc = RESTfm\Url::encode($layout);
 
         // Meta section.
-        // Add hrefs for recordIDs.
-        $restfmData->setIteratorSection('meta');
-        foreach($restfmData as $index => $row) {
-            if (isset($row['recordID'])) {
-                $href = $request->baseUri.'/'.
-                            $databaseEnc.'/layout/'.
-                            $layoutEnc.'/'.
-                            RESTfmUrl::encode($row['recordID']).'.'.$format;
-                $restfmData->setSectionData2nd('meta', $index, 'href', $href);
+        // Iterate records and set navigation hrefs.
+        $record = NULL;         // @var \RESTfm\Message\Record
+        foreach($restfmMessage->getRecords() as $record) {
+            if ($record->getRecordId() === NULL) {
+                continue;
             }
+            $record->setHref(
+                $request->baseUri.'/'.
+                        $databaseEnc.'/layout/'.$layoutEnc.'/'.
+                        RESTfm\Url::encode($record->getRecordId()).'.'.$format
+            );
         }
 
         // Nav section.
@@ -189,48 +185,44 @@ class uriLayout extends RESTfmResource {
 
         // Calculate skip values
         $skipPrev = max(0, $findSkip - $findMax);
-        $fetchCount = $restfmData->getSectionData('info', 'fetchCount');
+        $fetchCount = $restfmMessage->getInfo('fetchCount');
         $skipNext = $findSkip + $fetchCount;
 
         // Start nav link.
         unset($queryString->RFMskip);
-        $restfmData->pushNav('start',
-            $request->baseUri.'/'.
-                $databaseEnc.'/layout/'.
-                $layoutEnc.'.'.$format.$queryString->build()
-        );
-
-        // Only build a prev nav link if we have skipped something.
-        if ($findSkip != 0) {
-            $queryString->RFMskip = $skipPrev;
-            $restfmData->pushNav('prev',
-                $request->baseUri.'/'.
-                    $databaseEnc.'/layout/'.
+        $restfmMessage->setNav('start',
+                    $request->baseUri.'/'.$databaseEnc.'/layout/'.
                     $layoutEnc.'.'.$format.$queryString->build()
-            );
-        }
+        );
 
         // Only build a next nav link if we have not exhausted the found set.
         if ($skipNext < $foundSetCount) {
             $queryString->RFMskip = $skipNext;
-            $restfmData->pushNav('next',
-                $request->baseUri.'/'.
-                    $databaseEnc.'/layout/'.
-                    $layoutEnc.'.'.$format.$queryString->build()
+            $restfmMessage->setNav('next',
+                        $request->baseUri.'/'.$databaseEnc.'/layout/'.
+                        $layoutEnc.'.'.$format.$queryString->build()
+            );
+        }
+
+        // Only build a prev nav link if we have skipped something.
+        if ($findSkip != 0) {
+            $queryString->RFMskip = $skipPrev;
+            $restfmMessage->setNav('prev',
+                        $request->baseUri.'/'.$databaseEnc.'/layout/'.
+                        $layoutEnc.'.'.$format.$queryString->build()
             );
         }
 
         // End nav link.
         $queryString->RFMskip = $foundSetCount - 1;
-        $restfmData->pushNav('end',
-            $request->baseUri.'/'.
-                $databaseEnc.'/layout/'.
-                $layoutEnc.'.'.$format.$queryString->build()
+        $restfmMessage->setNav('end',
+                    $request->baseUri.'/'.$databaseEnc.'/layout/'.
+                    $layoutEnc.'.'.$format.$queryString->build()
         );
 
 
-        $response->setStatus(Response::OK);
-        $response->setData($restfmData);
+        $response->setStatus(RESTfm\Response::OK);
+        $response->setMessage($restfmMessage);
         return $response;
     }
 
@@ -250,23 +242,23 @@ class uriLayout extends RESTfmResource {
      *                                 to pass to pre-script.
      *  - RFMsuppressData : set flag to suppress 'data' section from response.
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/layout/{layout}
      * @param string $layout
      *   From URI parsing: /{database}/layout/{layout}
      *
-     * @return RESTfmResponse
+     * @return RESTfm\Response
      */
     function post($request, $database, $layout) {
-        $database = RESTfmUrl::decode($database);
-        $layout = RESTfmUrl::decode($layout);
+        $database = RESTfm\Url::decode($database);
+        $layout = RESTfm\Url::decode($layout);
 
-        $backend = BackendFactory::make($request, $database);
+        $backend = RESTfm\BackendFactory::make($request, $database);
 
         $opsRecord = $backend->makeOpsRecord($database, $layout);
 
-        $restfmParameters = $request->getRESTfmParameters();
+        $restfmParameters = $request->getParameters();
 
         // Allow script calling.
         if (isset($restfmParameters->RFMscript)) {
@@ -288,24 +280,28 @@ class uriLayout extends RESTfmResource {
             $opsRecord->setSuppressData(TRUE);
         }
 
-        $restfmData = $opsRecord->createSingle($request->getRESTfmData());
+        $restfmMessage = $opsRecord->createSingle($request->getMessage());
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
         $format = $response->format;
 
         // Meta section.
-        // Add hrefs for recordIDs.
-        $restfmData->setIteratorSection('meta');
-        foreach($restfmData as $index => $row) {
-            $href = $request->baseUri.'/'.
-                        RESTfmUrl::encode($database).'/layout/'.
-                        RESTfmUrl::encode($layout).'/'.
-                        RESTfmUrl::encode($row['recordID']).'.'.$format;
-            $restfmData->setSectionData2nd('meta', $index, 'href', $href);
+        // Iterate records and set navigation hrefs.
+        $record = NULL;         // @var \RESTfm\Message\Record
+        foreach($restfmMessage->getRecords() as $record) {
+            if ($record->getRecordId() === NULL) {
+                continue;
+            }
+            $record->setHref(
+                $request->baseUri.'/'.
+                        RESTfm\Url::encode($database).'/layout/'.
+                        RESTfm\Url::encode($layout).'/'.
+                        RESTfm\Url::encode($record->getRecordId()).'.'.$format
+            );
         }
 
-        $response->setData($restfmData);
-        $response->setStatus(Response::CREATED);
+        $response->setMessage($restfmMessage);
+        $response->setStatus(RESTfm\Response::CREATED);
         return $response;
     }
 

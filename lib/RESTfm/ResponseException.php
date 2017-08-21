@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -17,13 +17,12 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfmResponse.php';
-require_once 'RESTfmConfig.php';
+namespace RESTfm;
 
 /**
  * Exception class for HTTP response errors
  */
-class RESTfmResponseException extends ResponseException {
+class ResponseException extends \Tonic\ResponseException {
 
     /**
      * HTTP response code constant
@@ -57,7 +56,7 @@ class RESTfmResponseException extends ResponseException {
      *  HTTP Response code.
      * @param Exception $previous
      */
-    public function  __construct ($exceptionMessage, $exceptionCode = 0, Exception $previous = null) {
+    public function  __construct ($exceptionMessage, $exceptionCode = 0, \Exception $previous = null) {
         // Call parent constructor.
         if (version_compare(phpversion(), '5.3.0', '>=')) {
             parent::__construct($exceptionMessage, $exceptionCode, $previous);
@@ -65,7 +64,7 @@ class RESTfmResponseException extends ResponseException {
             parent::__construct($exceptionMessage, $exceptionCode);
         }
 
-        if (RESTfmConfig::getVar('settings', 'diagnostics') === TRUE) {
+        if (Config::getVar('settings', 'diagnostics') === TRUE) {
             $this->addInfo('X-RESTfm-Trace', $this->__toSTring());
         }
     }
@@ -73,13 +72,13 @@ class RESTfmResponseException extends ResponseException {
     /**
      * Generate a default response for this exception
      *
-     * @param RESTfmRequest request
+     * @param \RESTfm\Request request
      *
-     * @return Response
+     * @return \RESTfm\Response
      */
     public function response($request) {
 
-        $response = new RESTfmResponse($request);
+        $response = new Response($request);
 
         foreach ($this->_addHeader as $name => $value) {
             $response->addHeader($name, $value);
@@ -113,7 +112,7 @@ class RESTfmResponseException extends ResponseException {
     /**
      * Additional HTTP header to be included in response.
      *
-     * RESTfmResponse will inject all headers matching /^X-RESTfm-/i into the
+     * \RESTfm\Response will inject all headers matching /^X-RESTfm-/i into the
      * 'info' section automatically.
      *
      * @var string $header

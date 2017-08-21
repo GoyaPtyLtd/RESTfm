@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -17,18 +17,18 @@
  *  Gavin Stewart
  */
 
-require_once 'PdoResponseException.php';
+namespace RESTfm\BackendPdo;
 
 /**
  * PdoOpsDatabase
  *
  * PHP PDO specific implementation of OpsDatabaseAbstract.
  */
-class PdoOpsDatabase extends OpsDatabaseAbstract {
+class PdoOpsDatabase extends \RESTfm\OpsDatabaseAbstract {
 
     // --- OpsRecordDatabase implementation ---
 
-    public function __construct (BackendAbstract $backend, $database = NULL) {
+    public function __construct (\RESTfm\BackendAbstract $backend, $database = NULL) {
         $this->_backend = $backend;
         $this->_database = $database;
     }
@@ -37,28 +37,28 @@ class PdoOpsDatabase extends OpsDatabaseAbstract {
      * Read databases available - Not applicable to PDO backends, as the database
      * is hard coded in the DSN.
      *
-     * @return RESTfmDataAbstract
+     * @return \RESTfm\Message\Message
      *   Empty, no sections.
      */
     public function readDatabases () {
-        return new RESTfmDataSimple;
+        return new \RESTfm\Message\Message;
     }
 
     /**
      * Read tables available in database via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
+     * @return \RESTfm\Message\Message
      *  - 'data', 'meta' sections.
      */
     public function readLayouts () {
         $pdo = $this->_backend->getPDO();
         try {
             // MySQL:
-            $result = $pdo->query('SHOW TABLES', PDO::FETCH_NUM);
-        } catch (PDOException $e) {
+            $result = $pdo->query('SHOW TABLES', \PDO::FETCH_NUM);
+        } catch (\PDOException $e) {
             throw new PdoResponseException($e);
         }
 
@@ -69,26 +69,30 @@ class PdoOpsDatabase extends OpsDatabaseAbstract {
 
         natsort($tables);
 
-        $restfmData = new RESTfmDataSimple();
+        $restfmMessage = new \RESTfm\Message\Message();
         foreach($tables as $table) {
             if (empty($table)) continue;
-            $restfmData->pushDataRow( array('layout' => $table), NULL, NULL );
+            $restfmMessage->addRecord(new \RESTfm\Message\Record(
+                NULL,
+                NULL,
+                array('layout' => $table)
+            ));
         }
 
-        return $restfmData;
+        return $restfmMessage;
     }
 
     /**
      * Read scripts available in $database via backend. - Not applicable.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
+     * @return \RESTfm\Message\Message
      *  - 'data', 'meta' sections.
      */
     public function readScripts () {
-        return new RESTfmDataSimple();
+        return new \RESTfm\Message\Message();
     }
 
     // --- Protected ---

@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -17,8 +17,7 @@
  *  Gavin Stewart
  */
 
-require_once('SQLParserException.php');
-require_once('SQLToken.php');
+namespace RESTfm\SQLParser;
 
 /**
  * SQL-like syntax lexer.

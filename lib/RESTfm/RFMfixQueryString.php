@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -17,14 +17,12 @@
  *  Gavin Stewart
  */
 
-require_once 'QueryString.php';
-require_once 'RFMfixFM01.php';
-require_once 'RFMfixFM02.php';
+namespace RESTfm;
 
 /**
  * Extends QueryString to include additional encoding.
  */
-class RESTfmQueryString extends QueryString {
+class RFMfixQueryString extends QueryString {
 
     /**
      * Allowed encoding types.

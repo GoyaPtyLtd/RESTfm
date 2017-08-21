@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -17,9 +17,7 @@
  *  Gavin Stewart
  */
 
-require_once 'BackendAbstract.php';
-require_once 'RESTfmResponseException.php';
-require_once 'RESTfmDataAbstract.php';
+namespace RESTfm;
 
 /**
  * OpsDatabaseAbstract
@@ -28,12 +26,12 @@ require_once 'RESTfmDataAbstract.php';
  * queries that do not operate at the record level, such as listing
  * databases, layouts, etc.
  *
- * All data I/O is encapsulated in a RESTfmData object.
+ * All data I/O is encapsulated in a \RESTfm\Message\Message object.
  */
 abstract class OpsDatabaseAbstract {
 
     /**
-     * @var BackendAbstract
+     * @var \RESTfm\BackendAbstract
      *  Handle to backend object. Implementation should set this in
      *  constructor.
      */
@@ -42,43 +40,40 @@ abstract class OpsDatabaseAbstract {
     /**
      * Construct a new Database-level Operation object.
      *
-     * @param BackendAbstract $backend
+     * @param \RESTfm\BackendAbstract $backend
      *  Implementation must store $this->_backend if a reference is needed in
      *  other methods.
      * @param string $database
      */
-    abstract public function __construct (BackendAbstract $backend, $database = NULL);
+    abstract public function __construct (\RESTfm\BackendAbstract $backend, $database = NULL);
 
     /**
      * Read databases available via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTFm\ResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
-     *  - 'data', 'meta' sections.
+     * @return \RESTfm\Message\Message
      */
     abstract public function readDatabases ();
 
     /**
      * Read layouts available in $database via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTFm\ResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
-     *  - 'data', 'meta' sections.
+     * @return \RESTfm\Message\Message
      */
     abstract public function readLayouts ();
 
     /**
      * Read scripts available in $database via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTFm\ResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
-     *  - 'data', 'meta' sections.
+     * @return \RESTfm\Message\Message
      */
     abstract public function readScripts ();
 

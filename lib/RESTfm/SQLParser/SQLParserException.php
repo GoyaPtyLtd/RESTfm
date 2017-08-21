@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -17,7 +17,9 @@
  *  Gavin Stewart
  */
 
-class SQLParserException extends Exception {
+namespace RESTfm\SQLParser;
+
+class SQLParserException extends \Exception {
     /* ParserSQL Exception codes.*/
 
     // Lexer errors.

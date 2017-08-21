@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -17,18 +17,18 @@
  *  Gavin Stewart
  */
 
-require_once 'FileMakerResponseException.php';
+namespace RESTfm\BackendFileMaker;
 
 /**
  * FileMakerOpsDatabase
  *
  * FileMaker specific implementation of OpsDatabaseAbstract.
  */
-class FileMakerOpsDatabase extends OpsDatabaseAbstract {
+class FileMakerOpsDatabase extends \RESTfm\OpsDatabaseAbstract {
 
     // --- OpsRecordDatabase implementation ---
 
-    public function __construct (BackendAbstract $backend, $database = NULL) {
+    public function __construct (\RESTfm\BackendAbstract $backend, $database = NULL) {
         $this->_backend = $backend;
         if ($database != NULL) {
             $this->_backend->getFileMaker()->setProperty('database', $database);
@@ -42,74 +42,77 @@ class FileMakerOpsDatabase extends OpsDatabaseAbstract {
      * @throws FileMakerResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
-     *  - 'data', 'meta' sections.
+     * @return \RESTfm\Message\Message
      */
     public function readDatabases () {
         $FM = $this->_backend->getFileMaker();
         $result = $FM->listDatabases();
-        if (FileMaker::isError($result)) {
+        if (\FileMaker::isError($result)) {
             throw new FileMakerResponseException($result);
         }
         natsort($result);
 
-        $restfmData = new RESTfmDataSimple();
+        $restfmMessage = new \RESTfm\Message\Message();
         foreach($result as $database) {
-            $restfmData->pushDataRow( array('database' => $database), NULL, NULL );
+            $restfmMessage->addRecord(new \RESTfm\Message\Record(
+                NULL, NULL, array('database' => $database)
+            ));
         }
 
-        return $restfmData;
+        return $restfmMessage;
     }
 
     /**
      * Read layouts available in $database via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
-     *  - 'data', 'meta' sections.
+     * @return \RESTfm\Message\Message
      */
     public function readLayouts () {
         $FM = $this->_backend->getFileMaker();
         $result = $FM->listLayouts();
-        if (FileMaker::isError($result)) {
+        if (\FileMaker::isError($result)) {
             throw new FileMakerResponseException($result);
         }
         natsort($result);
 
-        $restfmData = new RESTfmDataSimple();
+        $restfmMessage = new \RESTfm\Message\Message();
         foreach($result as $layout) {
             if (empty($layout)) continue;
-            $restfmData->pushDataRow( array('layout' => $layout), NULL, NULL );
+            $restfmMessage->addRecord(new \RESTfm\Message\Record(
+                NULL, NULL, array('layout' => $layout)
+            ));
         }
 
-        return $restfmData;
+        return $restfmMessage;
     }
 
     /**
      * Read scripts available in $database via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
-     *  - 'data', 'meta' sections.
+     * @return \RESTfm\Message\Message
      */
     public function readScripts () {
         $FM = $this->_backend->getFileMaker();
         $result = $FM->listScripts();
-        if (FileMaker::isError($result)) {
+        if (\FileMaker::isError($result)) {
             throw new FileMakerResponseException($result);
         }
         natsort($result);
 
-        $restfmData = new RESTfmDataSimple();
+        $restfmMessage = new \RESTfm\Message\Message();
         foreach($result as $script) {
-            $restfmData->pushDataRow( array('script' => $script), NULL, NULL );
+            $restfmMessage->addRecord(new \RESTfm\Message\Record(
+                NULL, NULL, array('script' => $script)
+            ));
         }
 
-        return $restfmData;
+        return $restfmMessage;
     }
 
     // --- Protected ---

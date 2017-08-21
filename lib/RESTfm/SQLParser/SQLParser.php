@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -16,6 +16,8 @@
  * @author
  *  Gavin Stewart
  */
+
+namespace RESTfm\SQLParser;
 
  /*
   * References:
@@ -66,10 +68,6 @@ limit:              'LIMIT' string
 offset:             'OFFSET' string
 
  */
-
-require_once('SQLParserException.php');
-require_once('SQLToken.php');
-require_once('SQLLexer.php');
 
 /**
  * SQLParser Class.

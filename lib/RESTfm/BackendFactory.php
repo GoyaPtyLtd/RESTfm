@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -17,10 +17,7 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfmConfig.php';
-require_once 'RESTfmRequest.php';
-require_once 'RESTfmCredentials.php';
-require_once 'BackendAbstract.php';
+namespace RESTfm;
 
 /**
  * (Database) Backend Factory - instantiates appropriate database backend.
@@ -36,45 +33,37 @@ class BackendFactory {
     /**
      * Instantiate and return the appropriate backend object.
      *
-     * @param RESTfmRequest $request
+     * @param Request $request
      *  Originating request containing credentials for backend authentication.
      *
      * @param string $database
      *  Database name.
      *
-     * @throws RESTfmResponseException
+     * @throws ResponseException
      *  When no appropriate backend found.
      *
      * @return BackendAbstract
      */
-    public static function make (RESTfmRequest $request, $database = NULL) {
+    public static function make (Request $request, $database = NULL) {
         // FileMaker is the default, but $database may map to a PDO backend.
         $type = self::BACKEND_FILEMAKER;
-        if ($database !== NULL && RESTfmConfig::checkVar('databasePDOMap', $database)) {
+        if ($database !== NULL && Config::checkVar('databasePDOMap', $database)) {
             $type = self::BACKEND_PDO;
         }
 
-        // Identify backend class.
-        $backendName = 'Backend' . $type;
-        $classPath = dirname(__FILE__) . DIRECTORY_SEPARATOR .
-                     $backendName . DIRECTORY_SEPARATOR .
-                     $backendName . '.php';
-        if (!file_exists($classPath)) {
-            throw new RESTfmResponseException('Unknown backend: ' . $type, 500);
-        }
-        require_once($classPath);
+        $backendClassName = 'RESTfm\\Backend' . $type . '\\' . 'Backend';
 
-        $restfmCredentials = $request->getRESTfmCredentials();
+        $restfmCredentials = $request->getCredentials();
 
         if ($type === self::BACKEND_PDO) {
-            $backendObject = new $backendName(
-                            RESTfmConfig::getVar('databasePDOMap', $database),
+            $backendObject = new $backendClassName(
+                            Config::getVar('databasePDOMap', $database),
                             $restfmCredentials->getUsername(),
                             $restfmCredentials->getPassword()
                         );
         } else {    # Default to FileMaker
-            $backendObject = new $backendName(
-                            RESTfmConfig::getVar('database', 'hostspec'),
+            $backendObject = new $backendClassName(
+                            Config::getVar('database', 'hostspec'),
                             $restfmCredentials->getUsername(),
                             $restfmCredentials->getPassword()
                         );

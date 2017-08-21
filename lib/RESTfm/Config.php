@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -17,10 +17,12 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm;
+
 /**
  * RESTfm Config static class.
  */
-class RESTfmConfig {
+class Config {
 
     /**
      * @var array Cached copy of config array.
@@ -49,7 +51,7 @@ class RESTfmConfig {
         }
 
         // Fetch top level of config.
-        $result = RESTfmConfig::_getConfig();
+        $result = Config::_getConfig();
 
         // For each function argument; descend config.
         foreach(func_get_args() as $arg) {
@@ -89,14 +91,14 @@ class RESTfmConfig {
         }
 
         // Fetch top level of config.
-        $result = RESTfmConfig::_getConfig();
+        $result = Config::_getConfig();
 
         // For each function argument; descend config.
         foreach(func_get_args() as $arg) {
             if (! isset($result[$arg])) {
                 //var_dump(debug_backtrace());
-                error_log('RESTfmConfig::getVar() error: Request for non-existent variable: "' . join('", "', func_get_args()) . '", caller: ' .
-                          RESTfmConfig::_backtraceStr(debug_backtrace()));
+                error_log('RESTfm\Config::getVar() error: Request for non-existent variable: "' . join('", "', func_get_args()) . '", caller: ' .
+                          Config::_backtraceStr(debug_backtrace()));
                 return NULL;
             }
             $result = $result[$arg];

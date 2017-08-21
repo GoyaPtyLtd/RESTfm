@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -17,21 +17,19 @@
  *  Gavin Stewart
  */
 
-require_once 'BackendAbstract.php';
-require_once 'RESTfmResponseException.php';
-require_once 'RESTfmDataAbstract.php';
+namespace RESTfm;
 
 /**
  * OpsLayoutAbstract
  *
  * Wraps all layout-level operations to database backend(s).
  *
- * All data I/O is encapsulated in a RESTfmData object.
+ * All data I/O is encapsulated in a \RESTfm\Message\Message object.
  */
 abstract class OpsLayoutAbstract {
 
     /**
-     * @var BackendAbstract
+     * @var \RESTfm\BackendAbstract
      *  Handle to backend object. Implementation should set this in
      *  constructor.
      */
@@ -40,33 +38,31 @@ abstract class OpsLayoutAbstract {
     /**
      * Construct a new Record-level Operation object.
      *
-     * @param BackendAbstract $backend
+     * @param \RESTfm\BackendAbstract $backend
      *  Implementation must store $this->_backend if a reference is needed in
      *  other methods.
      * @param string $database
      * @param string $layout
      */
-    abstract public function __construct (BackendAbstract $backend, $database, $layout);
+    abstract public function __construct (\RESTfm\BackendAbstract $backend, $database, $layout);
 
     /**
      * Read records in layout in database via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
-     *  - 'data', 'meta', 'metaField' sections.
+     * @return \RESTfm\Message\Message
      */
     abstract public function read ();
 
     /**
      * Read field metadata in layout in database via backend.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *  On backend error.
      *
-     * @return RESTfmDataAbstract
-     *  - 'metaField' section.
+     * @return \RESTfm\Message\Message
      */
     abstract public function readMetaField ();
 

@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -17,18 +17,20 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm\BackendPdo;
+
 /**
  * PdoResponseException class.
  */
-class PdoResponseException extends RESTfmResponseException {
+class PdoResponseException extends \RESTfm\ResponseException {
 
     /**
      * Override superclass constructor.
      *
-     * @param PDOException $e
+     * @param \PDOException $e
      *   The exception object as returned from the failed PDO command.
      */
-    function __construct(PDOException $e) {
+    function __construct(\PDOException $e) {
 
         $code = 500;                // Default status code. Overridden below.
         $reason = '';
@@ -39,7 +41,7 @@ class PdoResponseException extends RESTfmResponseException {
         if ($pdoCode == 1045) {
             // 1045: "Access denied for user"
             //      Note: same with or without password being used.
-            $code = RESTfmResponseException::UNAUTHORIZED;
+            $code = \RESTfm\ResponseException::UNAUTHORIZED;
         }
 
         /* -- Code below from FileMakerResponseException, kept as reference --
@@ -49,23 +51,23 @@ class PdoResponseException extends RESTfmResponseException {
             // 101: Record is missing
             // 104: Script is missing
             // 105: Layout is missing
-            $code = RESTfmResponseException::NOTFOUND;
+            $code = \RESTfm\ResponseException::NOTFOUND;
         } elseif ($fmCode == 22 && stripos($fmMessage, 'password') !== FALSE) {
             // FileMaker Server 11 authorisation required response.
             // "Communication Error: (22) The requested URL returned error:
             //  401 - This can be due to an invalid username or password,
             //  or if the FMPHP privilege is not enabled for that user."
-            $code = RESTfmResponseException::UNAUTHORIZED;
+            $code = \RESTfm\ResponseException::UNAUTHORIZED;
         } elseif ($fmCode == 18 && stripos($fmMessage, 'account') !== FALSE) {
             // FileMaker Server 12 authorisation required response.
             // "Client must provide account information to proceed"
-            $code = RESTfmResponseException::UNAUTHORIZED;
+            $code = \RESTfm\ResponseException::UNAUTHORIZED;
         } elseif ($fmCode == 9 && stripos($fmMessage, 'privileges') !== FALSE) {
             // FileMaker Server 12 - Sometimes occurs when user account is
             //  correct, but with incorrect password. Does _not_ occur when
             //  trying to write record with read only access.
             // "Insufficient privileges"
-            $code = RESTfmResponseException::UNAUTHORIZED;
+            $code = \RESTfm\ResponseException::UNAUTHORIZED;
         }
         */
 

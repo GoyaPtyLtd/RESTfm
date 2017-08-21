@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -17,35 +17,40 @@
  *  Gavin Stewart
  */
 
-class FormatJson extends FormatAbstract {
+namespace RESTfm\Format;
+
+use RESTfm\FormatInterface;
+use RESTfm\Message\Message;
+
+class FormatJson implements FormatInterface {
 
     // --- Interface Implementation --- //
-
-    public function parse (RESTfmDataAbstract $restfmData, $data) {
+    /**
+     * Parse the provided data string into the provided \RESTfm\Message\Message
+     * implementation object.
+     *
+     * @param \RESTfm\Message\Message $restfmMessage
+     * @param string $data
+     */
+    public function parse (Message $restfmMessage, $data) {
         $a = json_decode($data, TRUE);
         foreach ($a as $sectionName => $sectionData) {
-
-            if ($this->_is_assoc($sectionData)) {           // Associative is
-                $restfmData->addSection($sectionName, 1);   // one dimension.
-                foreach ($sectionData as $key => $val) {
-                    $restfmData->setSectionData($sectionName, $key, $val);
-                }
-            } else {                                        // Indexed is
-                $restfmData->addSection($sectionName, 2);   // two dimensions.
-                foreach ($sectionData as $val) {
-                    $restfmData->setSectionData($sectionName, NULL, $val);
-                }
-            }
-
+            $restfmMessage->setSection($sectionName, $sectionData);
         }
     }
 
-    public function write (RESTfmDataAbstract $restfmData) {
-        $tables = $this->_collate($restfmData);
-        if (RESTfmConfig::getVar('settings', 'formatNicely')) {
-            return $this->_json_encode_pretty($tables);
+    /**
+     * Write the provided \RESTfm\Message\Message object into a formatted string.
+     *
+     * @param \RESTfm\Message\Message $restfmMessage
+     *
+     * @return string
+     */
+    public function write (Message $restfmMessage) {
+        if (\RESTfm\Config::getVar('settings', 'formatNicely')) {
+            return $this->_json_encode_pretty($restfmMessage->exportArray());
         } else {
-            return json_encode($tables);
+            return json_encode($restfmMessage->exportArray());
         }
     }
 

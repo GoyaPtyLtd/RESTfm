@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -17,7 +17,12 @@
  *  Gavin Stewart
  */
 
-require_once(__DIR__.'/../SQLParser/SQLParser.php');
+namespace RESTfm\BackendFileMaker;
+
+use RESTfm\SQLParser\SQLParser;
+use RESTfm\SQLParser\SQLToken;
+use RESTfm\SQLParser\SQLParserException;
+use RESTfm\ResponseException;
 
 /**
  * FileMaker specific implementation of SQLParser class.
@@ -46,15 +51,15 @@ class FileMakerSQLParser extends SQLParser {
     /**
      * Override parent class parse() method.
      *
-     * @throws RESTfmResponseException
+     * @throws \RESTfm\ResponseException
      *   On error.
      */
     public function parse() {
       try {
         parent::parse();
       } catch (SQLParserException $e) {
-         // Re-throw as a RESTfmResponseException.
-         throw new RESTfmResponseException('RFMfind SQL error: '.$e->getMessage(), RESTfmResponseException::BADREQUEST, $e);
+         // Re-throw as a \RESTfm\ResponseException.
+         throw new ResponseException('RFMfind SQL error: '.$e->getMessage(), ResponseException::BADREQUEST, $e);
       }
     }
 

@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -17,7 +17,7 @@
  *  Gavin Stewart
  */
 
-require_once 'FormatAbstract.php';
+namespace RESTfm;
 
 /**
  * Format/Format* object factory static class.
@@ -30,7 +30,7 @@ class FormatFactory {
      * @param string $type
      *  Type of formatter object to return.
      *
-     * @throws RESTfmResponseException
+     * @throws ResponseException
      *  When no matching formatter found.
      *
      * @return FormatAbstract
@@ -42,13 +42,7 @@ class FormatFactory {
             $type = self::$_map[$type];
         }
 
-        // Locate format class and instantiate object.
-        $formatPathPrefix = 'lib/RESTfm/Format/';
-        $formatClassName = 'Format' . ucfirst(strtolower($type));
-        if (!file_exists($formatPathPrefix . $formatClassName . '.php')) {
-            throw new RESTfmResponseException('Unknown format: ' . $type, 500);
-        }
-        require_once($formatPathPrefix . $formatClassName . '.php');
+        $formatClassName = 'RESTfm\\Format\\Format'.ucfirst(strtolower($type));
         return new $formatClassName();
     }
 

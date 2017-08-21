@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -17,33 +17,40 @@
  *  Gavin Stewart
  */
 
-class FormatHtml extends FormatAbstract {
+namespace RESTfm\Format;
+
+use RESTfm\FormatInterface;
+use RESTfm\Message\Message;
+use RESTfm\Message\Record;
+
+class FormatHtml implements FormatInterface {
 
     // --- Interface Implementation --- //
 
-    public function parse (RESTfmDataAbstract $restfmData, $data) {
+    public function parse (Message $restfmMessage, $data) {
         // $data is URL encoded key => value pairs as in a HTTP POST body or
         // HTTP GET query string.
         $a = array();
         $this->_parse_str($data, $a);
 
-        $restfmData->addSection('data', 2);
-        $restfmData->setSectionData('data', NULL, $a);
+        $restfmMessage->addRecord(new Record( NULL, NULL, $a ));
     }
 
-    public function write (RESTfmDataAbstract $restfmData) {
-        $sections = $this->_collate($restfmData);
+    /**
+     * @codeCoverageIgnore Not a testable unit.
+     */
+    public function write (Message $restfmMessage) {
 
         //$str = '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">' . "\n";
         $str = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">' . "\n";
         $str .= '<html><head>' . "\n";
         $str .= '<meta http-equiv="Content-type" content="text/html; charset=utf-8">' . "\n";
         $str .= "<title>Response</title>\n";
-        $str .= '<link type="text/css" rel="stylesheet" href="' . RESTfmConfig::getVar('settings', 'baseURI') . '/css/RESTfm.css">'."\n";
+        $str .= '<link type="text/css" rel="stylesheet" href="' . \RESTfm\Config::getVar('settings', 'baseURI') . '/css/RESTfm.css">'."\n";
         $str .= "</head><body>\n";
         $str .= '<div id="logo">' .
-                '<a target="_blank" href="http://www.restfm.com"><img width="106" height="36" src="' . RESTfmConfig::getVar('settings', 'baseURI') . '/css/RESTfm.logo.png" alt="RESTfm logo"></a>' .
-                '<span>' . Version::getRelease() . '</span>' .
+                '<a target="_blank" href="http://www.restfm.com"><img width="106" height="33" src="' . \RESTfm\Config::getVar('settings', 'baseURI') . '/css/RESTfm.logo.png" alt="RESTfm logo"></a>' .
+                '<span>' . \RESTfm\Version::getRelease() . '</span>' .
             '</div>' . "\n";
 
         // Credentials in use.
@@ -53,37 +60,58 @@ class FormatHtml extends FormatAbstract {
             $displayUser = $this->_username;
         }
         $str .= '<div id="credentials">Username: ' . $displayUser . '<br>'.
-                    '[ <a href="' . RESTfmConfig::getVar('settings', 'baseURI') . '?RFMreauth=' . rawurlencode($this->_username) . '">change user</a> ]'.
+                    '[ <a href="' . \RESTfm\Config::getVar('settings', 'baseURI') . '?RFMreauth=' . rawurlencode($this->_username) . '">change user</a> ]'.
                 '</div>';
 
-        $sectionNames = array_keys($sections);
+        $sectionNames = $restfmMessage->getSectionNames();
 
         // Prioritise some sections above others.
-        $sectionPriority = function ($a, $b) {
-            // Sort as 'nav', 'data', 'info', <any other>.
+        $sectionPriorityFunction = function ($a, $b) {
+            // Sort as 'nav', 'data', 'info', 'metaField', any other>.
             if ($a == 'nav' ) { return -1; }
             if ($b == 'nav' ) { return  1; }
             if ($a == 'data') { return -1; }
             if ($b == 'data') { return  1; }
             if ($a == 'info') { return -1; }
             if ($b == 'info') { return  1; }
+            if ($a == 'metaField') { return -1; }
+            if ($b == 'metaField') { return  1; }
             return 0;
         };
-        usort($sectionNames, $sectionPriority);
+        usort($sectionNames, $sectionPriorityFunction);
 
         foreach($sectionNames as $sectionName) {
+            $section = $restfmMessage->getSection($sectionName);
+
             $str .= '<h3>'.$sectionName.'</h3>'."\n";
             $str .= '<div id="'.$sectionName.'">'."\n";
-            if (count($sections[$sectionName]) <= 0) {
+            if (count($section) <= 0) {
                 $str .= '<div class="warn">Warning: no records found.</div>'."\n";
             }
             $str .= "<table>\n";
-            if ($this->_is_assoc($sections[$sectionName])) {
-                // This is an assoc array, render as field per row.
-                $str .= $this->_record2htmlFieldRow($sections[$sectionName]);
+            $sectionRows = $section->getRows();
+            if ($section->getDimensions() == 1) {
+                $row_num = 0;
+                foreach($sectionRows[0] as $fieldName => $val) {
+                    $str .= '<tr>'."\n";
+                    if ($sectionName == 'nav') {
+                        // Inject href field as link in first column of row.
+                        $str .= '<td>[ <a href="'.$val.'">link</a> ]</td>'."\n";
+                    }
+                    $str .= '<th>'.htmlspecialchars($fieldName).'</th>'."\n";
+                    $alt_colour = '';
+                    if ($row_num %2 == 0) {
+                        $alt_colour = ' class="alt-colour"';
+                    }
+                    $str .= '<td'.$alt_colour.'><pre>';
+                    $str .= htmlspecialchars($val);
+                    $str .= '</pre></td>'."\n";
+                    $str .= '</tr>'."\n";
+                    $row_num++;
+                }
             } else {
-                // !_is_assoc($sections[$sectionName])
-                // This is an array of records, render record per row.
+                // $section->getDimensions() == 2
+                // This is multiple records, render as record per row.
                 $str .= '<tr>';
                 if ($sectionName == 'data' || $sectionName == 'nav') {
                     $str .= '<th></th>'; // No heading for link column.
@@ -91,12 +119,15 @@ class FormatHtml extends FormatAbstract {
                     // No link column
                 }
                 // Pull the field names from the first record for the heading row.
-                foreach($sections[$sectionName][0] as $fieldName => $val) {
+                foreach($sectionRows[0] as $fieldName => $val) {
                     $str .= '<th>'.htmlspecialchars($fieldName).'</th>';
                 }
                 $str .= "</tr>\n";
+                if ($sectionName == 'data') {
+                    $sectionMetaRows = $restfmMessage->getSection('meta')->getRows();
+                }
                 $row_num = 0;
-                foreach($sections[$sectionName] as $row) {
+                foreach($sectionRows as $row) {
                     // Set row id and class.
                     $str .= '<tr id="'.$sectionName.'_'.$row_num.'"';
                     if ($row_num % 2 == 0) {
@@ -104,9 +135,9 @@ class FormatHtml extends FormatAbstract {
                     }
                     $str .= '>'."\n";
 
-                    if ($sectionName == 'data' && isset($sections['meta'][$row_num]['href'])) {
+                    if ($sectionName == 'data' && isset($sectionMetaRows[$row_num]['href'])) {
                         // Inject meta data href as link in first column of record.
-                        $str .= '<td>[ <a href="'.$sections['meta'][$row_num]['href'].'">link</a> ]</td>'."\n";
+                        $str .= '<td>[ <a href="'.$sectionMetaRows[$row_num]['href'].'">link</a> ]</td>'."\n";
                     } elseif ($sectionName == 'data') {
                         // Data section with empty link column.
                         $str .= '<td></td>'."\n";
@@ -136,6 +167,8 @@ class FormatHtml extends FormatAbstract {
     /**
      *  Set username for credentials of current request. Displayed in UI, and
      *  used in "change user" link to force reauthentication.
+     *
+     * @codeCoverageIgnore Not a testable unit.
      */
     public function setUsername ($username) {
         $this->_username = $username;
@@ -178,83 +211,4 @@ class FormatHtml extends FormatAbstract {
         }
     }
 
-    /**
-     * Convert an associative array (a single record) into a HTML
-     * string. Rendered as field per row.
-     *
-     * @param[in] array $assoc
-     *   Associative array to convert.
-     */
-    protected function _record2htmlFieldRow(array $assoc) {
-        $str = '';
-        $row_num = 0;
-        foreach($assoc as $fieldName => $val) {
-            $str .= '<tr><th>'.htmlspecialchars($fieldName).'</th>';
-            $alt_colour = '';
-            if ($row_num %2 == 0) {
-                $alt_colour = ' class="alt-colour"';
-            }
-            if (is_array($val)) {
-                $str .= '<td>';
-                $str .= "\n".'<table>';
-                $str .= self::_array2htmlItemRow($val);
-                $str .= '</table>'."\n";
-            } else {
-                $str .= '<td'.$alt_colour.'>';
-                $str .= htmlspecialchars($val);
-                // Convert hrefs into links.
-                /*
-                if (strpos($fieldName, 'href') === FALSE) {
-                    $str .= $val;
-                } else {
-                    $str .= '<a href="'.$val.'">'.$val."\n";
-                }
-                */
-            }
-            $str .= '</td></tr>'."\n";
-            $row_num++;
-        }
-
-        return $str;
-    }
-
-    /**
-     * Convert an array into a HTML
-     * string. Rendered as item per row.
-     *
-     * @param[in] array $a
-     *   Array to convert.
-     */
-    protected function _array2htmlItemRow(array $a) {
-        $str = '';
-        $row_num = 0;
-        foreach($a as $val) {
-            $str .= '<tr>';
-            $alt_colour = '';
-            if ($row_num %2 == 0) {
-                $alt_colour = ' class="alt-colour"';
-            }
-            if (is_array($val)) {
-                $str .= '<td>';
-                $str .= '<table>';
-                $str .= self::_array2htmlItemRow($val);
-                $str .= '</table>';
-            } else {
-                $str .= '<td'.$alt_colour.'>';
-                $str .= htmlspecialchars($val);
-                // Convert hrefs into links.
-                /*
-                if (strpos($fieldName, 'href') === FALSE) {
-                    $str .= $val;
-                } else {
-                    $str .= '<a href="'.$val.'">'.$val."\n";
-                }
-                */
-            }
-            $str .= '</td></tr>'."\n";
-            $row_num++;
-        }
-
-        return $str;
-    }
 }

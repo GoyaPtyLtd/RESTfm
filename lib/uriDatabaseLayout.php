@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -17,54 +17,50 @@
  *  Gavin Stewart
  */
 
-require_once 'RESTfm/RESTfmResource.php';
-require_once 'RESTfm/RESTfmResponse.php';
-require_once 'RESTfm/QueryString.php';
-
 /**
  * RESTfm layout collection handler for Tonic
  *
  * @uri /{database}/layout
  */
-class uriDatabaseLayout extends RESTfmResource {
+class uriDatabaseLayout extends RESTfm\Resource {
 
     const URI = '/{database}/layout';
 
     /**
      * Handle a GET request for this resource
      *
-     * @param RESTfmRequest $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/layout
      *
      * @return Response
      */
     function get($request, $database) {
-        $database = RESTfmUrl::decode($database);
+        $database = RESTfm\Url::decode($database);
 
-        $backend = BackendFactory::make($request, $database);
+        $backend = RESTfm\BackendFactory::make($request, $database);
         $opsDatabase = $backend->makeOpsDatabase($database);
-        $restfmData = $opsDatabase->readLayouts();
+        $restfmMessage = $opsDatabase->readLayouts();
 
-        $queryString = new QueryString(TRUE);
+        $queryString = new RESTfm\QueryString(TRUE);
 
-        $response = new RESTfmResponse($request);
+        $response = new RESTfm\Response($request);
         $format = $response->format;
 
-        // Iterate 'data' section rows and insert navigation hrefs into
-        // matching 'meta' section row.
-        $restfmData->setIteratorSection('data');
-        foreach($restfmData as $index => $row) {
-            $href = $request->baseUri.'/'.
-                        RESTfmUrl::encode($database).
-                        '/layout/'.RESTfmUrl::encode($row['layout']).'.'.$format.
-                        $queryString->build();
-
-            $restfmData->setSectionData2nd('meta', $index, 'href', $href);
+        // Iterate records and set navigation hrefs.
+        $restfmMessageRecords = $restfmMessage->getRecords();
+        $record = NULL;         // @var \RESTfm\Message\Record
+        foreach($restfmMessageRecords as $record) {
+            $record->setHref(
+                $request->baseUri.'/'.
+                        RESTfm\Url::encode($database).'/layout/'.
+                        RESTfm\Url::encode($record['layout']).'.'.
+                        $format.$queryString->build()
+            );
         }
 
-        $response->setStatus(Response::OK);
-        $response->setData($restfmData);
+        $response->setStatus(RESTfm\Response::OK);
+        $response->setMessage($restfmMessage);
         return $response;
     }
 }

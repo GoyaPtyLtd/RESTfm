@@ -1,3 +1,14 @@
+### 5.0.0 (Released 2017-08-21) ###
+ - Update diagnostics report for FMS 16.
+ - Update Mac OS X installer for FMS 16.
+Protocol changes:
+ - Simplified nav section.
+Internal:
+ - New internal message class greatly improves programming of database
+   backends and I/O formats.
+ - New unit testing framework improves robustness.
+ - RESTfm now ustilises PHP namespaces (PHP 5.3+).
+
 ### 4.0.9 (Released 2017-01-05) ###
 - Update Mac OS X installer to identify OS version 10.12 (a.k.a macOS Sierra)
 

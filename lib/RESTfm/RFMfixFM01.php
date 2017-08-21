@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -17,6 +17,8 @@
  *  Gavin Stewart
  */
 
+namespace RESTfm;
+
 /**
  * Static class to handle the pre and post encoding step to work around
  * FileMaker 12 Insert From URL encoding requirements.
@@ -26,7 +28,7 @@ class RFMfixFM01 {
     /**
      * @var array Bad character array.
      *
-     * Note: Originally we throught 0x80 to 0xFF were needed as well. FM
+     * Note: Originally we thought 0x80 to 0xFF were needed as well. FM
      *       appears to be handling chars > 127 correctly as Unicode.
      */
     protected static $_badChars = array (

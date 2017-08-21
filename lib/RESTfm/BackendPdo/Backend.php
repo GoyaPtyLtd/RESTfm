@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -17,15 +17,12 @@
  *  Gavin Stewart
  */
 
-require_once 'PdoResponseException.php';
-require_once 'PdoOpsRecord.php';
-require_once 'PdoOpsDatabase.php';
-require_once 'PdoOpsLayout.php';
+namespace RESTfm\BackendPdo;
 
 /**
  * PHP PDO implementation of BackendAbstract.
  */
-class BackendPdo extends BackendAbstract {
+class Backend extends \RESTfm\BackendAbstract {
 
     /*
      * Possible PDO types.
@@ -69,7 +66,7 @@ class BackendPdo extends BackendAbstract {
             $pdoType = strtolower($matches[1]);
         } else {
             error_log('RESTfm BackendPdo::__construct() error: unknown PDO type from DSN: ' . $dsn);
-            throw new RESTfmResponseException('Unknown backend PDO type.', 500);
+            throw new \RESTfm\ResponseException('Unknown backend PDO type.', 500);
         }
         if ($pdoType == 'mysql') {
             $this->_pdoType = self::PDO_MYSQL;
@@ -79,17 +76,17 @@ class BackendPdo extends BackendAbstract {
 
         // Configure default PDO options.
         $options = array(
-            PDO::ATTR_ERRMODE               => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE    => PDO::FETCH_ASSOC,
+            \PDO::ATTR_ERRMODE               => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE    => \PDO::FETCH_ASSOC,
         );
         if ($this->_pdoType == self::PDO_MYSQL) {
-            $options[PDO::MYSQL_ATTR_FOUND_ROWS] = TRUE;
+            $options[\PDO::MYSQL_ATTR_FOUND_ROWS] = TRUE;
         }
 
         // Create and store PDO.
         try {
-            $this->_pdoObject = new PDO($dsn, $username, $password, $options);
-        } catch (PDOException $e) {
+            $this->_pdoObject = new \PDO($dsn, $username, $password, $options);
+        } catch (\PDOException $e) {
             throw new PdoResponseException($e);
         }
     }

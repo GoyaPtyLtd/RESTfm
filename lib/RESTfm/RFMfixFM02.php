@@ -3,7 +3,7 @@
  * RESTfm - FileMaker RESTful Web Service
  *
  * @copyright
- *  Copyright (c) 2011-2015 Goya Pty Ltd.
+ *  Copyright (c) 2011-2017 Goya Pty Ltd.
  *
  * @license
  *  Licensed under The MIT License. For full copyright and license information,
@@ -16,6 +16,8 @@
  * @author
  *  Gavin Stewart
  */
+
+namespace RESTfm;
 
 /**
  * Static class to handle the pre and post encoding step to work around
