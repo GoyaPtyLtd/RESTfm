@@ -185,7 +185,7 @@ check_FMSVersion() {
             fi
             log_success_msg "$MSGPREFIX $FMS_VERSION"
             ;;
-        '14'|'15'|'16')
+        '14'|'15'|'16'|'17')
             log_success_msg "$MSGPREFIX $FMS_VERSION"
             ;;
         *)
