@@ -58,7 +58,7 @@ show_Header () {
     cat <<EOCAT
 
 +-----------------------------------------------------------------------------+
-|                       RESTfm installer for Mac OS X                         |
+|                       RESTfm installer for macOS                            |
 +-----------------------------------------------------------------------------+
 
 EOCAT
@@ -68,7 +68,7 @@ show_HeaderUninstall () {
     cat <<EOCAT
 
 +-----------------------------------------------------------------------------+
-|                       RESTfm uninstaller for Mac OS X                       |
+|                       RESTfm uninstaller for macOS                          |
 +-----------------------------------------------------------------------------+
 
 EOCAT
@@ -106,7 +106,7 @@ setup_Traps () {
 #   - that we are on a supported version of Mac OS X.
 #   - that we are not running on Mac OS X Server Edition.
 check_OSXVersion() {
-    local MSGPREFIX='Check macOS (Mac OS X) version: '
+    local MSGPREFIX='Check macOS (Mac OS X) version:'
 
     # Ensure we have sw_vers, and we are Mac OS X.
     local PRODUCTNAME=''
@@ -161,7 +161,7 @@ check_OSXVersion() {
 #   FMS_VERSION_PATCH   - The FMS patch version number.
 #
 check_FMSVersion() {
-    local MSGPREFIX='Check FMS version: '
+    local MSGPREFIX='Check FMS version:'
 
     local FMSADMIN_EXE='/Library/FileMaker Server/Database Server/bin/fmsadmin'
     local FMSVERSION_XML='/Library/FileMaker Server/Web Publishing/conf/jwpc_prefs.xml'
@@ -185,7 +185,7 @@ check_FMSVersion() {
             fi
             log_success_msg "$MSGPREFIX $FMS_VERSION"
             ;;
-        '14'|'15'|'16')
+        '14'|'15'|'16'|'17')
             log_success_msg "$MSGPREFIX $FMS_VERSION"
             ;;
         *)
@@ -205,7 +205,7 @@ check_FMSVersion() {
 #   APACHE_LISTEN - Port that Apache is listening on.
 #
 function check_ApacheVersion() {
-    local MSGPREFIX='Check Apache version: '
+    local MSGPREFIX='Check Apache version:'
 
     # Match usage in FMS /Library/FileMaker Server/HTTPServer/bin/httpdctl
     APACHE_VERSION=$(/usr/sbin/httpd -version | head -1 | cut -d "/" -f 2 | cut -d "." -f 1,2)
@@ -227,10 +227,32 @@ function check_ApacheVersion() {
 
 ##
 # Check:
-#   - that FMS has both WPE and PHP enabled.
+#   - that FMS has WPE enabled.
 #
-check_FMS_WPE_PHP() {
-    local MSGPREFIX='Check FMS WPE and PHP: '
+check_FMS_WPE() {
+    local MSGPREFIX='Check FMS Web Publishing Engine:'
+
+    # Check WPE xml:
+    curl -s "http://localhost:${APACHE_LISTEN}/fmi/xml/fmresultset.xml" | grep -qi "FileMaker"
+    local RET=$?
+
+    if [ $RET != 0 ]; then
+        log_failure_msg "${MSGPREFIX} not found."
+        echo
+        echo "Please ensure Web Publishing Engine is enabled in Admin Console."
+        echo
+        exit 1
+    fi
+
+    log_success_msg "$MSGPREFIX success"
+}
+
+##
+# Check:
+#   - that FMS has PHP enabled.
+#
+check_FMS_PHP() {
+    local MSGPREFIX='Check FMS PHP:'
 
     # Ensure that both WPE and PHP are enabled (only works on FMS14)
     #local FMS_SERVER_CONFIG='/Library/FileMaker Server/Admin/conf/server_config.xml'
@@ -255,7 +277,11 @@ check_FMS_WPE_PHP() {
     if [ $RET != 0 ]; then
         log_failure_msg "${MSGPREFIX} could not complete php test."
         echo
-        echo "Please check FileMaker Server deployment in Admin Console."
+        if [ $FMS_VERSION_MAJOR -ge 17 ]; then
+            echo "Please ensure PHP is enabled with fmsadmin command line tool."
+        else
+            echo "Please ensure PHP is enabled in Admin Console."
+        fi
         echo
         exit 1
     fi

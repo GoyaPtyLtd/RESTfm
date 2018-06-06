@@ -82,7 +82,9 @@ check_FMSVersion
 
 check_ApacheVersion
 
-check_FMS_WPE_PHP
+check_FMS_WPE
+
+check_FMS_PHP
 
 check_Location
 
