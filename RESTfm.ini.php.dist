@@ -24,6 +24,7 @@ $config['settings'] = array (
         'html',     // Handy for testing, not so useful in production.
         'json',     // JavaScript Object Notation.
         'simple',   // A simple to parse format, spec. in simple_export.xslt
+        'syncMeta',	// Format for simple Sync Meta queries.
         'txt',      // Handy for testing, not so useful in production.
         'xml',      // Extensible Markup Language.
     ),
