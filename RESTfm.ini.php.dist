@@ -18,6 +18,7 @@ $config['settings'] = array (
     // Comment out unneeded formats.
     'formats' => array (
         //'example',  // Commented out format example.
+        //'chargify', // Chargify multi-dimensional payload format.
         'dict',     // RESTfmSync transfer format.
         'fmpxml',   // FileMaker FMPXMLRESULT Grammar compliant.
         'html',     // Handy for testing, not so useful in production.
