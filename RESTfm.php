@@ -186,7 +186,7 @@ exit;
  * @return integer result
  */
 function iniToBytes ($val) {
-    $val = trim($val);
+    $val = preg_replace('/[^0-9\.]/', '', $val);
     $last = strtolower($val[strlen($val)-1]);
     switch ($last) {
         // The 'G' modifier is available since PHP 5.1.0
