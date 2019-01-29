@@ -1,3 +1,6 @@
+### 5.2.0 (Released 2019-01-29) ###
+ - Update macOS (Mac OS X) installer to identify OS version 10.14 (Mojave)
+
 ### 5.1.0 (Released 2018-06-07) ###
  - Update diagnostics report for FMS 17.
  - Update macOS (Mac OS X) installer for FMS 17.
