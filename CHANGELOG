@@ -1,3 +1,6 @@
+### 5.2.1 (Released 2019-02-05) ###
+ - Reset reporting level for production systems.
+
 ### 5.2.0 (Released 2019-01-29) ###
  - Update macOS (Mac OS X) installer to identify OS version 10.14 (Mojave)
 
