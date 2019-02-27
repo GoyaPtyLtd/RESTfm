@@ -26,8 +26,8 @@
 $startTimeUs = microtime(TRUE);
 
 // Ensure E_STRICT is removed for PHP 5.4+
-//error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
-error_reporting(E_ALL & ~E_STRICT);   // Dev. level reporting
+error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
+//error_reporting(E_ALL & ~E_STRICT);   // Dev. level reporting
 
 // x-debug's html error output makes CLI debugging with cURL a problem.
 ini_set('html_errors', FALSE);
@@ -186,10 +186,16 @@ exit;
  * @return integer result
  */
 function iniToBytes ($val) {
-    $val = trim($val);
-    $last = strtolower($val[strlen($val)-1]);
-    switch ($last) {
-        // The 'G' modifier is available since PHP 5.1.0
+    if ( preg_match('/([0-9]+)\s*([gmk]?)/i', $val, $matches) !== 1 ) {
+        return "NaN";   // Not a Number
+    }
+
+    $units = '';
+    if (isset($matches[2])) {
+        $units = $matches[2];
+    }
+
+    switch (strtolower($units)) {
         case 'g':
             $val *= 1024;
         case 'm':
@@ -208,6 +214,9 @@ function iniToBytes ($val) {
  * @return string
  */
 function prettyBytes ($val) {
+    if ($val == "NaN") {
+        return $val;   // Not a Number
+    }
     $suffix = '';
     if ($val > 1024) {
         $val /= 1024;
