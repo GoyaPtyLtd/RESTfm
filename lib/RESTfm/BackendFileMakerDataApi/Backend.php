@@ -46,7 +46,7 @@ class Backend extends \RESTfm\BackendAbstract {
     public function __construct ($dbMap, $username, $password) {
         $this->_FileMakerDataApi = new FileMakerDataApi(
                                         $dbMap['hostspec'],
-                                        $dbMap['solution'],
+                                        $dbMap['database'],
                                         $username, $password);
         $this->_dbMap = $dbMap;
     }

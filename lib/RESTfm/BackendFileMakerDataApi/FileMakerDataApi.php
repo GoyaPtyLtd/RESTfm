@@ -48,7 +48,7 @@ class FileMakerDataApi {
     /**
      * @var string
      */
-    private $_solution = NULL;
+    private $_database = NULL;
 
     /**
      * @var string
@@ -68,17 +68,17 @@ class FileMakerDataApi {
     /**
      * @param string $hostspec
      *  Base URL for FM Data API Server e.g. 'http://127.0.0.1:80'
-     * @param string $solution
-     *  The solution is hard coded into the RESTfm.ini.php map
+     * @param string $database
+     *  The database is hard coded into the RESTfm.ini.php map
      * @param string $username
      *  Optional username.
      * @param string $password
      *  Optional password.
      */
-    public function __construct ($hostspec, $solution, $username = NULL, $password = NULL) {
+    public function __construct ($hostspec, $database, $username = NULL, $password = NULL) {
         $this->_curlHandle = curl_init();
         $this->_hostspec = $hostspec;
-        $this->_solution = $solution;
+        $this->_database = $database;
         $this->_username = $username;
         $this->_password = $password;
 
@@ -112,20 +112,24 @@ class FileMakerDataApi {
             return;
         }
 
-        $this->curl_setup('/fmi/rest/api/auth/' .
-                          rawurlencode($this->_solution), 'DELETE');
+        $this->curl_setup('/fmi/data/v1/databases/' .
+                                rawurlencode($this->_database) .
+                                '/sessions/' .
+                                rawurlencode($this->_token),
+                          'DELETE');
 
         // Submit the requested operation to FileMaker Data API Server.
         $response = $this->curl_exec();
 
-        //echo "Closing response: ";
-        //var_dump($response);
+        // DEBUG
+        // echo "Closing response: ";
+        // var_dump($response); echo "\n";
 
         curl_close($this->_curlHandle);
     }
 
     /**
-     * Connect to the given layout using the hostspec, solution and
+     * Connect to the given layout using the hostspec, database and
      * credentials provided at construction.
      *
      * @throws \RESTfm\ResponseException
@@ -141,14 +145,18 @@ class FileMakerDataApi {
             return;
         }
 
-        $data = array(
-            'user'      => $this->_username,
-            'password'  => $this->_password,
-            'layout'    => $this->_layout,
+        $headers = array(
+            'Authorization: Basic ' .
+                base64_encode($this->_username . ':' . $this->_password),
         );
 
-        $this->curl_setup('/fmi/rest/api/auth/' .
-                          rawurlencode($this->_solution), 'POST', $data);
+        $data = array();
+
+        $this->curl_setup('/fmi/data/v1/databases/' .
+                                rawurlencode($this->_database) . '/sessions',
+                          'POST',
+                          $headers,
+                          $data);
 
         $response = $this->curl_exec();
 
@@ -157,7 +165,7 @@ class FileMakerDataApi {
             throw new FileMakerDataApiResponseException($response);
         }
 
-        $this->_token = $response['token'];
+        $this->_token = $response['response']['token'];
     }
 
     /**
@@ -176,11 +184,13 @@ class FileMakerDataApi {
      */
     public function getRecords($range = 24, $offset = 1, $sort = NULL) {
 
-        $this->curl_setup('/fmi/rest/api/record/' .
-                          rawurlencode($this->_solution) . '/' .
-                          rawurlencode($this->_layout) . '?' .
-                          'offset=' . $offset . '&' .
-                          'range=' . $range
+        $this->curl_setup('/fmi/data/v1/databases/' .
+                          rawurlencode($this->_database) .
+                          '/layouts/' .
+                          rawurlencode($this->_layout) .
+                          '/records?' .
+                          '_offset=' . $offset . '&' .
+                          '_limit=' . $range
                           , 'GET');
 
         $response = $this->curl_exec();
@@ -193,7 +203,7 @@ class FileMakerDataApi {
             throw new FileMakerDataApiResponseException($response);
         }
 
-        return $response;
+        return $response['response'];
     }
 
     /**
@@ -225,7 +235,7 @@ class FileMakerDataApi {
         );
 
         $this->curl_setup('/fmi/rest/api/find/' .
-                          rawurlencode($this->_solution) . '/' .
+                          rawurlencode($this->_database) . '/' .
                           rawurlencode($this->_layout), 'POST', $data);
 
         $response = $this->curl_exec();
@@ -248,21 +258,25 @@ class FileMakerDataApi {
      *  FM Data API URL not including hostspec.
      * @param string $method
      *  'GET', 'POST', 'PUT', 'DELETE'
+     * @param array $headers
+     *  Optional headers
      * @param array $data
-     *  Options array containing data to POST/PUT. Data is JSON encoded and
-     *  content headers set appropriatly.
+     *  Optional assoc array containing data to POST/PUT. Data will be JSON
+     *  encoded and Content-* headers will be set automatically.
      */
-    protected function curl_setup ($url, $method, $data = NULL) {
+    protected function curl_setup ($url, $method, $headers = NULL, $data = NULL) {
 
         $options = $this->_curlDefaultOptions + array(
             CURLOPT_URL             => $this->_hostspec . $url,
             CURLOPT_CUSTOMREQUEST   => $method,
         );
 
-        $headers = array();
+        if ($headers === NULL) {
+            $headers = array();
+        }
 
         if ($this->_token !== NULL) {
-            $headers[] = 'FM-Data-token: ' . $this->_token;
+            $headers[] = 'Authorization: Bearer ' . $this->_token;
         }
 
         if ($data !== NULL) {
@@ -279,7 +293,7 @@ class FileMakerDataApi {
         // DEBUG
         //echo "cURL options: ";
         //var_dump($options);
-        //echo "cURL jsonData: " . $jsonData;
+        //echo "cURL jsonData: " . $jsonData . "\n";
 
         curl_setopt_array($this->_curlHandle, $options);
     }
@@ -311,7 +325,7 @@ class FileMakerDataApi {
         }
 
         // DEBUG
-        //echo "cURL result: " . $result;
+        //echo "cURL result: " . $result . "\n";
 
         return $this->json_decode($result, TRUE);
     }
@@ -331,12 +345,12 @@ class FileMakerDataApi {
      *  If response does not contain a key named 'errorCode'. i.e. invlaid
      */
     protected function isError ($response) {
-        if (isset($response['errorCode'])) {
-            if ($response['errorCode'] !== '0') {
+        if ( isset($response['messages']) &&
+                isset($response['messages'][0]) &&
+                isset($response['messages'][0]['code']) ) {
+            if ($response['messages'][0]['code'] !== '0') {
                 return TRUE;
             }
-        } elseif (isset($response['errorMessage'])) {
-            return TRUE;
         } else {
             // Invalid response.
             error_log('RESTfm FileMakerDataApi::isError() invalid: ' . serialize($response));
@@ -355,11 +369,13 @@ class FileMakerDataApi {
      * @param int $depth
      * @param int $options
      *
+     * @return assoc|object Returns the value encoded in json in appropriate PHP type.
+     *
      * @throws \RESTfm\ResponseException
      *  If there is an error decoding JSON.
      */
     protected function json_decode ($json, $assoc = FALSE, $depth = 512, $options = 0) {
-        $json = \json_decode($json, $assoc, $depth, $options);
+        $value = \json_decode($json, $assoc, $depth, $options);
 
         // Throw an exception if JSON decoding has errors.
         if (json_last_error() !== JSON_ERROR_NONE) {
@@ -388,6 +404,6 @@ class FileMakerDataApi {
                             \RESTfm\ResponseException::INTERNALSERVERERROR);
         }
 
-        return $json;
+        return $value;
     }
 };

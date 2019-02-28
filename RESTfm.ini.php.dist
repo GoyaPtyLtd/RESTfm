@@ -98,10 +98,10 @@ $config['database'] = array (
 
 /*
  * Optional list of FileMaker Data API database names that map to a
- * hostspec and solution.
+ * backend hostspec and database.
  *
  * The database name should be unique, and may be unrelated to the
- * solution name it maps to.
+ * backend database name it maps to.
  *
  * The map may optionally contain a list of layouts, this is only used to
  * populate entries in the 'database-layout' URI /RESTfm/{database}/layout
@@ -110,11 +110,11 @@ $config['database'] = array (
 $config['databaseFMDataAPIMap'] = array (
     // 'example1' => array (
     //     'hostspec'  => 'https://127.0.0.1:443',
-    //     'solution'  => 'mySolution',
+    //     'database'  => 'myDatabase',
     // ),
     // 'example2' => array (
     //     'hostspec'  => 'https://127.0.0.1:443',
-    //     'solution'  => 'anotherSolution',
+    //     'database'  => 'anotherDatabase',
     //     'layouts'   =>  array (
     //         'A Layout',
     //         'Another Layout'
