@@ -20,7 +20,7 @@
 namespace RESTfm\BackendFileMakerDataApi;
 
 /**
- * Reperesents a connection between PHP and a FileMaker Data API Server.
+ * Represents a connection between PHP and a FileMaker Data API Server.
  */
 class FileMakerDataApi {
 
@@ -49,11 +49,6 @@ class FileMakerDataApi {
      * @var string
      */
     private $_database = NULL;
-
-    /**
-     * @var string
-     */
-    private $_layout = NULL;
 
     /**
      * @var string
@@ -99,6 +94,14 @@ class FileMakerDataApi {
                                 CURLOPT_SSL_VERIFYHOST => FALSE,
                             );
         }
+
+        $this->connect();
+    }
+
+    public function __destruct () {
+        $this->close();
+
+        curl_close($this->_curlHandle);
     }
 
     /**
@@ -124,8 +127,6 @@ class FileMakerDataApi {
         // DEBUG
         // echo "Closing response: ";
         // var_dump($response); echo "\n";
-
-        curl_close($this->_curlHandle);
     }
 
     /**
@@ -137,9 +138,7 @@ class FileMakerDataApi {
      * @throws \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResponseException
      *  Error from FileMaker Data API Server.
      */
-    public function connect ($layout) {
-        $this->_layout = $layout;
-
+    public function connect () {
         if ($this->_token !== NULL) {
             // Already authenticated.
             return;
@@ -158,70 +157,103 @@ class FileMakerDataApi {
                           $headers,
                           $data);
 
-        $response = $this->curl_exec();
+        $result = $this->curl_exec();
 
         // Throw an exception if FileMaker Data API Server has errors.
-        if ($this->isError($response)) {
-            throw new FileMakerDataApiResponseException($response);
+        if ($result->isError()) {
+            throw new FileMakerDataApiResponseException($result);
         }
 
-        $this->_token = $response['response']['token'];
+        $this->_token = $result->getToken();
     }
 
     /**
      * Get Records.
      *
+     * @param string $layout
      * @param int $range
      * @param int $offset
      * @param array $sort
      *
-     * @return array
+     * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult
+     *  Object containing decoded JSON response from FileMaker Data API Server.
      *
      * @throws \RESTfm\ResponseException
      *  On cURL and JSON errors.
      * @throws \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResponseException
      *  Error from FileMaker Data API Server.
      */
-    public function getRecords($range = 24, $offset = 1, $sort = NULL) {
+    public function getRecords($layout, $range = 24, $offset = 1, $sort = NULL) {
 
         $this->curl_setup('/fmi/data/v1/databases/' .
                           rawurlencode($this->_database) .
                           '/layouts/' .
-                          rawurlencode($this->_layout) .
+                          rawurlencode($layout) .
                           '/records?' .
                           '_offset=' . $offset . '&' .
                           '_limit=' . $range
                           , 'GET');
 
-        $response = $this->curl_exec();
+        $result = $this->curl_exec();
 
         // DEBUG
-        //var_dump($response);
+        //var_export($result);
 
-        // Throw an exception if FileMaker Data API Server has errors.
-        if ($this->isError($response)) {
-            throw new FileMakerDataApiResponseException($response);
-        }
-
-        return $response['response'];
+        return $result;
     }
 
     /**
-     * Find Records.
+     * Get Record by RecordId
      *
-     * @param array $query
-     * @param array $sort
-     * @param int $offset
+     * @param string $layout
      * @param int $range
+     * @param int $offset
+     * @param array $sort
      *
-     * @return array
+     * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult
+     *  Object containing decoded JSON response from FileMaker Data API Server.
      *
      * @throws \RESTfm\ResponseException
      *  On cURL and JSON errors.
      * @throws \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResponseException
      *  Error from FileMaker Data API Server.
      */
-    public function find ($query = array(), $sort = array(), $offset = 1, $range = 24) {
+    public function getRecordById($layout, $recordID) {
+
+        $this->curl_setup('/fmi/data/v1/databases/' .
+                          rawurlencode($this->_database) .
+                          '/layouts/' .
+                          rawurlencode($layout) .
+                          '/records/' .
+                          rawurlencode($recordID)
+                          , 'GET');
+
+        $result = $this->curl_exec();
+
+        // DEBUG
+        //var_export($result);
+
+        return $result;
+    }
+
+    /**
+     * Find Records.
+     *
+     * @param string $layout
+     * @param array $query
+     * @param array $sort
+     * @param int $offset
+     * @param int $range
+     *
+     * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult
+     *  Object containing decoded JSON response from FileMaker Data API Server.
+     *
+     * @throws \RESTfm\ResponseException
+     *  On cURL and JSON errors.
+     * @throws \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResponseException
+     *  Error from FileMaker Data API Server.
+     */
+    public function find ($layout, $query = array(), $sort = array(), $offset = 1, $range = 24) {
 
         // TEST - note double array here, converts to JSON array of objects.
         $query = array(array(
@@ -236,19 +268,14 @@ class FileMakerDataApi {
 
         $this->curl_setup('/fmi/rest/api/find/' .
                           rawurlencode($this->_database) . '/' .
-                          rawurlencode($this->_layout), 'POST', $data);
+                          rawurlencode($layout), 'POST', $data);
 
-        $response = $this->curl_exec();
+        $result = $this->curl_exec();
 
         // DEBUG
-        //var_dump($response);
+        //var_export($result);
 
-        // Throw an exception if FileMaker Data API Server has errors.
-        if ($this->isError($response)) {
-            throw new FileMakerDataApiResponseException($response);
-        }
-
-        return $response;
+        return $result;
     }
 
     /**
@@ -302,8 +329,8 @@ class FileMakerDataApi {
      * Perform a cURL session on private curl handle, throwing an exception
      * on error.
      *
-     * @return array
-     *  Array containing decoded JSON response from FileMaker Data API Server.
+     * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult
+     *  Object containing decoded JSON response from FileMaker Data API Server.
      *
      * @throws \RESTfm\ResponseException
      *  On cURL error.
@@ -327,7 +354,7 @@ class FileMakerDataApi {
         // DEBUG
         //echo "cURL result: " . $result . "\n";
 
-        return $this->json_decode($result, TRUE);
+        return new FileMakerDataApiResult($this->json_decode($result, TRUE));
     }
 
     /**
@@ -344,6 +371,7 @@ class FileMakerDataApi {
      * @throws \RESTfm\ResponseException
      *  If response does not contain a key named 'errorCode'. i.e. invlaid
      */
+    /*
     protected function isError ($response) {
         if ( isset($response['messages']) &&
                 isset($response['messages'][0]) &&
@@ -360,6 +388,7 @@ class FileMakerDataApi {
         }
         return FALSE;
     }
+    */
 
     /**
      * Decodes a JSON string, throwing an exception decoding has errors.

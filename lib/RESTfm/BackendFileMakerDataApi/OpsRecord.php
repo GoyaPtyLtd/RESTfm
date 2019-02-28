@@ -30,11 +30,12 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
      * @param \RESTfm\BackendAbstract $backend
      *  Implementation must store $this->_backend if a reference is needed in
      *  other methods.
-     * @param string $database
+     * @param string $mapName
      * @param string $layout
      */
-    public function __construct (\RESTfm\BackendAbstract $backend, $database, $layout) {
-
+    public function __construct (\RESTfm\BackendAbstract $backend, $mapName, $layout) {
+        $this->_backend = $backend;
+        $this->_layout = $layout;
     }
 
     /**
@@ -79,6 +80,81 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
      *  Record containing recordID to retrieve.
      */
     protected function _readRecord (\RESTfm\Message\Message $restfmMessage, \RESTfm\Message\Record $requestRecord) {
+        $fmDataApi = $this->_backend->getFileMakerDataApi(); // @var FileMakerDataApi
+
+        $recordID = $requestRecord->getRecordId();
+
+        // Handle unique-key-recordID OR literal recordID.
+        /*
+        $record = NULL;
+        if (strpos($recordID, '=')) {
+            list($searchField, $searchValue) = explode('=', $recordID, 2);
+            $findCommand = $FM->newFindCommand($this->_layout);
+            $findCommand->addFindCriterion($searchField, $searchValue);
+            $result = $findCommand->execute();
+
+            if (\FileMaker::isError($result)) {
+                if ($this->_isSingle) {
+                    if ($result->getCode() == 401) {
+                        // "No records match the request"
+                        // This is a special case where we actually want to return
+                        // 404. ONLY because we are a unique-key-recordID.
+                        throw new \RESTfm\ResponseException(NULL, \RESTfm\ResponseException::NOTFOUND);
+                    } else {
+                        throw new FileMakerResponseException($result);
+                    }
+                }
+                $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
+                    $result->getCode(),
+                    $result->getMessage(),
+                    $recordID
+                ));
+                return;                         // Nothing more to do here.
+            }
+
+            if ($result->getFetchCount() > 1) {
+                // We have to abort if the search query recordID is not unique.
+                if ($this->_isSingle) {
+                    throw new \RESTfm\ResponseException($result->getFetchCount() .
+                            ' conflicting records found', \RESTfm\ResponseException::CONFLICT);
+                }
+                $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
+                    42409,                      // Made up status value.
+                                                // 42xxx not in use by FileMaker
+                                                // 409 Conflict is HTTP code.
+                    $result->getFetchCount() . ' conflicting records found',
+                    $recordID
+
+                ));
+                return;                         // Nothing more to do here.
+            }
+
+        } else {
+        */
+            $result = $fmDataApi->getRecordById($this->_layout, $recordID); // @var FileMakerDataApiResult
+
+            if ($result->isError()) {
+                if ($this->_isSingle) {
+                    throw new FileMakerDataApiResponseException($result);
+                }
+                // Store result codes in multistatus section
+                $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
+                    $result->getCode(),
+                    $result->getMessage(),
+                    $recordID
+                ));
+                return;                             // Nothing more to do here.
+            }
+        /*
+        }
+        */
+
+        $record = $result->getFirstRecord();
+        $restfmMessage->addRecord(new \RESTfm\Message\Record(
+            $record['recordId'],
+            NULL,
+            $record['fieldData']
+        ));
 
     }
 

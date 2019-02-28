@@ -48,8 +48,6 @@ class OpsLayout extends \RESTfm\OpsLayoutAbstract {
      */
     public function read () {
         $fmDataApi = $this->_backend->getFileMakerDataApi(); // @var FileMakerDataApi
-        $fmDataApi->connect($this->_layout);
-
 
         $findSkip = $this->_readOffset;
         $findMax = $this->_readCount;
@@ -60,12 +58,12 @@ class OpsLayout extends \RESTfm\OpsLayoutAbstract {
         }
 
         // Query.
-        $response = $fmDataApi->getRecords($findMax, $findSkip + 1);
+        $result = $fmDataApi->getRecords($this->_layout, $findMax, $findSkip + 1);
 
         $restfmMessage = new \RESTfm\Message\Message();
 
         $fetchCount = 0;
-        foreach ($response['data'] as $record) {
+        foreach ($result->getRecords() as $record) {
             $restfmMessage->addRecord(new \RESTfm\Message\Record(
                 $record['recordId'],
                 NULL,
@@ -82,8 +80,6 @@ class OpsLayout extends \RESTfm\OpsLayoutAbstract {
         //$restfmMessage->setInfo('tableRecordCount', $recordCount);
         $restfmMessage->setInfo('foundSetCount', $recordCount);
         $restfmMessage->setInfo('fetchCount', $fetchCount);
-
-        $fmDataApi->close();
 
         return $restfmMessage;
     }

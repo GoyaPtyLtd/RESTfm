@@ -27,23 +27,17 @@ class FileMakerDataApiResponseException extends \RESTfm\ResponseException {
     /**
      * Override superclass constructor.
      *
-     * @param array $response
-     *  Response array decoded from FileMaker Data API Server JSON.
+     * @param \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult $result
+     *  Result object decoded from FileMaker Data API Server JSON.
      */
-    function __construct ($response) {
+    function __construct ($result) {
 
         $code = 500;                // Default status code. Overridden below.
         $reason = '';
 
-        // Exctract error code and message from response.
-        $fmDataApiCode = '';
-        $fmDataApiMessage = '';
-        if (isset($response['errorCode'])) {
-            $fmDataApiCode = $response['errorCode'];
-        }
-        if (isset($response['errorMessage'])) {
-            $fmDataApiMessage = $response['errorMessage'];
-        }
+        // Exctract error code and message from result.
+        $fmDataApiCode = $result->getCode();
+        $fmDataApiMessage = $result->getMessage();
 
         // Manage cases that map to HTTP Not Found & HTTP Unauthorized
         if ($fmDataApiCode == 212) {
