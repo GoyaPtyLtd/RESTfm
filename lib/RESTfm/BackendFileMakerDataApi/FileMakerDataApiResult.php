@@ -75,6 +75,13 @@ class FileMakerDataApiResult {
     }
 
     /**
+     * Return recordID from result of record POST to FileMaker Data API.
+     */
+    public function getRecordId () {
+        return @$this->_result['response']['recordId'];
+    }
+
+    /**
      * Return token from result of querying FileMaker Data API.
      */
     public function getToken () {

@@ -168,6 +168,41 @@ class FileMakerDataApi {
     }
 
     /**
+     * Create Record.
+     *
+     * @param string $layout
+     * @param array $data
+     *  In the form:
+     *      array (
+     *          'fieldName1' => 'fieldValue1',
+     *          . . .
+     *      )
+     *
+     * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult
+     *  Object containing decoded JSON response from FileMaker Data API Server.
+     *
+     * @throws \RESTfm\ResponseException
+     *  On cURL and JSON errors.
+     */
+    public function createRecord($layout, $data = array()) {
+
+        $fieldData = array ('fieldData' => $data);
+        $this->curl_setup('/fmi/data/v1/databases/'.
+                                rawurlencode($this->_database) .
+                                '/layouts/' .
+                                rawurlencode($layout) .
+                                '/records' ,
+                          'POST', NULL, $fieldData);
+
+        $result = $this->curl_exec();
+
+        // DEBUG
+        //var_export($result);
+
+        return $result;
+    }
+
+    /**
      * Get Records.
      *
      * @param string $layout

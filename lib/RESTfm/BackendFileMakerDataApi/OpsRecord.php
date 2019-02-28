@@ -57,7 +57,43 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
      *  identifier for new record data.
      */
     protected function _createRecord (\RESTfm\Message\Message $restfmMessage, \RESTfm\Message\Record $requestRecord, $index) {
+        $fmDataApi = $this->_backend->getFileMakerDataApi(); // @var FileMakerDataApi
 
+        /*
+        $valuesRepetitions = $this->_convertValuesToRepetitions($requestRecord);
+
+        $addCommand = $FM->newAddCommand($this->_layout, $valuesRepetitions);
+
+        // Script calling.
+        if ($this->_postOpScriptTrigger) {
+            $addCommand->setScript($this->_postOpScript, $this->_postOpScriptParameter);
+            $this->_postOpScriptTrigger = FALSE;
+        }
+        if ($this->_preOpScriptTrigger) {
+            $addCommand->setPreCommandScript($this->_preOpScript, $this->_preOpScriptParameter);
+            $this->_preOpScriptTrigger = FALSE;
+        }
+        */
+
+        // Commit to database.
+        $result = $fmDataApi->createRecord($this->_layout, $requestRecord->_getDataReference());
+
+        if ($result->isError()) {
+            if ($this->_isSingle) {
+                throw new FileMakerDataApiResponseException($result);
+            }
+            $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
+                    $result->getCode(),
+                    $result->getMessage(),
+                    $index
+            ));
+            return;                                 // Nothing more to do here.
+        }
+
+        // Insert just the recordID into the 'meta' section.
+        $restfmMessage->addRecord(new \RESTfm\Message\Record(
+                $result->getRecordId()
+        ));
     }
 
     /**
