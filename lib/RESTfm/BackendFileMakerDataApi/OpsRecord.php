@@ -85,15 +85,13 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
         $recordID = $requestRecord->getRecordId();
 
         // Handle unique-key-recordID OR literal recordID.
-        /*
         $record = NULL;
         if (strpos($recordID, '=')) {
             list($searchField, $searchValue) = explode('=', $recordID, 2);
-            $findCommand = $FM->newFindCommand($this->_layout);
-            $findCommand->addFindCriterion($searchField, $searchValue);
-            $result = $findCommand->execute();
+            $query = array( array( $searchField => $searchValue ) );
+            $result = $fmDataApi->findRecords($this->_layout, $query);
 
-            if (\FileMaker::isError($result)) {
+            if ($result->isError()) {
                 if ($this->_isSingle) {
                     if ($result->getCode() == 401) {
                         // "No records match the request"
@@ -101,7 +99,7 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
                         // 404. ONLY because we are a unique-key-recordID.
                         throw new \RESTfm\ResponseException(NULL, \RESTfm\ResponseException::NOTFOUND);
                     } else {
-                        throw new FileMakerResponseException($result);
+                        throw new FileMakerDataApiResponseException($result);
                     }
                 }
                 $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
@@ -130,8 +128,7 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
             }
 
         } else {
-        */
-            $result = $fmDataApi->getRecordById($this->_layout, $recordID); // @var FileMakerDataApiResult
+            $result = $fmDataApi->getRecord($this->_layout, $recordID); // @var FileMakerDataApiResult
 
             if ($result->isError()) {
                 if ($this->_isSingle) {
@@ -143,11 +140,9 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
                     $result->getMessage(),
                     $recordID
                 ));
-                return;                             // Nothing more to do here.
+                return;                         // Nothing more to do here.
             }
-        /*
         }
-        */
 
         $record = $result->getFirstRecord();
         $restfmMessage->addRecord(new \RESTfm\Message\Record(

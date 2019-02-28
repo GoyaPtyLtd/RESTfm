@@ -218,7 +218,7 @@ class FileMakerDataApi {
      * @throws \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResponseException
      *  Error from FileMaker Data API Server.
      */
-    public function getRecordById($layout, $recordID) {
+    public function getRecord($layout, $recordID) {
 
         $this->curl_setup('/fmi/data/v1/databases/' .
                           rawurlencode($this->_database) .
@@ -241,9 +241,22 @@ class FileMakerDataApi {
      *
      * @param string $layout
      * @param array $query
+     *  Must be an array of arrays in the form:
+     *      array (         # Find criteria
+     *          array (     # 1st find request
+     *              '<fieldName1'> => '<searchValue1'>,
+     *              '<filedName2'> => '<searchValue2'>,
+     *              [ 'ommit'      => 'true' ]
+     *          )
+     *          array (     # 2nd find request (ANDed)
+     *              '<fieldNameX'> => '<searchValueX'>,
+     *              '<filedNameY'> => '<searchValueY'>,
+     *              [ 'ommit'      => 'true' ]
+     *          )
+     *      )
      * @param array $sort
      * @param int $offset
-     * @param int $range
+     * @param int $limit
      *
      * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult
      *  Object containing decoded JSON response from FileMaker Data API Server.
@@ -253,22 +266,29 @@ class FileMakerDataApi {
      * @throws \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResponseException
      *  Error from FileMaker Data API Server.
      */
-    public function find ($layout, $query = array(), $sort = array(), $offset = 1, $range = 24) {
+    public function findRecords ($layout, $query = array(), $sort = array(), $offset = 1, $limit = 24) {
 
         // TEST - note double array here, converts to JSON array of objects.
-        $query = array(array(
-            'Pcode' => '*',
-        ));
+        //$query = array(array(
+        //    'Pcode' => '==0810',
+        //));
+
         $data = array(
             'query'     => $query,
-            //'sort'      => $sort,
-            //'offset'    => (string)$offset,
-            //'range'     => (string)$range,
+            'offset'    => (string)$offset,
+            'limit'     => (string)$limit,
         );
 
-        $this->curl_setup('/fmi/rest/api/find/' .
-                          rawurlencode($this->_database) . '/' .
-                          rawurlencode($layout), 'POST', $data);
+        if (! empty($sort)) {
+            $data['sort'] = $sort;
+        }
+
+        $this->curl_setup('/fmi/data/v1/databases/' .
+                                rawurlencode($this->_database) .
+                                '/layouts/' .
+                                rawurlencode($layout) .
+                                '/_find',
+                          'POST', NULL, $data);
 
         $result = $this->curl_exec();
 
@@ -319,7 +339,7 @@ class FileMakerDataApi {
 
         // DEBUG
         //echo "cURL options: ";
-        //var_dump($options);
+        //var_export($options);
         //echo "cURL jsonData: " . $jsonData . "\n";
 
         curl_setopt_array($this->_curlHandle, $options);
