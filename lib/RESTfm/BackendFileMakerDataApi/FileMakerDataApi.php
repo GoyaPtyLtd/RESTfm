@@ -95,22 +95,22 @@ class FileMakerDataApi {
                             );
         }
 
-        $this->connect();
+        $this->login();
     }
 
     public function __destruct () {
-        $this->close();
+        $this->logout();
 
         curl_close($this->_curlHandle);
     }
 
     /**
-     * Logout from FileMaker Data API session, and clean up.
+     * Logout (close) from FileMaker Data API session.
      *
      * @throws \RESTfm\ResponseException
      *  On cURL and JSON errors.
      */
-    public function close () {
+    public function logout () {
         if ($this->_token == NULL) {
             return;
         }
@@ -130,7 +130,7 @@ class FileMakerDataApi {
     }
 
     /**
-     * Connect to the given layout using the hostspec, database and
+     * Login (connect) to the given layout using the hostspec, database and
      * credentials provided at construction.
      *
      * @throws \RESTfm\ResponseException
@@ -138,7 +138,7 @@ class FileMakerDataApi {
      * @throws \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResponseException
      *  Error from FileMaker Data API Server.
      */
-    public function connect () {
+    public function login () {
         if ($this->_token !== NULL) {
             // Already authenticated.
             return;
@@ -153,9 +153,7 @@ class FileMakerDataApi {
 
         $this->curl_setup('/fmi/data/v1/databases/' .
                                 rawurlencode($this->_database) . '/sessions',
-                          'POST',
-                          $headers,
-                          $data);
+                          'POST', $data, $headers);
 
         $result = $this->curl_exec();
 
@@ -192,7 +190,37 @@ class FileMakerDataApi {
                                 '/layouts/' .
                                 rawurlencode($layout) .
                                 '/records' ,
-                          'POST', NULL, $fieldData);
+                          'POST', $fieldData);
+
+        $result = $this->curl_exec();
+
+        // DEBUG
+        //var_export($result);
+
+        return $result;
+    }
+
+    /**
+     * Delete Record.
+     *
+     * @param string $layout
+     * @param string $recordId
+     *
+     * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult
+     *  Object containing decoded JSON response from FileMaker Data API Server.
+     *
+     * @throws \RESTfm\ResponseException
+     *  On cURL and JSON errors.
+     */
+    public function deleteRecord($layout, $recordId) {
+
+        $this->curl_setup('/fmi/data/v1/databases/'.
+                                rawurlencode($this->_database) .
+                                '/layouts/' .
+                                rawurlencode($layout) .
+                                '/records/' .
+                                rawurlencode($recordId),
+                          'DELETE');
 
         $result = $this->curl_exec();
 
@@ -229,7 +257,7 @@ class FileMakerDataApi {
                                 rawurlencode($layout) .
                                 '/records/' .
                                 rawurlencode($recordId),
-                          'PATCH', NULL, $fieldData);
+                          'PATCH', $fieldData);
 
         $result = $this->curl_exec();
 
@@ -258,13 +286,13 @@ class FileMakerDataApi {
     public function getRecords($layout, $range = 24, $offset = 1, $sort = NULL) {
 
         $this->curl_setup('/fmi/data/v1/databases/' .
-                          rawurlencode($this->_database) .
-                          '/layouts/' .
-                          rawurlencode($layout) .
-                          '/records?' .
-                          '_offset=' . $offset . '&' .
-                          '_limit=' . $range
-                          , 'GET');
+                                rawurlencode($this->_database) .
+                                '/layouts/' .
+                                rawurlencode($layout) .
+                                '/records?' .
+                                '_offset=' . $offset . '&' .
+                                '_limit=' . $range,
+                          'GET');
 
         $result = $this->curl_exec();
 
@@ -293,12 +321,12 @@ class FileMakerDataApi {
     public function getRecord($layout, $recordID) {
 
         $this->curl_setup('/fmi/data/v1/databases/' .
-                          rawurlencode($this->_database) .
-                          '/layouts/' .
-                          rawurlencode($layout) .
-                          '/records/' .
-                          rawurlencode($recordID)
-                          , 'GET');
+                                rawurlencode($this->_database) .
+                                '/layouts/' .
+                                rawurlencode($layout) .
+                                '/records/' .
+                                rawurlencode($recordID),
+                          'GET');
 
         $result = $this->curl_exec();
 
@@ -360,7 +388,7 @@ class FileMakerDataApi {
                                 '/layouts/' .
                                 rawurlencode($layout) .
                                 '/_find',
-                          'POST', NULL, $data);
+                          'POST', $data);
 
         $result = $this->curl_exec();
 
@@ -377,13 +405,14 @@ class FileMakerDataApi {
      *  FM Data API URL not including hostspec.
      * @param string $method
      *  'GET', 'POST', 'PUT', 'DELETE'
-     * @param array $headers
-     *  Optional headers
      * @param array $data
      *  Optional assoc array containing data to POST/PUT. Data will be JSON
-     *  encoded and Content-* headers will be set automatically.
+     *  encoded and Content-headers will be set automatically.
+     * @param array $headers
+     *  Optional array containing complete string header:
+     *      array( 'X-Some-Header: 00111010101', [ ... ] )
      */
-    protected function curl_setup ($url, $method, $headers = NULL, $data = NULL) {
+    protected function curl_setup ($url, $method, $data = NULL, $headers = NULL) {
 
         $options = $this->_curlDefaultOptions + array(
             CURLOPT_URL             => $this->_hostspec . $url,

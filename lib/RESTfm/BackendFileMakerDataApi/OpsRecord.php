@@ -347,7 +347,57 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
      *  Record containing recordID to delete.
      */
     protected function _deleteRecord (\RESTfm\Message\Message $restfmMessage, \RESTfm\Message\Record $requestRecord) {
+        $recordID = $requestRecord->getRecordId();
 
+        if (strpos($recordID, '=')) {   // This is a unique-key-recordID, will
+                                        // need to find the real recordID.
+            $readMessage = new \RESTfm\Message\Message();
+            $this->_readRecord($readMessage, new \RESTfm\Message\Record($recordID));
+
+            // Check if we have an error.
+            $readStatus = $readMessage->getMultistatus(0);
+            if ($readStatus !== NULL) {
+                // Set our own multistatus for this error.
+                $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
+                        $readStatus->getStatus(),
+                        $readStatus->getReason(),
+                        $requestRecord->getRecordId()
+                ));
+                return;                             // Nothing more to do here.
+            }
+
+            // We now have the real recordID.
+            $recordID = $readMessage->getRecord(0)->getRecordId();
+        }
+
+        $fmDataApi = $this->_backend->getFileMakerDataApi(); // @var FileMakerDataApi
+
+        /*
+        // Script calling.
+        if ($this->_postOpScriptTrigger) {
+            $deleteCommand->setScript($this->_postOpScript, $this->_postOpScriptParameter);
+            $this->_postOpScriptTrigger = FALSE;
+        }
+        if ($this->_preOpScriptTrigger) {
+            $deleteCommand->setPreCommandScript($this->_preOpScript, $this->_preOpScriptParameter);
+            $this->_preOpScriptTrigger = FALSE;
+        }
+        */
+
+        $result = $fmDataApi->deleteRecord($this->_layout, $recordID);
+
+        if ($result->isError()) {
+            if ($this->_isSingle) {
+                throw new FileMakerDataApiResponseException($result);
+            }
+            // Store result codes in multistatus section
+            $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
+                $result->getCode(),
+                $result->getMessage(),
+                $requestRecord->getRecordId()
+            ));
+            return;                                 // Nothing more to do here.
+        }
     }
 
     /**

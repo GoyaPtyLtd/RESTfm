@@ -40,7 +40,12 @@ class FileMakerDataApiResponseException extends \RESTfm\ResponseException {
         $fmDataApiMessage = $result->getMessage();
 
         // Manage cases that map to HTTP Not Found & HTTP Unauthorized
-        if ($fmDataApiCode == 212) {
+        if ($fmDataApiCode == 101 || $fmDataApiCode == 104 || $fmDataApiCode == 105) {
+            // 101: Record is missing
+            // 104: Script is missing
+            // 105: Layout is missing
+            $code = \RESTfm\ResponseException::NOTFOUND;
+        } elseif ($fmDataApiCode == 212) {
             // "Invalid user account and/or password; please try again"
             $code = \RESTfm\ResponseException::UNAUTHORIZED;
         }
