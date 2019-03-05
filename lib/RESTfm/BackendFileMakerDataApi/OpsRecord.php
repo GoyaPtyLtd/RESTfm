@@ -215,6 +215,121 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
      *  arising from _updateElseCreate flag.
      */
     protected function _updateRecord (\RESTfm\Message\Message $restfmMessage, \RESTfm\Message\Record $requestRecord, $index) {
+        $recordID = $requestRecord->getRecordId();
+
+        $readMessage = NULL;            // May be re-used for appending data.
+
+        if (strpos($recordID, '=')) {   // This is a unique-key-recordID, will
+                                        // need to find the real recordID.
+            $readMessage = new \RESTfm\Message\Message();
+
+            // $this->_readRecord() will throw an exception if $this->_isSingle.
+            try {
+                $this->_readRecord($readMessage, new \RESTfm\Message\Record($recordID));
+            } catch (\RESTfm\ResponseException $e) {
+                // Check for 404 Not Found in exception.
+                if ($e->getCode() == \RESTfm\ResponseException::NOTFOUND && $this->_updateElseCreate) {
+                    // No record matching this unique-key-recordID,
+                    // create new record instead.
+                    return $this->_createRecord($restfmMessage, $requestRecord, $index);
+                }
+
+                // Not 404, re-throw exception.
+                throw $e;
+            }
+
+            // Check if we have an error.
+            $readStatus = $readMessage->getMultistatus(0);
+            if ($readStatus !== NULL) {
+
+                // Check for FileMaker error 401: No records match the request
+                if ($readStatus->getStatus() == 401 && $this->_updateElseCreate) {
+                    // No record matching this unique-key-recordID,
+                    // create new record instead.
+                    return $this->_createRecord($restfmMessage, $requestRecord, $index);
+                }
+
+                // Some other error, set our own multistatus.
+                $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
+                        $readStatus->getStatus(),
+                        $readStatus->getReason(),
+                        $requestRecord->getRecordId()
+                ));
+                return;                             // Nothing more to do here.
+            }
+
+            // We now have the real recordID.
+            $recordID = $readMessage->getRecord(0)->getRecordId();
+        }
+
+        $fmDataApi = $this->_backend->getFileMakerDataApi(); // @var FileMakerDataApi
+
+        // Allow appending to existing data.
+        if ($this->_updateAppend) {
+            if ($readMessage == NULL) {
+                $readMessage = new \RESTfm\Message\Message();
+                $this->_readRecord($readMessage, new \RESTfm\Message\Record($recordID));
+
+                // Check if we have an error.
+                $readStatus = $readMessage->getMultistatus(0);
+                if ($readStatus !== NULL) {
+                    // Set our own multistatus for this error.
+                    $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
+                            $readStatus->getStatus(),
+                            $readStatus->getReason(),
+                            $requestRecord->getRecordId()
+                    ));
+                    return;                             // Nothing more to do here.
+                }
+            }
+
+            $readRecord = $readMessage->getRecord(0);
+
+            // Rebuild $requestRecord field values by appending to the field
+            // values in $readRecord.
+            foreach ($requestRecord as $fieldName => $value) {
+                $requestRecord[$fieldName] = $readRecord[$fieldName] . $value;
+            }
+        }
+
+        /*
+        $updatedValuesRepetitions = $this->_convertValuesToRepetitions($requestRecord);
+
+        // New edit command on record with values to update.
+        $editCommand = $FM->newEditCommand($this->_layout, $recordID, $updatedValuesRepetitions);
+
+        // Script calling.
+        if ($this->_postOpScriptTrigger) {
+            $editCommand->setScript($this->_postOpScript, $this->_postOpScriptParameter);
+            $this->_postOpScriptTrigger = FALSE;
+        }
+        if ($this->_preOpScriptTrigger) {
+            $editCommand->setPreCommandScript($this->_preOpScript, $this->_preOpScriptParameter);
+            $this->_preOpScriptTrigger = FALSE;
+        }
+        */
+
+        // Commit edit back to database.
+        $result = $fmDataApi->editRecord($this->_layout, $recordID, $requestRecord->_getDataReference());
+
+        if ($result->isError()) {
+            // Check for FileMaker error 401: No records match the request
+            if ($result->getCode() == 401 && $this->_updateElseCreate) {
+                // No record matching this recordID, create new record instead.
+                return $this->_createRecord($restfmMessage, $requestRecord, $index);
+            }
+
+            if ($this->_isSingle) {
+                throw new FileMakerDataApiResponseException($result);
+            }
+            // Store result codes in multistatus section
+            $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
+                $result->getCode(),
+                $result->getMessage(),
+                $requestRecord->getRecordId()
+            ));
+            return;                                 // Nothing more to do here.
+        }
 
     }
 
