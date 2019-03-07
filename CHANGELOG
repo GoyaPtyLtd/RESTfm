@@ -1,3 +1,6 @@
+### 5.2.2 (Released 2019-03-07) ###
+ - Fix base64 container encoding warnings in PHP 5.6
+
 ### 5.2.1 (Released 2019-02-05) ###
  - Reset reporting level for production systems.
 
