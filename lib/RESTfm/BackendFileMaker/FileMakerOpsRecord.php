@@ -538,7 +538,11 @@ class FileMakerOpsRecord extends \RESTfm\OpsRecordAbstract {
                             if (preg_match('/^\/fmi\/xml\/cnt\/([^\?]*)\?/', $fieldData, $matches)) {
                                 $filename = $matches[1] . ';';
                             }
-                            $fieldData = $filename . base64_encode($FM->getContainerData($record->getField($fieldName, $repetition)));
+                            $containerData = $FM->getContainerData($record->getField($fieldName, $repetition));
+							if (gettype($containerData) !== 'string') {
+								$containerData = "";
+							}
+                            $fieldData = $filename . base64_encode($containerData);
                             break;
                         case self::CONTAINER_RAW:
                             // TODO
