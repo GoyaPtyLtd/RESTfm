@@ -190,6 +190,10 @@ function iniToBytes ($val) {
         return "NaN";   // Not a Number
     }
 
+    if (isset($matches[1])) {
+        $val = $matches[1];
+    }
+
     $units = '';
     if (isset($matches[2])) {
         $units = $matches[2];
