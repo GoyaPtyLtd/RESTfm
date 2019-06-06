@@ -1,3 +1,6 @@
+### 5.2.3 (Released 2019-06-06) ###
+ - Second fix to clean up "non well formed" notice.
+
 ### 5.2.2 (Released 2019-03-07) ###
  - Fix base64 container encoding warnings in PHP 5.6
 
