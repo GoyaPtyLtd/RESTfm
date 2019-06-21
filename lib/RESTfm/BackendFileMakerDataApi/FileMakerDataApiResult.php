@@ -111,7 +111,7 @@ class FileMakerDataApiResult {
             return TRUE;
         } else {
             // Invalid response.
-            error_log('RESTfm FileMakerDataApiResult::isError() invalid: ' . serialize($_result));
+            error_log('RESTfm FileMakerDataApiResult::isError() invalid: ' . serialize($this->_result));
             throw new \RESTfm\ResponseException(
                             'Invalid response from FMDataAPI Server',
                             \RESTfm\ResponseException::INTERNALSERVERERROR);
