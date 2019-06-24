@@ -100,6 +100,8 @@ $config['database'] = array (
  * Optional list of FileMaker Data API database names that map to a
  * backend hostspec and database.
  *
+ * NOTE: https is required in the hostspec for the FileMaker Data API.
+ *
  * The database name should be unique, and may be unrelated to the
  * backend database name it maps to.
  *
@@ -113,7 +115,7 @@ $config['databaseFMDataAPIMap'] = array (
     //     'database'  => 'myDatabase',
     // ),
     // 'example2' => array (
-    //     'hostspec'  => 'https://127.0.0.1:443',
+    //     'hostspec'  => 'https://127.0.0.1',
     //     'database'  => 'anotherDatabase',
     //     'layouts'   =>  array (
     //         'A Layout',

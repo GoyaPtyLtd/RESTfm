@@ -25,6 +25,12 @@ namespace RESTfm\BackendFileMakerDataApi;
 class FileMakerDataApi {
 
     /**
+     * FMS Data API version that we support.
+     * This is the required version string as used in all backend query URLs.
+     */
+    const BACKEND_VERSION = 'v1';
+
+    /**
      * @var resource
      *  Curl Handle.
      */
@@ -84,7 +90,7 @@ class FileMakerDataApi {
             CURLOPT_HEADER          => FALSE,
             CURLOPT_RETURNTRANSFER  => TRUE,
             CURLOPT_FOLLOWLOCATION  => FALSE, // Redirects don't work. Must use
-                                              // https in hostspec with FMS16
+                                              // https in hostspec with FMS16+
                                               // Data API.
         );
         if (\RESTfm\Config::getVar('settings', 'strictSSLCertsFMS') === FALSE) {
@@ -115,7 +121,7 @@ class FileMakerDataApi {
             return;
         }
 
-        $this->curl_setup('/fmi/data/v1/databases/' .
+        $this->curl_setup($this->databasesUrl() . '/' .
                                 rawurlencode($this->_database) .
                                 '/sessions/' .
                                 rawurlencode($this->_token),
@@ -125,8 +131,8 @@ class FileMakerDataApi {
         $response = $this->curl_exec();
 
         // DEBUG
-        // echo "Closing response: ";
-        // var_dump($response); echo "\n";
+        //echo "Closing response: ";
+        //var_dump($response); echo "\n";
     }
 
     /**
@@ -149,9 +155,9 @@ class FileMakerDataApi {
                 base64_encode($this->_username . ':' . $this->_password),
         );
 
-        $data = array();
+        $data = json_decode('{}');
 
-        $this->curl_setup('/fmi/data/v1/databases/' .
+        $this->curl_setup($this->databasesUrl() . '/' .
                                 rawurlencode($this->_database) . '/sessions',
                           'POST', $data, $headers);
 
@@ -185,7 +191,7 @@ class FileMakerDataApi {
     public function createRecord($layout, $data = array()) {
 
         $fieldData = array ('fieldData' => $data);
-        $this->curl_setup('/fmi/data/v1/databases/'.
+        $this->curl_setup($this->databasesUrl() . '/' .
                                 rawurlencode($this->_database) .
                                 '/layouts/' .
                                 rawurlencode($layout) .
@@ -214,7 +220,7 @@ class FileMakerDataApi {
      */
     public function deleteRecord($layout, $recordId) {
 
-        $this->curl_setup('/fmi/data/v1/databases/'.
+        $this->curl_setup($this->databasesUrl() . '/' .
                                 rawurlencode($this->_database) .
                                 '/layouts/' .
                                 rawurlencode($layout) .
@@ -251,7 +257,7 @@ class FileMakerDataApi {
     public function editRecord($layout, $recordId, $data = array()) {
 
         $fieldData = array ('fieldData' => $data);
-        $this->curl_setup('/fmi/data/v1/databases/'.
+        $this->curl_setup($this->databasesUrl() . '/' .
                                 rawurlencode($this->_database) .
                                 '/layouts/' .
                                 rawurlencode($layout) .
@@ -285,7 +291,7 @@ class FileMakerDataApi {
      */
     public function getRecords($layout, $range = 24, $offset = 1, $sort = NULL) {
 
-        $this->curl_setup('/fmi/data/v1/databases/' .
+        $this->curl_setup($this->databasesUrl() . '/' .
                                 rawurlencode($this->_database) .
                                 '/layouts/' .
                                 rawurlencode($layout) .
@@ -320,7 +326,7 @@ class FileMakerDataApi {
      */
     public function getRecord($layout, $recordID) {
 
-        $this->curl_setup('/fmi/data/v1/databases/' .
+        $this->curl_setup($this->databasesUrl() . '/' .
                                 rawurlencode($this->_database) .
                                 '/layouts/' .
                                 rawurlencode($layout) .
@@ -383,7 +389,7 @@ class FileMakerDataApi {
             $data['sort'] = $sort;
         }
 
-        $this->curl_setup('/fmi/data/v1/databases/' .
+        $this->curl_setup($this->databasesUrl() . '/' .
                                 rawurlencode($this->_database) .
                                 '/layouts/' .
                                 rawurlencode($layout) .
@@ -396,6 +402,24 @@ class FileMakerDataApi {
         //var_export($result);
 
         return $result;
+    }
+
+    /**
+     * Returns the base URL for all backend 'databases' queries.
+     *
+     * @return string
+     */
+    protected function databasesUrl () {
+        return('/fmi/data/' . self::BACKEND_VERSION . '/databases');
+    }
+
+    /**
+     * Returns the base URL for backend 'productinfo' query.
+     *
+     * @return string
+     */
+    protected function productinfoUrl () {
+        return('/fmi/data/' . self::BACKEND_VERSION . '/productinfo');
     }
 
     /**
@@ -430,7 +454,12 @@ class FileMakerDataApi {
         if ($data !== NULL) {
             $jsonData = json_encode($data);
             $headers[] = 'Content-Length: ' . strlen($jsonData);
-            $headers[] = 'Content-Type: application/json; charset=UTF-8';
+
+            // As of FMSv18, the data API is no longer able to accept UTF-8
+            // charset.
+            // 20190624 - Gavin Stewart, Goya Pty Ltd.
+            //$headers[] = 'Content-Type: application/json; charset=UTF-8';
+            $headers[] = 'Content-Type: application/json';
             $options[CURLOPT_POSTFIELDS] = $jsonData;
         }
 
