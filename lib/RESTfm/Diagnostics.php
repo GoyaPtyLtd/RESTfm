@@ -403,16 +403,17 @@ class Diagnostics {
             return;
         }
 
-        $hostspec = Config::getVar('database', 'hostspec');
-        $reportItem->details .= $hostspec . "\n";
-
         // Probe hostspec for fmi/xml/fmresultset.xml path using cURL, this
         // will verify that FileMaker Web Publishing Engine is really
         // configured and listening. Otherwise the second part of this test
         // using the FileMaker API can give a false positive as any webserver
         // listening can give a 404 error (which the FM API returns as
         // error 22, which may just be related to bad credentials !).
-        $ch = curl_init($hostspec . '/fmi/xml/fmresultset.xml');
+        $hostspec = Config::getVar('database', 'hostspec');
+        $URL = $hostspec . '/fmi/xml/fmresultset.xml';
+        $reportItem->details .= '<a href="'. $URL . '">' . $URL . '</a>' . "\n";
+       
+        $ch = curl_init($URL);
         curl_setopt($ch, CURLOPT_HEADER, FALSE);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
         if (Config::getVar('settings', 'strictSSLCertsFMS') === FALSE) {
