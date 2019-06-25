@@ -31,24 +31,22 @@ class Backend extends \RESTfm\BackendAbstract {
     private $_FileMakerDataApi;
 
     /**
-     * @var array Database map from RESTfm.ini.php.
-     */
-    private $_dbMap = '';
-
-    /**
      * Instantiate backend.
      *
-     * @param string $host
-     *  Hostname/Hostspec for backend database.
+     * @param assoc array $hostspec
+     *  In the form:
+     *  array (
+     *      'hostspec' => https://127.0.0.1:443,
+     *      'database' => <string|NULL>,
+     *  )
      * @param string $username
      * @param string $password
      */
-    public function __construct ($dbMap, $username, $password) {
+    public function __construct ($hostspec, $username, $password) {
         $this->_FileMakerDataApi = new FileMakerDataApi(
-                                        $dbMap['hostspec'],
-                                        $dbMap['database'],
+                                        $hostspec['hostspec'],
+                                        $hostspec['database'],
                                         $username, $password);
-        $this->_dbMap = $dbMap;
     }
 
     /**
@@ -98,10 +96,4 @@ class Backend extends \RESTfm\BackendAbstract {
         return $this->_FileMakerDataApi;
     }
 
-    /**
-     * @return array
-     */
-    public function getDbMap () {
-        return $this->_dbMap;
-    }
 }

@@ -29,9 +29,9 @@ class BackendFactory {
      *
      * Each string must be the directory name of the backend (minus ^Backend).
      */
-    const   BACKEND_FILEMAKER = "FileMaker",
-            BACKEND_FILEMAKERDATAAPI = "FileMakerDataApi",
-            BACKEND_PDO = "Pdo";
+    const   BACKEND_FILEMAKERPHPAPI     = "FileMaker",
+            BACKEND_FILEMAKERDATAAPI    = "FileMakerDataApi",
+            BACKEND_PDO                 = "Pdo";
 
     /**
      * Instantiate and return the appropriate backend object.
@@ -48,12 +48,16 @@ class BackendFactory {
      * @return BackendAbstract
      */
     public static function make (Request $request, $database = NULL) {
-        // FileMaker is the default, but $database may map to a PDO backend.
-        $type = self::BACKEND_FILEMAKER;
+        // Determine which FileMaker backend API is in use.
+        if (Config::getVar('database', 'dataApi') === TRUE) {
+            $type = self::BACKEND_FILEMAKERDATAAPI;
+        } else {
+            $type = self::BACKEND_FILEMAKERPHPAPI;
+        }
+
+        // $database may map to a PDO backend.
         if ($database !== NULL) {
-            if (Config::checkVar('databaseFMDataAPIMap', $database)) {
-                $type = self::BACKEND_FILEMAKERDATAAPI;
-            } elseif (Config::checkVar('databasePDOMap', $database)) {
+            if (Config::checkVar('databasePDOMap', $database)) {
                 $type = self::BACKEND_PDO;
             }
         }
@@ -65,7 +69,10 @@ class BackendFactory {
         switch ($type) {
             case self::BACKEND_FILEMAKERDATAAPI:
                 $backendObject = new $backendClassName(
-                            Config::getVar('databaseFMDataAPIMap', $database),
+                            array(
+                                'hostspec' => Config::getVar('database', 'hostspec'),
+                                'database' => $database,
+                            ),
                             $restfmCredentials->getUsername(),
                             $restfmCredentials->getPassword()
                         );

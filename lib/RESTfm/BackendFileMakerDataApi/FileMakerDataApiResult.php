@@ -46,6 +46,13 @@ class FileMakerDataApiResult {
     }
 
     /**
+     * Return all databases from result of querying FileMaker Data API.
+     */
+    public function getDatabases () {
+        return @$this->_result['response']['databases'];
+    }
+
+    /**
      * Return the number of records in this result.
      */
     public function getFetchCount () {
@@ -58,6 +65,13 @@ class FileMakerDataApiResult {
      */
     public function getFirstRecord () {
         return @$this->_result['response']['data'][0];
+    }
+
+    /**
+     * Return all layouts from result of querying FileMaker Data API.
+     */
+    public function getLayouts () {
+        return @$this->_result['response']['layouts'];
     }
 
     /**

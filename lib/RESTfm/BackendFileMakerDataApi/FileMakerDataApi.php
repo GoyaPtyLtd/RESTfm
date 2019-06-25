@@ -58,6 +58,7 @@ class FileMakerDataApi {
 
     /**
      * @var string
+     *  Data API session token.
      */
     private $_token = NULL;
 
@@ -68,15 +69,15 @@ class FileMakerDataApi {
 
     /**
      * @param string $hostspec
-     *  Base URL for FM Data API Server e.g. 'http://127.0.0.1:80'
+     *  Base URL for FM Data API Server e.g. 'https://127.0.0.1:443'
      * @param string $database
-     *  The database is hard coded into the RESTfm.ini.php map
+     *  Optional database name.
      * @param string $username
      *  Optional username.
      * @param string $password
      *  Optional password.
      */
-    public function __construct ($hostspec, $database, $username = NULL, $password = NULL) {
+    public function __construct ($hostspec, $database = NULL, $username = NULL, $password = NULL) {
         $this->_curlHandle = curl_init();
         $this->_hostspec = $hostspec;
         $this->_database = $database;
@@ -101,7 +102,11 @@ class FileMakerDataApi {
                             );
         }
 
-        $this->login();
+        if ($this->_database !== NULL) {
+            // If we were provided with a database, then login and get the
+            // session token.
+            $this->login();
+        }
     }
 
     public function __destruct () {
@@ -109,6 +114,8 @@ class FileMakerDataApi {
 
         curl_close($this->_curlHandle);
     }
+
+    // Begin Auth
 
     /**
      * Logout (close) from FileMaker Data API session.
@@ -170,6 +177,58 @@ class FileMakerDataApi {
 
         $this->_token = $result->getToken();
     }
+
+    // Begin Metadata
+
+    /**
+     * Database Names.
+     *
+     * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult
+     *  Object containing decoded JSON response from FileMaker Data API Server.
+     *
+     * @throws \RESTfm\ResponseException
+     *  On cURL and JSON errors.
+     */
+    public function databaseNames () {
+        $this->curl_setup($this->databasesUrl(), 'GET');
+
+        $headers = array(
+            'Authorization: Basic ' .
+                base64_encode($this->_username . ':' . $this->_password),
+        );
+
+        $result = $this->curl_exec();
+
+        // DEBUG
+        //var_export($result);
+
+        return $result;
+    }
+
+    /**
+     * Layout Names.
+     *
+     * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult
+     *  Object containing decoded JSON response from FileMaker Data API Server.
+     *
+     * @throws \RESTfm\ResponseException
+     *  On cURL and JSON errors.
+     */
+    public function layoutNames () {
+        $this->curl_setup($this->databasesUrl() . '/' .
+                                rawurlencode($this->_database) .
+                                '/layouts',
+                          'GET');
+
+        $result = $this->curl_exec();
+
+        // DEBUG
+        //var_export($result);
+
+        return $result;
+    }
+
+    // Begin Records
 
     /**
      * Create Record.
@@ -312,9 +371,7 @@ class FileMakerDataApi {
      * Get Record by RecordId
      *
      * @param string $layout
-     * @param int $range
-     * @param int $offset
-     * @param array $sort
+     * @param string $recordID
      *
      * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult
      *  Object containing decoded JSON response from FileMaker Data API Server.

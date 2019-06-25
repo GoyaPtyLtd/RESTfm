@@ -37,37 +37,75 @@ class OpsDatabase extends \RESTfm\OpsDatabaseAbstract {
     }
 
     /**
-     * Read databases available - Not applicable to this backend, as the
-     * databases are hard coded under databaseFMDataAPIMap in the RESTfm config.
+     * Read databases available.
+     *
+     * @throws FileMakerDataApiResponseException
+     *  On backend error.
      *
      * @return \RESTfm\Message\Message
-     *   Empty, no sections.
      */
     public function readDatabases () {
-        return new \RESTfm\Message\Message;
+        // @var FileMakerDataApi
+        $fmDataApi = $this->_backend->getFileMakerDataApi();
+
+         // @var FileMakerDataApiResult
+        $result = $fmDataApi->databaseNames();
+
+        if ($result->isError()) {
+            throw FileMakerDataApiResponseException($result);
+        }
+
+        $databases = $result->getDatabases();
+        $databaseNames = array();
+        foreach ($databases as $database) {
+            array_push($databaseNames, $database['name']);
+        }
+        natsort($databaseNames);
+
+        $restfmMessage = new \RESTfm\Message\Message;
+        foreach ($databaseNames as $database) {
+            $restfmMessage->addRecord(new \RESTfm\Message\Record(
+                NULL, NULL, array('database' => $database)
+            ));
+        }
+
+        return $restfmMessage;
     }
 
     /**
-     * Read layouts available in $database via backend.
+     * Read layouts available in database via backend.
      *
-     * @throws \RESTFm\ResponseException
+     * @throws FileMakerDataApiResponseException
      *  On backend error.
      *
      * @return \RESTfm\Message\Message
      */
     public function readLayouts () {
-        $message = new \RESTfm\Message\Message();
-        $map = $this->_backend->getDbMap();
-        if (isset($map['layouts'])) {
-            foreach ($map['layouts'] as $layout) {
-                $message->addRecord(new \RESTfm\Message\Record(
-                        NULL,
-                        NULL,
-                        array('layout' => $layout)
-                    ));
-            }
+        // @var FileMakerDataApi
+        $fmDataApi = $this->_backend->getFileMakerDataApi();
+
+         // @var FileMakerDataApiResult
+        $result = $fmDataApi->layoutNames();
+
+        if ($result->isError()) {
+            throw FileMakerDataApiResponseException($result);
         }
-        return $message;
+
+        $layouts = $result->getLayouts();
+        $layoutNames = array();
+        foreach ($layouts as $layout) {
+            array_push($layoutNames, $layout['name']);
+        }
+        natsort($layoutNames);
+
+        $restfmMessage = new \RESTfm\Message\Message();
+        foreach ($layoutNames as $layout) {
+            $restfmMessage->addRecord(new \RESTfm\Message\Record(
+                NULL, NULL, array('layout' => $layout)
+            ));
+        }
+
+        return $restfmMessage;
     }
 
     /**
