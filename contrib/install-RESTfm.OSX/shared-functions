@@ -824,7 +824,7 @@ update_RESTfmIni() {
 
     # Use sed to update hostspec.
     log_progress_msg "hostspec,"
-    if [[ ${RESTFM_USE_DATAAPI} ]]; then
+    if [[ ${RESTFM_USE_DATAAPI} -eq 1 ]]; then
         # FMS Data API requires https to work.
         sed -i.bak -E "s/^([[:space:]]*\'hostspec\'[[:space:]]*\=\>[[:space:]]*\')(.*)(\'[,[:space:]]*)/\1https:\/\/127.0.0.1:${APACHE_LISTEN_SSL}\3/" "${RESTFMINI}"
         local RET=$?
@@ -840,7 +840,7 @@ update_RESTfmIni() {
         exit 1
     fi
 
-    if [[ ${FMS_SELFSIGNEDSSLCERT} ]]; then
+    if [[ ${FMS_SELFSIGNEDSSLCERT} -eq 1 ]]; then
         # Use sed to update strictSSLCerts.
         log_progress_msg "strictSSLCerts"
 

@@ -88,7 +88,7 @@ check_UseDataApi
 
 check_FMS_SelfSignedSslCertificate
 
-if [ ${RESTFM_USE_DATAAPI} ]; then
+if [[ ${RESTFM_USE_DATAAPI} -eq 1 ]]; then
     check_FMS_DataApi
     check_RESTfm_PHP
 else
