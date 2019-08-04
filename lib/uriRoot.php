@@ -55,18 +55,6 @@ class uriRoot extends RESTfm\Resource {
             unset($queryString->RFMlink);
         }
 
-        // Inject FM Data API solutions, if any.
-        // If we get this far then FM authentication was successful so this
-        // list wont be open access with FM guest access disabled.
-        if (RESTfm\Config::checkVar('databaseFMDataAPIMap')) {
-            $dbs = RESTfm\Config::getVar('databaseFMDataAPIMap');
-            foreach ($dbs as $mapName => $hostspec) {
-                $restfmMessage->addRecord(new \RESTfm\Message\Record(
-                    NULL, NULL, array('database' => $mapName)
-                ));
-            }
-        }
-
         // Inject PDO databases, if any.
         // If we get this far then FM authentication was successful so this
         // list wont be open access with FM guest access disabled.

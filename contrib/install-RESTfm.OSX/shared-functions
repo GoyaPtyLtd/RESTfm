@@ -206,6 +206,7 @@ check_FMSVersion() {
 #   APACHE_VERSION - x.y Apache version.
 #   APACHE_CONF - Full path to Apache conf file with version suffix for FMS13+.
 #   APACHE_LISTEN - Port that Apache is listening on.
+#   APACHE_LISTEN_SSL - Port that Apache is listening on for SSL.
 #
 function check_ApacheVersion() {
     local MSGPREFIX='Check Apache version:'
@@ -217,15 +218,117 @@ function check_ApacheVersion() {
 
     APACHE_LISTEN=$(grep '^Listen' "${APACHE_CONF}" | head -1 | sed -E 's/Listen[[:space:]]+([0-9]+)/\1/')
 
+    local APACHE_CONF_SSL="/Library/FileMaker Server/HTTPServer/conf/extra/httpd-ssl.conf.${APACHE_VERSION}"
+    APACHE_LISTEN_SSL=$(grep '^Listen' "${APACHE_CONF_SSL}" | head -1 | sed -E 's/Listen[[:space:]]+([0-9]+)/\1/')
+
     case "$APACHE_VERSION" in
         '2.2'|'2.4')
-            log_success_msg "$MSGPREFIX $APACHE_VERSION (Listen port: ${APACHE_LISTEN})"
+            log_success_msg "$MSGPREFIX $APACHE_VERSION (Listen port: ${APACHE_LISTEN}, SSL: ${APACHE_LISTEN_SSL})"
             ;;
         *)
             log_failure_msg "$MSGPREFIX $APACHE_VERSION, unsupported"
             exit 1
             ;;
     esac
+}
+
+
+##
+# Check:
+#   - if dataApi is set TRUE in RESTfm.ini.php
+#
+# Initialises global variable:
+#   RESTFM_USE_DATAAPI
+#
+check_UseDataApi() {
+    local MSGPREFIX="Check RESTfm using Data API:"
+    local RESTFMINI="${RESTFM_DIRNAME}/${RESTFM_BASENAME}/RESTfm.ini.php"
+
+    # Use grep to determine if dataApi is set TRUE in RESTfm.ini.php
+    grep -Eq "^\s*'dataApi'\s+=>\s+(TRUE|true)" "${RESTFMINI}"
+
+    if [ $? -eq 0 ]; then
+        RESTFM_USE_DATAAPI=1
+        MSGPREFIX="${MSGPREFIX} True"
+    else
+        RESTFM_USE_DATAAPI=0
+        MSGPREFIX="${MSGPREFIX} False"
+    fi
+
+    log_success_msg $MSGPREFIX
+}
+
+##
+# Check:
+#   - if FMS is using a self signed SSL certificate.
+#
+# Initialises global variable:
+#   FMS_SELFSIGNEDSSLCERT
+#
+check_FMS_SelfSignedSslCertificate () {
+    local MSGPREFIX="Check FMS Self Signed SSL Certificate:"
+
+    curl -sS "https://localhost:${APACHE_LISTEN_SSL}/" 2>&1 | grep -iq "self signed certificate in certificate chain"
+
+    if [ $? -eq 0 ]; then
+        FMS_SELFSIGNEDSSLCERT=1
+        MSGPREFIX="${MSGPREFIX} True"
+    else
+        FMS_SELFSIGNEDSSLCERT=0
+        MSGPREFIX="${MSGPREFIX} False"
+    fi
+
+    log_success_msg $MSGPREFIX
+}
+
+##
+# Check:
+#   - that FMS has Data API enabled.
+#
+check_FMS_DataApi() {
+    local MSGPREFIX='Check FMS Data API:'
+
+    # Check Data API Product Info:
+    # N.B. Data API only works with https.
+    curl -ks "https://localhost:${APACHE_LISTEN_SSL}/fmi/data/v1/productInfo" | grep -qi "FileMaker Data API Engine"
+    local RET=$?
+
+    if [ $RET != 0 ]; then
+        log_failure_msg "${MSGPREFIX} not found."
+        echo
+        echo "Please ensure FileMaker Data API is enabled in Admin Console."
+        echo
+        exit 1
+    fi
+
+    log_success_msg "$MSGPREFIX Success"
+}
+
+##
+# Check:
+#   - that PHP is functional for RESTfm (ignores WPE status)
+#
+check_RESTfm_PHP() {
+    local MSGPREFIX='Check RESTfm PHP:'
+
+    # Check RESTfm diagnostic.php output:
+    curl -s "http://localhost:${APACHE_LISTEN}/RESTfm/report.php" | grep -q "Operating System Name : Darwin"
+    local RET=$?
+
+    if [ $RET != 0 ]; then
+        log_failure_msg "${MSGPREFIX} RESTfm/report.php"
+        echo
+        if [ $FMS_VERSION_MAJOR -ge 17 ]; then
+            echo "Please ensure PHP is enabled with fmsadmin command line tool."
+        else
+            echo "Please ensure PHP is enabled in Admin Console."
+        fi
+        echo
+        exit 1
+    fi
+
+    log_success_msg "$MSGPREFIX Success"
+
 }
 
 ##
@@ -247,15 +350,15 @@ check_FMS_WPE() {
         exit 1
     fi
 
-    log_success_msg "$MSGPREFIX success"
+    log_success_msg "$MSGPREFIX Success"
 }
 
 ##
 # Check:
-#   - that FMS has PHP enabled.
+#   - that FMS has WPE+PHP enabled.
 #
 check_FMS_PHP() {
-    local MSGPREFIX='Check FMS PHP:'
+    local MSGPREFIX='Check FMS WPE+PHP:'
 
     # Ensure that both WPE and PHP are enabled (only works on FMS14)
     #local FMS_SERVER_CONFIG='/Library/FileMaker Server/Admin/conf/server_config.xml'
@@ -289,7 +392,7 @@ check_FMS_PHP() {
         exit 1
     fi
 
-    log_success_msg "$MSGPREFIX success"
+    log_success_msg "$MSGPREFIX Success"
 }
 
 ##
@@ -481,7 +584,7 @@ install_RESTfmApacheConfig() {
         exit 1
     fi
 
-    log_success_msg "${MSGPREFIX} success"
+    log_success_msg "${MSGPREFIX} Success"
 }
 
 ##
@@ -518,7 +621,7 @@ install_HttpsRootSymlink(){
         exit 1
     fi
 
-    log_success_msg "${MSGPREFIX} success"
+    log_success_msg "${MSGPREFIX} Success"
 }
 
 ##
@@ -551,7 +654,7 @@ update_FMSApacheConfig() {
     # Append include string to FMS Apache config.
     echo "$INCLUDESTR" >> "${SRC}"
 
-    log_success_msg "${MSGPREFIX} success"
+    log_success_msg "${MSGPREFIX} Success"
 }
 
 ##
@@ -693,13 +796,14 @@ update_RESTfmHtaccess() {
         exit 1
     fi
 
-    log_success_msg "${MSGPREFIX} success"
+    log_success_msg "${MSGPREFIX} Success"
 }
 
 ##
 # Update RESTfm.ini.php
 #   - set baseURI.
 #   - set hostspec.
+#   - set strictSSLCerts* (if FMS_SELFSIGNEDSSLCERT)
 #
 update_RESTfmIni() {
     local MSGPREFIX="Update RESTfm.ini.php"
@@ -719,14 +823,42 @@ update_RESTfmIni() {
     fi
 
     # Use sed to update hostspec.
-    log_progress_msg "hostspec"
-    sed -i.bak -E "s/^([[:space:]]*\'hostspec\'[[:space:]]*\=\>[[:space:]]*\')(.*)(\'[,[:space:]]*)/\1http:\/\/127.0.0.1:${APACHE_LISTEN}\3/" "${RESTFMINI}"
-    local RET=$?
+    log_progress_msg "hostspec,"
+    if [[ ${RESTFM_USE_DATAAPI} ]]; then
+        # FMS Data API requires https to work.
+        sed -i.bak -E "s/^([[:space:]]*\'hostspec\'[[:space:]]*\=\>[[:space:]]*\')(.*)(\'[,[:space:]]*)/\1https:\/\/127.0.0.1:${APACHE_LISTEN_SSL}\3/" "${RESTFMINI}"
+        local RET=$?
+    else
+        # Default to http for PHP API.
+        sed -i.bak -E "s/^([[:space:]]*\'hostspec\'[[:space:]]*\=\>[[:space:]]*\')(.*)(\'[,[:space:]]*)/\1http:\/\/127.0.0.1:${APACHE_LISTEN}\3/" "${RESTFMINI}"
+        local RET=$?
+    fi
 
     if [ "$RET" != "0" ]; then
         # fail
         log_end_msg 1
         exit 1
+    fi
+
+    if [[ ${FMS_SELFSIGNEDSSLCERT} ]]; then
+        # Use sed to update strictSSLCerts.
+        log_progress_msg "strictSSLCerts"
+
+        sed -i.bak -E "s/^([[:space:]]*\'strictSSLCertsFMS\'[[:space:]]*\=\>[[:space:]]*)(.*)(,[:space:]*)/\1FALSE\3/" "${RESTFMINI}"
+        local RET=$?
+        if [ "$RET" != "0" ]; then
+            # fail
+            log_end_msg 1
+            exit 1
+        fi
+
+        sed -i.bak -E "s/^([[:space:]]*\'strictSSLCertsReport\'[[:space:]]*\=\>[[:space:]]*)(.*)(,[:space:]*)/\1FALSE\3/" "${RESTFMINI}"
+        local RET=$?
+        if [ "$RET" != "0" ]; then
+            # fail
+            log_end_msg 1
+            exit 1
+        fi
     fi
 
     # OK
@@ -800,7 +932,7 @@ update_FMSApacheConfigRemove() {
         exit 1
     fi
 
-    log_success_msg "${MSGPREFIX} updated"
+    log_success_msg "${MSGPREFIX} Updated"
 }
 
 ##
@@ -822,7 +954,7 @@ uninstall_RESTfmApacheConfig() {
         exit 1
     fi
 
-    log_success_msg "${MSGPREFIX} success"
+    log_success_msg "${MSGPREFIX} Success"
 }
 
 ##
@@ -853,5 +985,5 @@ uninstall_HttpsRootSymlink(){
         fi
     fi
 
-    log_success_msg "${MSGPREFIX} success"
+    log_success_msg "${MSGPREFIX} Success"
 }

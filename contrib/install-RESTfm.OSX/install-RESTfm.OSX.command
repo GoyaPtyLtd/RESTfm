@@ -82,11 +82,19 @@ check_FMSVersion
 
 check_ApacheVersion
 
-check_FMS_WPE
-
-check_FMS_PHP
-
 check_Location
+
+check_UseDataApi
+
+check_FMS_SelfSignedSslCertificate
+
+if [ ${RESTFM_USE_DATAAPI} ]; then
+    check_FMS_DataApi
+    check_RESTfm_PHP
+else
+    check_FMS_WPE
+    check_FMS_PHP
+fi
 
 check_Privilege
 

@@ -190,12 +190,16 @@ class FileMakerDataApi {
      *  On cURL and JSON errors.
      */
     public function databaseNames () {
-        $this->curl_setup($this->databasesUrl(), 'GET');
+        $headers = NULL;
 
-        $headers = array(
-            'Authorization: Basic ' .
-                base64_encode($this->_username . ':' . $this->_password),
-        );
+        if ($this->_username !== NULL && $this->_username !== '') {
+            $headers = array(
+                'Authorization: Basic ' .
+                    base64_encode($this->_username . ':' . $this->_password),
+            );
+        }
+
+        $this->curl_setup($this->databasesUrl(), 'GET', NULL, $headers);
 
         $result = $this->curl_exec();
 
