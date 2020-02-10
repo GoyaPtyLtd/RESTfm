@@ -85,7 +85,7 @@ class FormatHtml implements FormatInterface {
 
             $str .= '<h3>'.$sectionName.'</h3>'."\n";
             $str .= '<div id="'.$sectionName.'">'."\n";
-            if (count($section) <= 0) {
+            if (count((array)$section) <= 0) {
                 $str .= '<div class="warn">Warning: no records found.</div>'."\n";
             }
             $str .= "<table>\n";
