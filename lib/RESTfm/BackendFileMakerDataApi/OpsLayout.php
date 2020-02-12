@@ -49,6 +49,8 @@ class OpsLayout extends \RESTfm\OpsLayoutAbstract {
     public function read () {
         $fmDataApi = $this->_backend->getFileMakerDataApi(); // @var FileMakerDataApi
 
+        $selectList = array();
+
         $findSkip = $this->_readOffset;
         $findMax = $this->_readCount;
 
@@ -58,28 +60,66 @@ class OpsLayout extends \RESTfm\OpsLayoutAbstract {
         }
 
         // Query.
-        $result = $fmDataApi->getRecords($this->_layout, $findMax, $findSkip + 1);
+        if ($this->_SQLquery !== NULL) {
+            // This search is using SQL-like syntax.
+            $parser = new FileMakerDataApiSQLParser($this->_SQLquery);
+            //$parser->setDebug(TRUE);
+            $parser->parse();
+
+            // Iff SQL OFFSET is set, use it for $findSkip.
+            // Otherwise RFMskip paging will work with SQL queries.
+            if ($parser->getOffset() !== NULL) {
+                $findSkip = $parser->getOffset();
+            }
+
+            $result = $fmDataApi->findRecords($this->_layout,
+                                              $parser->getQuery(),
+                                              $parser->getSort(),
+                                              $findSkip + 1,
+                                              $parser->getLimit());
+            $selectList = $parser->getSelectList();
+        } else {
+            $result = $fmDataApi->getRecords($this->_layout, $findMax, $findSkip + 1);
+        }
+
+
+        if ($result->isError()) {
+            throw new FileMakerDataApiResponseException($result);
+        }
 
         $restfmMessage = new \RESTfm\Message\Message();
 
-        $fetchCount = 0;
-        foreach ($result->getRecords() as $record) {
-            $restfmMessage->addRecord(new \RESTfm\Message\Record(
-                $record['recordId'],
-                NULL,
-                $record['fieldData']
-            ));
-            $fetchCount++;
+        /*
+        $restfmMessage->addRecord(new \RESTfm\Message\Record(
+            $record['recordId'],
+            NULL,
+            $record['fieldData']
+        ));
+        */
+
+        $fieldNames = $result->getFields();
+        // An empty $selectList, or '*' anywhere in $selectList means that
+        // all $fieldNames will be returned.
+        if (! empty($selectList) && ! in_array('*', $selectList)) {
+            // Restrict $fieldNames to those that are common with $selectList,
+            // preserving $selectList order.
+            $fieldNames = array_intersect($selectList, $fieldNames);
         }
 
-        // Calculate the number of records in this query till here
-        // (ensures we get "next" navigation link).
-        $recordCount = $findSkip + $fetchCount + 1;
+        foreach ($result->getRecords() as $record) {
+            $restfmMessageRecord = new \RESTfm\Message\Record($record['recordId']);
+            foreach ($fieldNames as $fieldName) {
+                $fieldData = $record['fieldData'][$fieldName];
+                // Store this field's data for this row.
+                $restfmMessageRecord[$fieldName] = $fieldData;
+            }
+            $restfmMessage->addRecord($restfmMessageRecord);
+        }
 
         // Info.
-        //$restfmMessage->setInfo('tableRecordCount', $recordCount);
-        $restfmMessage->setInfo('foundSetCount', $recordCount);
-        $restfmMessage->setInfo('fetchCount', $fetchCount);
+        $restfmMessage->setInfo('tableRecordCount', $result->getTotalRecordCount());
+        $restfmMessage->setInfo('foundSetCount', $result->getFoundCount());
+        $restfmMessage->setInfo('fetchCount', $result->getReturnedCount());
 
         return $restfmMessage;
     }

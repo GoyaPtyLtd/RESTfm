@@ -68,6 +68,21 @@ class FileMakerDataApiResult {
     }
 
     /**
+     * Return an array of field names in the first record of this result.
+     * @return array
+     */
+    public function getFields () {
+        return array_keys(@$this->_result['response']['data'][0]['fieldData']);
+    }
+
+    /**
+     * Return foundCount from result of querying FileMaker Data API.
+     */
+    public function getFoundCount () {
+        return @$this->_result['response']['dataInfo']['foundCount'];
+    }
+
+    /**
      * Return all layouts from result of querying FileMaker Data API.
      */
     public function getLayouts () {
@@ -96,10 +111,24 @@ class FileMakerDataApiResult {
     }
 
     /**
+     * Return returnedCount from result of querying FileMaker Data API.
+     */
+    public function getReturnedCount () {
+        return @$this->_result['response']['dataInfo']['returnedCount'];
+    }
+
+    /**
      * Return token from result of querying FileMaker Data API.
      */
     public function getToken () {
         return @$this->_result['response']['token'];
+    }
+
+    /**
+     * Return totalRecordCount from result of querying FileMaker Data API.
+     */
+    public function getTotalRecordCount () {
+        return @$this->_result['response']['dataInfo']['totalRecordCount'];
     }
 
     /**

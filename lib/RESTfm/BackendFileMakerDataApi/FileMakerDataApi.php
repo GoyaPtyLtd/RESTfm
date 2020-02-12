@@ -30,6 +30,9 @@ class FileMakerDataApi {
      */
     const BACKEND_VERSION = 'v1';
 
+    const DEFAULT_LIMIT = 24;
+    const DEFAULT_OFFSET = 1;
+
     /**
      * @var resource
      *  Curl Handle.
@@ -340,7 +343,7 @@ class FileMakerDataApi {
      * Get Records.
      *
      * @param string $layout
-     * @param int $range
+     * @param int $limit
      * @param int $offset
      * @param array $sort
      *
@@ -352,7 +355,10 @@ class FileMakerDataApi {
      * @throws \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResponseException
      *  Error from FileMaker Data API Server.
      */
-    public function getRecords($layout, $range = 24, $offset = 1, $sort = NULL) {
+    public function getRecords($layout, $limit = self::DEFAULT_LIMIT, $offset = self::DEFAULT_OFFSET, $sort = NULL) {
+
+        if ($offset < 1) { $offset = self::DEFAULT_OFFSET; }
+        if ($limit < 1) { $limit = self::DEFAULT_LIMIT; }
 
         $this->curl_setup($this->databasesUrl() . '/' .
                                 rawurlencode($this->_database) .
@@ -360,7 +366,7 @@ class FileMakerDataApi {
                                 rawurlencode($layout) .
                                 '/records?' .
                                 '_offset=' . $offset . '&' .
-                                '_limit=' . $range,
+                                '_limit=' . $limit,
                           'GET');
 
         $result = $this->curl_exec();
@@ -409,19 +415,32 @@ class FileMakerDataApi {
      * @param string $layout
      * @param array $query
      *  Must be an array of arrays in the form:
-     *      array (         # Find criteria
+     *      array (         # Query
      *          array (     # 1st find request
-     *              '<fieldName1'> => '<searchValue1'>,
-     *              '<filedName2'> => '<searchValue2'>,
+     *              '<fieldName1'> => '<searchValue1'>, # Criterion 1 (AND)
+     *              '<filedName2'> => '<searchValue2'>, # Criterion 2
      *              [ 'ommit'      => 'true' ]
-     *          )
-     *          array (     # 2nd find request (ANDed)
+     *          ),
+     *          array (     # 2nd find request (OR)
      *              '<fieldNameX'> => '<searchValueX'>,
      *              '<filedNameY'> => '<searchValueY'>,
      *              [ 'ommit'      => 'true' ]
-     *          )
+     *          ),
+     *          . . .
      *      )
      * @param array $sort
+     *  Must be an array of arrays in the form:
+     *      array (
+     *          array (
+     *              'fieldName' => '<fieldName1>',
+     *              'sortOrder' => 'ascend|descend'
+     *          ),
+     *          array (
+     *              'fieldName' => '<fieldName2>',
+     *              'sortOrder' => 'ascend|descend'
+     *          ),
+     *          . . .
+     *      )
      * @param int $offset
      * @param int $limit
      *
@@ -433,7 +452,10 @@ class FileMakerDataApi {
      * @throws \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResponseException
      *  Error from FileMaker Data API Server.
      */
-    public function findRecords ($layout, $query = array(), $sort = array(), $offset = 1, $limit = 24) {
+    public function findRecords ($layout, $query = array(), $sort = array(), $offset = self::DEFAULT_OFFSET, $limit = self::DEFAULT_LIMIT) {
+
+        if ($offset < 1) { $offset = self::DEFAULT_OFFSET; }
+        if ($limit < 1) { $limit = self::DEFAULT_LIMIT; }
 
         // TEST - note double array here, converts to JSON array of objects.
         //$query = array(array(
