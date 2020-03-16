@@ -407,7 +407,7 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
      * @param string $scriptParameter
      *  Optional parameter to pass to script.
      *
-     * @throws ResponseException
+     * @throws \RESTfm\ResponseException
      *  On error
      *
      * @return \RESTfm\Message\Message
@@ -415,7 +415,34 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
      *  - does not contain 'multistatus' this is not a bulk operation.
      */
     public function callScript ($scriptName, $scriptParameter = NULL) {
+        $fmDataApi = $this->_backend->getFileMakerDataApi(); // @var FileMakerDataApi
 
+        // FileMaker only supports passing a single string parameter into a
+        // script. Any requirements for multiple parameters must be handled
+        // by string processing within the script.
+        $result = $fmDataApi->executeScript($this->_layout, $scriptName, $scriptParameter);
+
+        if ($result->isError()) {
+            throw new FileMakerDataApiResponseException($result);
+        }
+
+        // Every FileMaker script will return a found set of at least on record,
+        // even if the script does not perform a find. The record can be random.
+
+        $restfmMessage = new \RESTfm\Message\Message();
+
+        // Query the result for returned records.
+        if (! $this->_suppressData) {
+            foreach ($result->getRecords() as $record) {
+                $restfmMessage->addRecord(new \RESTfm\Message\Record(
+                    $record['recordId'],
+                    NULL,
+                    $record['fieldData']
+                ));
+            }
+        }
+
+        return $restfmMessage;
     }
 
 };

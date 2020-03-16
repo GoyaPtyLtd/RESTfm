@@ -235,6 +235,29 @@ class FileMakerDataApi {
         return $result;
     }
 
+    /**
+     * Script Names.
+     *
+     * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult
+     *  Object containing decoded JSON response from FileMaker Data API Server.
+     *
+     * @throws \RESTfm\ResponseException
+     *  On cURL and JSON errors.
+     */
+    public function scriptNames () {
+        $this->curl_setup($this->databasesUrl() . '/' .
+                                rawurlencode($this->_database) .
+                                '/scripts',
+                          'GET');
+
+        $result = $this->curl_exec();
+
+        // DEBUG
+        //var_export($result);
+
+        return $result;
+    }
+
     // Begin Records
 
     /**
@@ -486,6 +509,46 @@ class FileMakerDataApi {
 
         return $result;
     }
+
+    // Begin Scripts
+
+    /**
+     * Execute script in layout.
+     *
+     * @param string $layout
+     * @param string $scriptName
+     * @param string $scriptParameter
+     *  Optional parameter to pass to script.
+     *
+     * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult
+     *  Object containing decoded JSON response from FileMaker Data API Server.
+     *
+     * @throws \RESTfm\ResponseException
+     *  On cURL and JSON errors.
+     * @throws \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResponseException
+     *  Error from FileMaker Data API Server.
+     */
+    public function executeScript ($layout, $scriptName, $scriptParameter = NULL) {
+        $this->curl_setup($this->databasesUrl() . '/' .
+                                rawurlencode($this->_database) .
+                                '/layouts/' .
+                                rawurlencode($layout) .
+                                '/script/'.
+                                rawurlencode($scriptName) .
+                                '?' .
+                                'script.param=' .
+                                rawurlencode($scriptParameter),
+                          'GET');
+
+        $result = $this->curl_exec();
+
+        // DEBUG
+        var_export($result);
+
+        return $result;
+    }
+
+    // Begin protected handlers
 
     /**
      * Returns the base URL for all backend 'databases' queries.

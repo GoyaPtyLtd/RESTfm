@@ -118,6 +118,13 @@ class FileMakerDataApiResult {
     }
 
     /**
+     * Return all scripts from result of querying FileMaker Data API.
+     */
+    public function getScripts () {
+        return @$this->_result['response']['scripts'];
+    }
+
+    /**
      * Return token from result of querying FileMaker Data API.
      */
     public function getToken () {

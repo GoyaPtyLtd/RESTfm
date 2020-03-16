@@ -109,7 +109,7 @@ class OpsDatabase extends \RESTfm\OpsDatabaseAbstract {
     }
 
     /**
-     * Read scripts available in $database via backend.
+     * Read scripts available in database via backend.
      *
      * @throws \RESTFm\ResponseException
      *  On backend error.
@@ -117,7 +117,31 @@ class OpsDatabase extends \RESTfm\OpsDatabaseAbstract {
      * @return \RESTfm\Message\Message
      */
     public function readScripts () {
-        return new \RESTfm\Message\Message();
+        // @var FileMakerDataApi
+        $fmDataApi = $this->_backend->getFileMakerDataApi();
+
+         // @var FileMakerDataApiResult
+        $result = $fmDataApi->scriptNames();
+
+        if ($result->isError()) {
+            throw FileMakerDataApiResponseException($result);
+        }
+
+        $scripts = $result->getScripts();
+        $scriptNames = array();
+        foreach ($scripts as $script) {
+            array_push($scriptNames, $script['name']);
+        }
+        natsort($scriptNames);
+
+        $restfmMessage = new \RESTfm\Message\Message();
+        foreach ($scriptNames as $script) {
+            $restfmMessage->addRecord(new \RESTfm\Message\Record(
+                NULL, NULL, array('script' => $script)
+            ));
+        }
+
+        return $restfmMessage;
     }
 
 };
