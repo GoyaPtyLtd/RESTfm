@@ -426,14 +426,21 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
             throw new FileMakerDataApiResponseException($result);
         }
 
-        // Every FileMaker script will return a found set of at least on record,
-        // even if the script does not perform a find. The record can be random.
-
         $restfmMessage = new \RESTfm\Message\Message();
+
+        // 20200316 - No records ever returned on scripts - GAV
+        /*
+        $records = $result->getRecords();
+
+        // A script may return a found set of one or more records, or nothing
+        // at all.
+        if ($records === NULL) {
+            return $restfmMessage;
+        }
 
         // Query the result for returned records.
         if (! $this->_suppressData) {
-            foreach ($result->getRecords() as $record) {
+            foreach ($records as $record) {
                 $restfmMessage->addRecord(new \RESTfm\Message\Record(
                     $record['recordId'],
                     NULL,
@@ -441,6 +448,7 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
                 ));
             }
         }
+        */
 
         return $restfmMessage;
     }
