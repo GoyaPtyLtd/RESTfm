@@ -63,30 +63,15 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
         $valuesRepetitions = $this->_convertValuesToRepetitions($requestRecord);
         */
 
+        $params = array();
+
         // Script calling.
-        $postOpScript = NULL;
-        $postOpScriptParameter = NULL;
-        $preOpScript = NULL;
-        $preOpScriptParameter = NULL;
-        if ($this->_postOpScriptTrigger) {
-            $postOpScript = $this->_postOpScript;
-            $postOpScriptParameter = $this->_postOpScriptParameter;
-            $this->_postOpScriptTrigger = FALSE;
-        }
-        if ($this->_preOpScriptTrigger) {
-            $preOpScript = $this->_preOpScript;
-            $preOpScriptParameter = $this->_preOpScriptParameter;
-            $this->_preOpScriptTrigger = FALSE;
-        }
+        $this->_scriptPropertiesToParams($params);
 
         // Commit to database.
         $result = $fmDataApi->createRecord($this->_layout,
                                            $requestRecord->_getDataReference(),
-                                           $postOpScript,
-                                           $postOpScriptParameter,
-                                           $preOpScript,
-                                           $preOpScriptParameter
-                                           );
+                                           $params);
 
         if ($result->isError()) {
             if ($this->_isSingle) {
@@ -304,23 +289,15 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
 
         /*
         $updatedValuesRepetitions = $this->_convertValuesToRepetitions($requestRecord);
-
-        // New edit command on record with values to update.
-        $editCommand = $FM->newEditCommand($this->_layout, $recordID, $updatedValuesRepetitions);
-
-        // Script calling.
-        if ($this->_postOpScriptTrigger) {
-            $editCommand->setScript($this->_postOpScript, $this->_postOpScriptParameter);
-            $this->_postOpScriptTrigger = FALSE;
-        }
-        if ($this->_preOpScriptTrigger) {
-            $editCommand->setPreCommandScript($this->_preOpScript, $this->_preOpScriptParameter);
-            $this->_preOpScriptTrigger = FALSE;
-        }
         */
 
+        $params = array();
+
+        // Script calling.
+        $this->_scriptPropertiesToParams($params);
+
         // Commit edit back to database.
-        $result = $fmDataApi->editRecord($this->_layout, $recordID, $requestRecord->_getDataReference());
+        $result = $fmDataApi->editRecord($this->_layout, $recordID, $requestRecord->_getDataReference(), $params);
 
         if ($result->isError()) {
             // Check for FileMaker error 401: No records match the request
@@ -382,19 +359,12 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
 
         $fmDataApi = $this->_backend->getFileMakerDataApi(); // @var FileMakerDataApi
 
-        /*
-        // Script calling.
-        if ($this->_postOpScriptTrigger) {
-            $deleteCommand->setScript($this->_postOpScript, $this->_postOpScriptParameter);
-            $this->_postOpScriptTrigger = FALSE;
-        }
-        if ($this->_preOpScriptTrigger) {
-            $deleteCommand->setPreCommandScript($this->_preOpScript, $this->_preOpScriptParameter);
-            $this->_preOpScriptTrigger = FALSE;
-        }
-        */
+        $params = array();
 
-        $result = $fmDataApi->deleteRecord($this->_layout, $recordID);
+        // Script calling.
+        $this->_scriptPropertiesToParams($params);
+
+        $result = $fmDataApi->deleteRecord($this->_layout, $recordID, $params);
 
         if ($result->isError()) {
             if ($this->_isSingle) {
@@ -463,4 +433,31 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
         return $restfmMessage;
     }
 
+    /**
+     * Build an array of FileMakerDataApi "params" from our script related
+     * properties.
+     *
+     * @param array &$params
+     *  Array to populate with script related parameters.
+     */
+    protected function _scriptPropertiesToParams (array &$params) {
+        if ($this->_postOpScriptTrigger) {
+            if ($this->_postOpScript !== NULL) {
+                $params['script'] = $this->_postOpScript;
+                if ($this->_postOpScriptParameter !== NULL) {
+                    $params['script.param'] = $this->_postOpScriptParameter;
+                }
+            }
+            $this->_postOpScriptTrigger = FALSE;
+        }
+        if ($this->_preOpScriptTrigger) {
+            if ($this->_preOpScript !== NULL) {
+                $params['script.prerequest'] = $this->_preOpScript;
+                if ($this->_preOpScriptParameter !== NULL) {
+                    $params['script.prerequest.param'] = $this->_preOpScriptParameter;
+                }
+            }
+            $this->_preOpScriptTrigger = FALSE;
+        }
+    }
 };

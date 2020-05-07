@@ -270,10 +270,9 @@ class FileMakerDataApi {
      *          'fieldName1' => 'fieldValue1',
      *          . . .
      *      )
-     * @param string $script Optional
-     * @param string $script_param Optional
-     * @param string $script_prerequest Optional
-     * @param string $script_prerequest_param Optional
+     * @param array $params
+     *  Associative array of additional FM Data API parameters
+     *  e.g. script, script.presort, etc
      *
      * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult
      *  Object containing decoded JSON response from FileMaker Data API Server.
@@ -281,22 +280,16 @@ class FileMakerDataApi {
      * @throws \RESTfm\ResponseException
      *  On cURL and JSON errors.
      */
-    public function createRecord($layout, $data = array(),
-                                 $script = NULL, $script_param = NULL,
-                                 $script_prerequest = NULL, $script_prerequest_param = NULL) {
+    public function createRecord ($layout, $data = array(), $params = array()) {
 
-        $postData = $this->scriptParametersToData( $script,
-                                                   $script_param,
-                                                   $script_prerequest,
-                                                   $script_prerequest_param);
-        $postData['fieldData'] = $data;
+        $params['fieldData'] = $data;
 
         $this->curl_setup($this->databasesUrl() . '/' .
                                 rawurlencode($this->_database) .
                                 '/layouts/' .
                                 rawurlencode($layout) .
                                 '/records' ,
-                          'POST', $postData);
+                          'POST', $params);
 
         $result = $this->curl_exec();
 
@@ -311,10 +304,9 @@ class FileMakerDataApi {
      *
      * @param string $layout
      * @param string $recordId
-     * @param string $script Optional
-     * @param string $script_param Optional
-     * @param string $script_prerequest Optional
-     * @param string $script_prerequest_param Optional
+     * @param array $params
+     *  Associative array of additional FM Data API parameters
+     *  e.g. script, script.presort, etc
      *
      * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult
      *  Object containing decoded JSON response from FileMaker Data API Server.
@@ -322,16 +314,9 @@ class FileMakerDataApi {
      * @throws \RESTfm\ResponseException
      *  On cURL and JSON errors.
      */
-    public function deleteRecord($layout, $recordId,
-                                 $script = NULL, $script_param = NULL,
-                                 $script_prerequest = NULL, $script_prerequest_param = NULL) {
+    public function deleteRecord ($layout, $recordId, $params = array()) {
 
-        $postData = $this->scriptParametersToData( $script,
-                                                   $script_param,
-                                                   $script_prerequest,
-                                                   $script_prerequest_param);
-
-        $queryString = $this->dataToQueryString($postData);
+        $queryString = $this->_dataToQueryString($params);
         if (!empty($queryString)) { $queryString = '?' . $queryString;}
 
         $this->curl_setup($this->databasesUrl() . '/' .
@@ -362,10 +347,9 @@ class FileMakerDataApi {
      *          'fieldName1' => 'fieldValue1',
      *          . . .
      *      )
-     * @param string $script Optional
-     * @param string $script_param Optional
-     * @param string $script_prerequest Optional
-     * @param string $script_prerequest_param Optional
+     * @param array $params
+     *  Associative array of additional FM Data API parameters
+     *  e.g. script, script.presort, etc
      *
      * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult
      *  Object containing decoded JSON response from FileMaker Data API Server.
@@ -373,15 +357,9 @@ class FileMakerDataApi {
      * @throws \RESTfm\ResponseException
      *  On cURL and JSON errors.
      */
-    public function editRecord($layout, $recordId, $data = array(),
-                               $script = NULL, $script_param = NULL,
-                               $script_prerequest = NULL, $script_prerequest_param = NULL) {
+    public function editRecord ($layout, $recordId, $data = array(), $params = array()) {
 
-        $postData = $this->scriptParametersToData( $script,
-                                                   $script_param,
-                                                   $script_prerequest,
-                                                   $script_prerequest_param);
-        $postData['fieldData'] = $data;
+        $params['fieldData'] = $data;
 
         $this->curl_setup($this->databasesUrl() . '/' .
                                 rawurlencode($this->_database) .
@@ -389,7 +367,7 @@ class FileMakerDataApi {
                                 rawurlencode($layout) .
                                 '/records/' .
                                 rawurlencode($recordId),
-                          'PATCH', $postData);
+                          'PATCH', $params);
 
         $result = $this->curl_exec();
 
@@ -406,10 +384,9 @@ class FileMakerDataApi {
      * @param int $limit
      * @param int $offset
      * @param array $sort
-     * @param string $script Optional
-     * @param string $script_param Optional
-     * @param string $script_prerequest Optional
-     * @param string $script_prerequest_param Optional
+     * @param array $params
+     *  Associative array of additional FM Data API parameters
+     *  e.g. script, script.presort, etc
      *
      * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult
      *  Object containing decoded JSON response from FileMaker Data API Server.
@@ -419,21 +396,19 @@ class FileMakerDataApi {
      * @throws \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResponseException
      *  Error from FileMaker Data API Server.
      */
-    public function getRecords($layout, $limit = self::DEFAULT_LIMIT, $offset = self::DEFAULT_OFFSET, $sort = NULL,
-                               $script = NULL, $script_param = NULL,
-                               $script_prerequest = NULL, $script_prerequest_param = NULL) {
+    public function getRecords ($layout,
+                                $limit = self::DEFAULT_LIMIT,
+                                $offset = self::DEFAULT_OFFSET,
+                                $sort = NULL,
+                                $params = array()) {
 
         if ($offset < 1) { $offset = self::DEFAULT_OFFSET; }
         if ($limit < 1) { $limit = self::DEFAULT_LIMIT; }
 
-        $postData = $this->scriptParametersToData( $script,
-                                                   $script_param,
-                                                   $script_prerequest,
-                                                   $script_prerequest_param);
-        $postData['_offset'] = $offset;
-        $postData['_limit']  = $limit;
+        $params['_offset'] = $offset;
+        $params['_limit']  = $limit;
 
-        $queryString = $this->dataToQueryString($postData);
+        $queryString = $this->_dataToQueryString($params);
         if (!empty($queryString)) { $queryString = '?' . $queryString;}
 
         $this->curl_setup($this->databasesUrl() . '/' .
@@ -457,10 +432,9 @@ class FileMakerDataApi {
      *
      * @param string $layout
      * @param string $recordID
-     * @param string $script Optional
-     * @param string $script_param Optional
-     * @param string $script_prerequest Optional
-     * @param string $script_prerequest_param Optional
+     * @param array $params
+     *  Associative array of additional FM Data API parameters
+     *  e.g. script, script.presort, etc
      *
      * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult
      *  Object containing decoded JSON response from FileMaker Data API Server.
@@ -470,16 +444,9 @@ class FileMakerDataApi {
      * @throws \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResponseException
      *  Error from FileMaker Data API Server.
      */
-    public function getRecord($layout, $recordID,
-                               $script = NULL, $script_param = NULL,
-                               $script_prerequest = NULL, $script_prerequest_param = NULL) {
+    public function getRecord ($layout, $recordID, $params = array()) {
 
-        $postData = $this->scriptParametersToData( $script,
-                                                   $script_param,
-                                                   $script_prerequest,
-                                                   $script_prerequest_param);
-
-        $queryString = $this->dataToQueryString($postData);
+        $queryString = $this->_dataToQueryString($params);
         if (!empty($queryString)) { $queryString = '?' . $queryString;}
 
         $this->curl_setup($this->databasesUrl() . '/' .
@@ -533,10 +500,9 @@ class FileMakerDataApi {
      *      )
      * @param int $offset
      * @param int $limit
-     * @param string $script Optional
-     * @param string $script_param Optional
-     * @param string $script_prerequest Optional
-     * @param string $script_prerequest_param Optional
+     * @param array $params
+     *  Associative array of additional FM Data API parameters
+     *  e.g. script, script.presort, etc
      *
      * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult
      *  Object containing decoded JSON response from FileMaker Data API Server.
@@ -546,9 +512,12 @@ class FileMakerDataApi {
      * @throws \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResponseException
      *  Error from FileMaker Data API Server.
      */
-    public function findRecords ($layout, $query = array(), $sort = array(), $offset = self::DEFAULT_OFFSET, $limit = self::DEFAULT_LIMIT,
-                                 $script = NULL, $script_param = NULL,
-                                 $script_prerequest = NULL, $script_prerequest_param = NULL) {
+    public function findRecords ($layout,
+                                 $query = array(),
+                                 $sort = array(),
+                                 $offset = self::DEFAULT_OFFSET,
+                                 $limit = self::DEFAULT_LIMIT,
+                                 $params = array()) {
 
         if ($offset < 1) { $offset = self::DEFAULT_OFFSET; }
         if ($limit < 1) { $limit = self::DEFAULT_LIMIT; }
@@ -558,16 +527,12 @@ class FileMakerDataApi {
         //    'Pcode' => '==0810',
         //));
 
-        $postData = $this->scriptParametersToData( $script,
-                                                   $script_param,
-                                                   $script_prerequest,
-                                                   $script_prerequest_param);
-        $postData['query']  = $query;
-        $postData['offset'] = (string)$offset;
-        $postData['limit']  = (string)$limit;
+        $params['query']  = $query;
+        $params['offset'] = (string)$offset;
+        $params['limit']  = (string)$limit;
 
         if (! empty($sort)) {
-            $postData['sort'] = $sort;
+            $params['sort'] = $sort;
         }
 
         $this->curl_setup($this->databasesUrl() . '/' .
@@ -575,7 +540,7 @@ class FileMakerDataApi {
                                 '/layouts/' .
                                 rawurlencode($layout) .
                                 '/_find',
-                          'POST', $postData);
+                          'POST', $params);
 
         $result = $this->curl_exec();
 
@@ -729,50 +694,6 @@ class FileMakerDataApi {
     }
 
     /**
-     * Builds an assoc array from script* parameters, ready to pass to
-     * curl.
-     *
-     * @param string $script
-     *  Optional
-     * @param string $script_param
-     *  Optional (still) if previous param given
-     * @param string $script_prerequest
-     *  Optional
-     * @param string $script_prerequest_param
-     *  Optional (still) if previous param given
-     *
-     * @return array
-     *  In the form:
-     *      array (
-     *          'script'                    => <string>,
-     *          'script.param'              => <string>,
-     *          'script.prerequest'         => <string>,
-     *          'script.prereqeust.param'   => <string>
-     *      )
-     *  OR an empty array if all parameters are NULL.
-     */
-    protected function scriptParametersToData (
-                                 $script = NULL, $script_param = NULL,
-                                 $script_prerequest = NULL, $script_prerequest_param = NULL) {
-
-        $data = array();
-        if ($script !== NULL) {
-            $data['script'] = $script;
-            if ($script_param !== NULL) {
-                $data['script.param'] = $script_param;
-            }
-        }
-        if ($script_prerequest !== NULL) {
-            $data['script.prerequest'] = $script_prerequest;
-            if ($script_prerequest_param !== NULL) {
-                $data['script.prerequest.param'] = $script_prerequest_param;
-            }
-        }
-
-        return $data;
-    }
-
-    /**
      * Returns an encoded query string from the provided array of data.
      *
      * @param array $data
@@ -782,10 +703,10 @@ class FileMakerDataApi {
      *  OR
      *  An empty string if data array is empty.
      */
-    protected function dataToQueryString (array $data) {
+    protected function _dataToQueryString (array $data) {
         $queryString = '';
-        if (!empty($postData)) {
-            $queryString = http_build_query($postData, NULL, ini_get('arg_separator.output'), PHP_QUERY_RFC3986);
+        if (!empty($data)) {
+            $queryString = http_build_query($data, NULL, ini_get('arg_separator.output'), PHP_QUERY_RFC3986);
         }
         return $queryString;
     }
