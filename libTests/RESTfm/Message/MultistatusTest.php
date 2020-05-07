@@ -21,7 +21,7 @@ namespace RESTfmTests\Message;
 
 use RESTfm\Message\Multistatus;
 
-class MultistatusTest extends \PHPUnit_Framework_TestCase {
+class MultistatusTest extends \PHPUnit\Framework\TestCase {
 
     public function testConstructorSetAndGet() {
         $multistatus = new Multistatus('9999', 'test again', 'someOtherRecordId');

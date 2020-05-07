@@ -21,7 +21,7 @@ namespace RESTfmTests\Message;
 
 use RESTfm\Message\Row;
 
-class RowTest extends \PHPUnit_Framework_TestCase {
+class RowTest extends \PHPUnit\Framework\TestCase {
 
     static $data = array(
         'Field1' => 'Value1',

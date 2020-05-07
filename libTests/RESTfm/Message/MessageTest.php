@@ -24,7 +24,7 @@ use RESTfm\Message\Row;
 use RESTfm\Message\Multistatus;
 use RESTfm\Message\Record;
 
-class MessageTest extends \PHPUnit_Framework_Testcase
+class MessageTest extends \PHPUnit\Framework\TestCase
 {
 
     public function testSetAndGetAndUnsetInfo () {

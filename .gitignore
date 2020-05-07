@@ -10,3 +10,4 @@ RESTfm.komodoproject
 tools
 unit_coverage_report
 .DS_Store
+.phpunit.result.cache
