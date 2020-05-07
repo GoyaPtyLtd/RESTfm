@@ -61,22 +61,32 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
 
         /*
         $valuesRepetitions = $this->_convertValuesToRepetitions($requestRecord);
-
-        $addCommand = $FM->newAddCommand($this->_layout, $valuesRepetitions);
+        */
 
         // Script calling.
+        $postOpScript = NULL;
+        $postOpScriptParameter = NULL;
+        $preOpScript = NULL;
+        $preOpScriptParameter = NULL;
         if ($this->_postOpScriptTrigger) {
-            $addCommand->setScript($this->_postOpScript, $this->_postOpScriptParameter);
+            $postOpScript = $this->_postOpScript;
+            $postOpScriptParameter = $this->_postOpScriptParameter;
             $this->_postOpScriptTrigger = FALSE;
         }
         if ($this->_preOpScriptTrigger) {
-            $addCommand->setPreCommandScript($this->_preOpScript, $this->_preOpScriptParameter);
+            $preOpScript = $this->_preOpScript;
+            $preOpScriptParameter = $this->_preOpScriptParameter;
             $this->_preOpScriptTrigger = FALSE;
         }
-        */
 
         // Commit to database.
-        $result = $fmDataApi->createRecord($this->_layout, $requestRecord->_getDataReference());
+        $result = $fmDataApi->createRecord($this->_layout,
+                                           $requestRecord->_getDataReference(),
+                                           $postOpScript,
+                                           $postOpScriptParameter,
+                                           $preOpScript,
+                                           $preOpScriptParameter
+                                           );
 
         if ($result->isError()) {
             if ($this->_isSingle) {
