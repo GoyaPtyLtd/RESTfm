@@ -21,7 +21,9 @@ namespace RESTfmTests;
 
 use RESTfm\Version;
 
-class VersionTest extends \PHPUnit_Framework_TestCase {
+use PHPUnit\Framework\TestCase;
+
+class VersionTest extends TestCase {
 
     static $versionPath = "lib/RESTfm/Version.php";
 

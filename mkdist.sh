@@ -73,7 +73,7 @@ usage() {
 # Unit tests. Will exit on failure.
 #
 # @param $1 enableCoverage
-#   Optional. Set to "enableCoverage" to enable PHPUnit html code coverage 
+#   Optional. Set to "enableCoverage" to enable PHPUnit html code coverage
 #   report.
 #
 unitTests() {
@@ -174,7 +174,7 @@ VERSION="${PACKAGERELEASE}/${REVISION}"
 
 # Check we have a full release, or a beta where we attach a revision
 # to the release name.
-echo "${PACKAGERELEASE}" | grep "^[0-9].[0-9].[0-9]$"
+echo "${PACKAGERELEASE}" | grep -q "^[0-9].[0-9].[0-9]$"
 RET=$?
 if [ "$RET" != "0" ]; then
     PACKAGERELEASE="${PACKAGERELEASE}-${REVISION}"
