@@ -1,3 +1,8 @@
+### 5.2.4 (Released 2020-11-25) ###
+ - Update Mac support for Catalina.
+ - Update for FMS 19 and 18.
+ - Update phpunit from v4.8 to v8.5.
+
 ### 5.2.3 (Released 2019-06-06) ###
  - Second fix to clean up "non well formed" notice.
 
