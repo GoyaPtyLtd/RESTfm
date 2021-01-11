@@ -121,6 +121,9 @@ check_OSXVersion() {
     # Trim off any patch version, e.g. 10.10.1 -> 10.10
     OSXVERSION=`echo "${OSXVERSION}" | grep -Eo '^[0-9]+\.[0-9]+'`
     case "$OSXVERSION" in
+        "11.1")
+            log_success_msg "$MSGPREFIX $OSXVERSION Big Sur"
+            ;;
         "10.15")
             log_success_msg "$MSGPREFIX $OSXVERSION Catalina"
             ;;
