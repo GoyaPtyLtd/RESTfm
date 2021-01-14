@@ -111,7 +111,7 @@ check_OSXVersion() {
     # Ensure we have sw_vers, and we are Mac OS X.
     local PRODUCTNAME=''
     [ -x "`which sw_vers`" ] && PRODUCTNAME=`sw_vers -productName`
-    if [ "$PRODUCTNAME" != 'Mac OS X' ]; then
+    if [ "$PRODUCTNAME" != 'Mac OS X' ]&&[ "$PRODUCTNAME" != 'macOS' ]; then
         log_failure_msg "$MSGPREFIX macOS (Mac OS X) not detected"
         exit 1
     fi
