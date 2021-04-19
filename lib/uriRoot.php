@@ -24,7 +24,7 @@
  */
 class uriRoot extends RESTfm\Resource {
 
-    const URI = '/';
+    const URI = '';
 
     /**
      * Handle a GET request for this resource
