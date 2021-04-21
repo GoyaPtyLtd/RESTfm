@@ -25,6 +25,12 @@ namespace RESTfm\BackendFileMakerDataApi;
 class OpsRecord extends \RESTfm\OpsRecordAbstract {
 
     /**
+     * @var \RESTfm\BackendFileMakerDataApi\Backend
+     *  Handle to backend object.
+     */
+    protected $_backend = NULL;
+
+    /**
      * Construct a new Record-level Operation object.
      *
      * @param \RESTfm\BackendAbstract $backend

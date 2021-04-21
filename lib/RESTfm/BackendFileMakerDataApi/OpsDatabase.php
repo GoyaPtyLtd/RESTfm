@@ -25,6 +25,12 @@ namespace RESTfm\BackendFileMakerDataApi;
 class OpsDatabase extends \RESTfm\OpsDatabaseAbstract {
 
     /**
+     * @var \RESTfm\BackendFileMakerDataApi\Backend
+     *  Handle to backend object.
+     */
+    protected $_backend = NULL;
+
+    /**
      * Construct a new Database-level Operation object.
      *
      * @param \RESTfm\BackendAbstract $backend
@@ -52,7 +58,7 @@ class OpsDatabase extends \RESTfm\OpsDatabaseAbstract {
         $result = $fmDataApi->databaseNames();
 
         if ($result->isError()) {
-            throw FileMakerDataApiResponseException($result);
+            throw new FileMakerDataApiResponseException($result);
         }
 
         $databases = $result->getDatabases();
@@ -88,7 +94,7 @@ class OpsDatabase extends \RESTfm\OpsDatabaseAbstract {
         $result = $fmDataApi->layoutNames();
 
         if ($result->isError()) {
-            throw FileMakerDataApiResponseException($result);
+            throw new FileMakerDataApiResponseException($result);
         }
 
         $layouts = $result->getLayouts();
@@ -124,7 +130,7 @@ class OpsDatabase extends \RESTfm\OpsDatabaseAbstract {
         $result = $fmDataApi->scriptNames();
 
         if ($result->isError()) {
-            throw FileMakerDataApiResponseException($result);
+            throw new FileMakerDataApiResponseException($result);
         }
 
         $scripts = $result->getScripts();

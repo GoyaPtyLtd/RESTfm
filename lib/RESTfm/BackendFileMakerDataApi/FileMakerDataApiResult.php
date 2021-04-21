@@ -47,6 +47,8 @@ class FileMakerDataApiResult {
 
     /**
      * Return all databases from result of querying FileMaker Data API.
+     *
+     * @return array
      */
     public function getDatabases () {
         return @$this->_result['response']['databases'];
@@ -61,6 +63,7 @@ class FileMakerDataApiResult {
 
     /**
      * Return the first record in this result.
+     *
      * @return array
      */
     public function getFirstRecord () {
@@ -69,10 +72,13 @@ class FileMakerDataApiResult {
 
     /**
      * Return an array of field names in the first record of this result.
+     *
      * @return array
      */
     public function getFields () {
-        return array_keys(@$this->_result['response']['data'][0]['fieldData']);
+        /** @var array $a */
+        $a = @$this->_result['response']['data'][0]['fieldData'];
+        return array_keys($a);
     }
 
     /**
@@ -84,6 +90,8 @@ class FileMakerDataApiResult {
 
     /**
      * Return all layouts from result of querying FileMaker Data API.
+     *
+     * @return array
      */
     public function getLayouts () {
         return @$this->_result['response']['layouts'];
@@ -98,6 +106,8 @@ class FileMakerDataApiResult {
 
     /**
      * Return all records from result of querying FileMaker Data API.
+     *
+     * @return array
      */
     public function getRecords () {
         return @$this->_result['response']['data'];
@@ -119,6 +129,8 @@ class FileMakerDataApiResult {
 
     /**
      * Return all scripts from result of querying FileMaker Data API.
+     *
+     * @return array
      */
     public function getScripts () {
         return @$this->_result['response']['scripts'];

@@ -706,7 +706,7 @@ class FileMakerDataApi {
     protected function _dataToQueryString (array $data) {
         $queryString = '';
         if (!empty($data)) {
-            $queryString = http_build_query($data, NULL, ini_get('arg_separator.output'), PHP_QUERY_RFC3986);
+            $queryString = http_build_query($data, '', ini_get('arg_separator.output'), PHP_QUERY_RFC3986);
         }
         return $queryString;
     }
@@ -746,7 +746,7 @@ class FileMakerDataApi {
     */
 
     /**
-     * Decodes a JSON string, throwing an exception decoding has errors.
+     * Decodes a JSON string, throws an exception if decoding has errors.
      *
      * @param string $json
      * @param bool $assoc
@@ -783,7 +783,7 @@ class FileMakerDataApi {
                     $jsonError = 'JSON decode error - Unknown error';
                     break;
             }
-            error_log('RESTfm FileMakerDataApi::json_decode() error: ' . $jsonError . ":\n" . $result);
+            error_log('RESTfm FileMakerDataApi::json_decode() error: ' . $jsonError . ":\n" . $json);
             throw new \RESTfm\ResponseException($jsonError,
                             \RESTfm\ResponseException::INTERNALSERVERERROR);
         }
