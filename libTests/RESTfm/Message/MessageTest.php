@@ -24,7 +24,9 @@ use RESTfm\Message\Row;
 use RESTfm\Message\Multistatus;
 use RESTfm\Message\Record;
 
-class MessageTest extends \PHPUnit\Framework\TestCase
+use PHPUnit\Framework\TestCase;
+
+class MessageTest extends Testcase
 {
 
     public function testSetAndGetAndUnsetInfo () {
@@ -234,9 +236,12 @@ class MessageTest extends \PHPUnit\Framework\TestCase
 
         $sectionNames = $message->getSectionNames();
 
-        $this->assertArraySubset(['meta', 'data', 'info', 'metaField',
-                                  'multistatus', 'nav'],
-                                 $sectionNames);
+        $requiredNames = ['meta', 'data', 'info', 'metaField',
+                          'multistatus', 'nav'];
+
+        foreach ($requiredNames as $name) {
+            $this->assertContains($name, $sectionNames);
+        }
     }
 
     public function testNonExistentGetSection () {

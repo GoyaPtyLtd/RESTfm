@@ -21,7 +21,9 @@ namespace RESTfmTests\Message;
 
 use RESTfm\Message\Record;
 
-class RecordTest extends \PHPUnit\Framework\TestCase {
+use PHPUnit\Framework\TestCase;
+
+class RecordTest extends TestCase {
 
     public function testConstructorAndGetDataReference() {
         $rowData = array ('field1'  => 'value1',

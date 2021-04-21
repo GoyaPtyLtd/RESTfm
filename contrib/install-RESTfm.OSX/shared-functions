@@ -111,7 +111,7 @@ check_OSXVersion() {
     # Ensure we have sw_vers, and we are Mac OS X.
     local PRODUCTNAME=''
     [ -x "`which sw_vers`" ] && PRODUCTNAME=`sw_vers -productName`
-    if [ "$PRODUCTNAME" != 'Mac OS X' ]; then
+    if [ "$PRODUCTNAME" != 'Mac OS X' ]&&[ "$PRODUCTNAME" != 'macOS' ]; then
         log_failure_msg "$MSGPREFIX macOS (Mac OS X) not detected"
         exit 1
     fi
@@ -121,6 +121,12 @@ check_OSXVersion() {
     # Trim off any patch version, e.g. 10.10.1 -> 10.10
     OSXVERSION=`echo "${OSXVERSION}" | grep -Eo '^[0-9]+\.[0-9]+'`
     case "$OSXVERSION" in
+        "11.1")
+            log_success_msg "$MSGPREFIX $OSXVERSION Big Sur"
+            ;;
+        "10.15")
+            log_success_msg "$MSGPREFIX $OSXVERSION Catalina"
+            ;;
         "10.14")
             log_success_msg "$MSGPREFIX $OSXVERSION Mojave"
             ;;
@@ -176,7 +182,7 @@ check_FMSVersion() {
     fi
 
     # Ensure FMS is a supported version.
-    local FMS_VERSION=`xpath "$FMSVERSION_XML" '/jwpcconfig/build-settings/parameter[@name="product-version"]/text()' 2>/dev/null`
+    local FMS_VERSION=`xpath -e '/jwpcconfig/build-settings/parameter[@name="product-version"]/text()' "$FMSVERSION_XML" 2>/dev/null`
     FMS_VERSION_MAJOR=$(echo "$FMS_VERSION" | cut -d . -f 1)
     FMS_VERSION_MINOR=$(echo "$FMS_VERSION" | cut -d . -f 2)
     FMS_VERSION_PATCH=$(echo "$FMS_VERSION" | cut -d . -f 3)
@@ -188,7 +194,7 @@ check_FMSVersion() {
             fi
             log_success_msg "$MSGPREFIX $FMS_VERSION"
             ;;
-        '14'|'15'|'16'|'17'|'18')
+        '14'|'15'|'16'|'17'|'18'|'19')
             log_success_msg "$MSGPREFIX $FMS_VERSION"
             ;;
         *)
