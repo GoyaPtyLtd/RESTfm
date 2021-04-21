@@ -29,7 +29,7 @@ class uriDatabaseScript extends RESTfm\Resource {
     /**
      * Handle a GET request for this resource
      *
-     * @param Request $request
+     * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/script
      *

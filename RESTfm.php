@@ -149,6 +149,7 @@ if (RESTfm\Config::getVar('settings', 'diagnostics') === TRUE) {
         // Memory Limit (human readable bytes)
         $profLimitMem = prettyBytes(iniToBytes(ini_get('memory_limit')));
 
+        /** @var \RESTfm\Response $response */
         $response->addInfo('X-RESTfm-Profile',  $profRealTimeMs . 'ms ' .
                                                 $profPeakMem . ' ' .
                                                 $profLimitMem);
@@ -163,6 +164,7 @@ if ( is_a($response, 'RESTfm\Response') &&
     if (! empty($requestUsername)) {
         // All RESTfm URIs perform a database query to validate credentials,
         // so all RESTfm 2xx responses imply successful authorisation.
+        /** @var \RESTfm\Response $response */
         $response->addInfo('X-RESTfm-PHP-memory_limit',
                         prettyBytes(iniToBytes(ini_get('memory_limit'))));
         $response->addInfo('X-RESTfm-PHP-post_max_size',

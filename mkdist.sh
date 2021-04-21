@@ -61,7 +61,7 @@ PHPUNITCOVERAGEDIR="unit_coverage_report"
 usage() {
     echo ""
     echo "Usage: ${ARGV0} [<flags>]"
-    echo "  -b | --build            :  build distribution packages."
+    echo "  -b | --build            : build distribution packages."
     echo "  -c | --clean            : clean intermediate build files."
     echo "       --clean-all        : expunge entire build area."
     echo "  -u | --unit             : unit tests only."

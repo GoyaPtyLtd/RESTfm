@@ -344,7 +344,7 @@ class Request extends \Tonic\Request {
 
         // If a format hasn't been determined yet, work one out.
         if (! isset($this->_format)) {
-            if (isset($queryString->RFMurlencoded)) {
+            if (isset($this->_parametersQueryString['RFMurlencoded'])) {
                 // Override uploaded data format.
                 $this->_format = 'application/x-www-form-urlencoded';
             } else {

@@ -403,7 +403,7 @@ abstract class OpsRecordAbstract {
      *  CONTAINER_BASE64: [<filename>;]<base64 encoding>
      *  CONTAINER_RAW: No RESTfm formatting, RAW data for single field returned.
      */
-    public function setContainerEncoding ($encoding = CONTAINER_DEFAULT) {
+    public function setContainerEncoding ($encoding = self::CONTAINER_DEFAULT) {
         $this->_containerEncoding = $encoding;
     }
 
