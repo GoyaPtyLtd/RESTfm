@@ -253,8 +253,25 @@ abstract class OpsRecordAbstract {
 
         $result = new \RESTfm\Message\Message();
 
+        // Trigger preOpScript on the first element.
+        if ($this->_preOpScript !== NULL) {
+            $this->_preOpScriptTrigger = TRUE;
+        }
+
+        // Trigger postOpScript on the last element.
+        if ($this->_postOpScript != NULL) {
+            $postOpTriggerCount = $requestMessage->getRecordCount();
+        } else {
+            $postOpTriggerCount = -1;
+        }
+
         $requestRecord = NULL;  // @var \RESTfm\Message\Record
+        $index = 0;
         foreach($requestMessage->getRecords() as $requestRecord) {
+            $index++;
+            if ($index == $postOpTriggerCount) {
+                $this->_postOpScriptTrigger = TRUE;
+            }
             $this->_readRecord($result, $requestRecord);
         }
 

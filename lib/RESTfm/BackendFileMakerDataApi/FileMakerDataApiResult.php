@@ -137,6 +137,37 @@ class FileMakerDataApiResult {
     }
 
     /**
+     * Return associative array of script results from executing a script. May
+     * return an empty array for no results. There is no equivalent to this
+     * in the FMS PHP API.
+     *
+     * @return array
+     *      (
+     *          'scriptResult.prerequest'   => '<string>',
+     *          'scriptError.prerequest'    => '<FMS error code>',
+     *          'scriptResult'              => '<string>',
+     *          'scriptError'               => '<FMS error code>'
+     *      )
+     */
+    public function getScriptResults () {
+        $interest = [
+            'scriptResult.prerequest',
+            'scriptError.prerequest',
+            'scriptResult',
+            'scriptError'
+        ];
+
+        $result = array();
+        foreach ($interest as $i) {
+            if (isset($this->_result['response'][$i])) {
+                $result[$i] = $this->_result['response'][$i];
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * Return token from result of querying FileMaker Data API.
      */
     public function getToken () {

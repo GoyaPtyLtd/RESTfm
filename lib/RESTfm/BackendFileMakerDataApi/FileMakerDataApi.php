@@ -485,6 +485,9 @@ class FileMakerDataApi {
      *          ),
      *          . . .
      *      )
+     * @param array $params
+     *  Associative array of additional FM Data API parameters
+     *  e.g. script, script.presort, etc
      * @param array $sort
      *  Must be an array of arrays in the form:
      *      array (
@@ -500,9 +503,6 @@ class FileMakerDataApi {
      *      )
      * @param int $offset
      * @param int $limit
-     * @param array $params
-     *  Associative array of additional FM Data API parameters
-     *  e.g. script, script.presort, etc
      *
      * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult
      *  Object containing decoded JSON response from FileMaker Data API Server.
@@ -512,12 +512,14 @@ class FileMakerDataApi {
      * @throws \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResponseException
      *  Error from FileMaker Data API Server.
      */
-    public function findRecords ($layout,
-                                 $query = array(),
-                                 $sort = array(),
-                                 $offset = self::DEFAULT_OFFSET,
-                                 $limit = self::DEFAULT_LIMIT,
-                                 $params = array()) {
+    public function findRecords (
+                        $layout,
+                        $query = array(),
+                        $params = array(),
+                        $sort = array(),
+                        $offset = self::DEFAULT_OFFSET,
+                        $limit = self::DEFAULT_LIMIT
+                    ) {
 
         if ($offset < 1) { $offset = self::DEFAULT_OFFSET; }
         if ($limit < 1) { $limit = self::DEFAULT_LIMIT; }
@@ -656,7 +658,10 @@ class FileMakerDataApi {
         // DEBUG
         //echo "cURL options: ";
         //var_export($options);
-        //echo "cURL jsonData: " . $jsonData . "\n";
+        //echo "\n";
+        //if ($data !== NULL) {
+        //    echo "cURL jsonData: " . $jsonData . "\n";
+        //}
 
         curl_setopt_array($this->_curlHandle, $options);
     }
@@ -688,7 +693,7 @@ class FileMakerDataApi {
         }
 
         // DEBUG
-        //echo "cURL result: " . $result . "\n";
+        //echo "cURL raw result: " . $result . "\n";
 
         return new FileMakerDataApiResult($this->json_decode($result, TRUE));
     }

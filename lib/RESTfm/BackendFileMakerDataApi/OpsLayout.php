@@ -80,6 +80,7 @@ class OpsLayout extends \RESTfm\OpsLayoutAbstract {
 
             $result = $fmDataApi->findRecords($this->_layout,
                                               $parser->getQuery(),
+                                              array(),
                                               $parser->getSort(),
                                               $findSkip + 1,
                                               $parser->getLimit());

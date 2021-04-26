@@ -121,12 +121,21 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
 
         $recordID = $requestRecord->getRecordId();
 
+        $params = array();
+
+        // Script calling.
+        $this->_scriptPropertiesToParams($params);
+
         // Handle unique-key-recordID OR literal recordID.
         $record = NULL;
         if (strpos($recordID, '=')) {
             list($searchField, $searchValue) = explode('=', $recordID, 2);
             $query = array( array( $searchField => $searchValue ) );
-            $result = $fmDataApi->findRecords($this->_layout, $query);
+            $result = $fmDataApi->findRecords(
+                            $this->_layout,
+                            $query,
+                            $params
+                        );
 
             if ($result->isError()) {
                 if ($this->_isSingle) {
@@ -165,7 +174,7 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
             }
 
         } else {
-            $result = $fmDataApi->getRecord($this->_layout, $recordID); // @var FileMakerDataApiResult
+            $result = $fmDataApi->getRecord($this->_layout, $recordID, $params);
 
             if ($result->isError()) {
                 if ($this->_isSingle) {
@@ -188,6 +197,8 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
             $record['fieldData']
         ));
 
+        // Script results.
+        $this->_scriptResultsToInfo($restfmMessage, $result);
     }
 
     /**
@@ -324,6 +335,8 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
             return;                                 // Nothing more to do here.
         }
 
+        // Script results.
+        $this->_scriptResultsToInfo($restfmMessage, $result);
     }
 
     /**
@@ -384,6 +397,9 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
             ));
             return;                                 // Nothing more to do here.
         }
+
+        // Script results.
+        $this->_scriptResultsToInfo($restfmMessage, $result);
     }
 
     /**
@@ -436,6 +452,9 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
         }
         */
 
+        // Script results.
+        $this->_scriptResultsToInfo($restfmMessage, $result);
+
         return $restfmMessage;
     }
 
@@ -466,4 +485,20 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
             $this->_preOpScriptTrigger = FALSE;
         }
     }
+
+    /**
+     * Insert any script responses into 'info' section of restfmMessage.
+     * 
+     * @param \RESTfm\Message\Message $restfmMessage
+     *  Message object to set 'info'.
+     * @param \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult $result
+     *  Result from querying FileMaker Data API.
+     */
+    protected function _scriptResultsToInfo (\RESTfm\Message\Message $restfmMessage, \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult $result) {
+        $scriptResults = $result->getScriptResults();
+        foreach ($scriptResults as $res => $val) {
+            $restfmMessage->setInfo($res, $val);
+        }
+    }
+
 };

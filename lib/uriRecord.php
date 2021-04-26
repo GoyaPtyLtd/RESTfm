@@ -30,6 +30,14 @@ class uriRecord extends RESTfm\Resource {
      * Handle a GET request for this resource
      *
      * Query String Parameters:
+     *  - RFMscript=<name>  : url encoded script name to be called after
+     *                        result set is generated and sorted.
+     *  - RFMscriptParam=<string> : (optional) url encoded parameter string to
+     *                              pass to script.
+     *  - RFMpreScript=<name> : url encoded script name to be called before
+     *                          performing the find and sorting the result set.
+     *  - RFMpreScriptParam=<string> : (optional) url encoded parameter string
+     *                                 to pass to pre-script.
      *  - RFMcontainer=<encoding> : [default: DEFAULT], BASE64, RAW
      *
      * @param RESTfm\Request $request
@@ -51,6 +59,22 @@ class uriRecord extends RESTfm\Resource {
 
         $opsRecord = $backend->makeOpsRecord($database, $layout);
         $restfmParameters = $request->getParameters();
+
+        // Allow script calling.
+        if (isset($restfmParameters->RFMscript)) {
+            $scriptParameters = NULL;
+            if (isset($restfmParameters->RFMscriptParam)) {
+                $scriptParameters = $restfmParameters->RFMscriptParam;
+            }
+            $opsRecord->setPostOpScript($restfmParameters->RFMscript, $scriptParameters);
+        }
+        if (isset($restfmParameters->RFMpreScript)) {
+            $scriptParameters = NULL;
+            if (isset($restfmParameters->RFMpreScriptParam)) {
+                $scriptParameters = $restfmParameters->RFMpreScriptParam;
+            }
+            $opsRecord->setPreOpScript($restfmParameters->RFMpreScript, $scriptParameters);
+        }
 
         // Determine requirements for container encoding.
         if (isset($restfmParameters->RFMcontainer)) {
