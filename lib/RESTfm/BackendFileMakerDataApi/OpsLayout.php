@@ -66,7 +66,18 @@ class OpsLayout extends \RESTfm\OpsLayoutAbstract {
         }
 
         // Query.
-        if ($this->_SQLquery !== NULL) {
+        if (count($this->_findCriteria) > 0) {
+            // This search query will contain criterion.
+            $query = array();
+            $query[0] = $this->_findCriteria;
+
+            $result = $fmDataApi->findRecords($this->_layout,
+                                              $query,
+                                              array(),
+                                              array(),
+                                              $findSkip + 1,
+                                              $findMax);
+        } elseif ($this->_SQLquery !== NULL) {
             // This search is using SQL-like syntax.
             $parser = new FileMakerDataApiSQLParser($this->_SQLquery);
             //$parser->setDebug(TRUE);
