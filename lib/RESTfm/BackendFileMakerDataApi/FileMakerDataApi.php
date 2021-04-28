@@ -213,6 +213,31 @@ class FileMakerDataApi {
     }
 
     /**
+     * Layout Metadata.
+     *
+     * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult
+     *  Object containing decoded JSON response from FileMaker Data API Server.
+     *
+     * @throws \RESTfm\ResponseException
+     *  On cURL and JSON errors.
+     */
+    public function layoutMetadata ($layout) {
+        $this->curl_setup($this->databasesUrl() . '/' .
+                                rawurlencode($this->_database) .
+                                '/layouts/' .
+                                rawurlencode($layout),
+                          'GET');
+
+        $result = $this->curl_exec();
+
+        // DEBUG
+        //var_export($result);
+
+        return $result;
+    }
+
+
+    /**
      * Layout Names.
      *
      * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult

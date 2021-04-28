@@ -82,6 +82,15 @@ class FileMakerDataApiResult {
     }
 
     /**
+     * Return an array of assoc arrays of field metadata.
+     *
+     * @return array
+     */
+    public function getFieldMetaData () {
+        return @$this->_result['response']['fieldMetaData'];
+    }
+
+    /**
      * Return foundCount from result of querying FileMaker Data API.
      */
     public function getFoundCount () {

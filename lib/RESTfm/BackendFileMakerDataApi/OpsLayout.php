@@ -151,7 +151,21 @@ class OpsLayout extends \RESTfm\OpsLayoutAbstract {
      * @return \RESTfm\Message\Message
      */
     public function readMetaField () {
-        return new \RESTfm\Message\Message;
+        $fmDataApi = $this->_backend->getFileMakerDataApi();
+
+        $result = $fmDataApi->layoutMetadata($this->_layout);
+        $fieldMetaData = $result->getFieldMetaData();
+
+        $restfmMessage = new \RESTfm\Message\Message();
+
+        foreach ($fieldMetaData as $data) {
+            if (isset($data['name'])) {
+                $row = new \RESTfm\Message\Row($data);
+                $restfmMessage->setMetaField($data['name'], $row);
+            }
+        }
+
+        return $restfmMessage;
     }
 
     /**
