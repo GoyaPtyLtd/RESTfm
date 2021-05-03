@@ -577,6 +577,26 @@ class FileMakerDataApi {
         return $result;
     }
 
+    /**
+     * Get container data from URL.
+     *
+     * @param string $URL
+     *  URL to fetch container data from.
+     *
+     * @return string
+     *  Raw data returned from URL
+     */
+    function getContainerData ($URL) {
+        // TODO:
+        //  - Initially this is very simple, just raw data returned
+        //  - We probably want to change this when adding field-level operations
+        //      - We will want to capture headers (CURLOPT_HEADERFUNCTION),
+        //        so we can grab Content-type to pass through.
+        //      - Or look at CURLINFO_CONTENT_TYPE after request
+        return '<container_data_here>';
+    }
+
+
     // Begin Scripts
 
     /**

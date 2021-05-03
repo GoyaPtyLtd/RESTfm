@@ -191,6 +191,48 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
         }
 
         $record = $result->getFirstRecord();
+
+        if ($this->_containerEncoding !== self::CONTAINER_DEFAULT) {
+            // Since some kind of container encoding is requested, we need to
+            // request field metadata so we can work out which field(s) it is.
+            $metaDataResult = $fmDataApi->layoutMetadata($this->_layout);
+            $fieldMetaData = $metaDataResult->getFieldMetaData();
+            $containerFields = array();
+            foreach ($fieldMetaData as $data) {
+                if (isset($data['name']) &&
+                        isset($data['result']) &&
+                        $data['result'] == 'container') {
+                    $containerFields[$data['name']] = 1;
+                }
+            }
+
+            foreach ($record['fieldData'] as $fieldName => $fieldData) {
+                if (array_key_exists($fieldName, $containerFields)) {
+                    switch ($this->_containerEncoding) {
+                        case self::CONTAINER_BASE64:
+                            $filename = '';
+                            $matches = array();
+                            if (preg_match('/\/([^\/\?]*)\?/', $fieldData, $matches)) {
+                                $filename = $matches[1] . ';';
+                            }
+                            $containerData = $fmDataApi->getContainerData($fieldData);
+                            if (gettype($containerData) !== 'string') {
+                                $containerData = "";
+                            }
+                            $fieldData = $filename . base64_encode($containerData);
+                            break;
+                        case self::CONTAINER_RAW:
+                            // TODO
+                            break;
+                        case self::CONTAINER_DEFAULT:
+                        default:
+                            // Do nothing
+                    }
+                    $record['fieldData'][$fieldName] = $fieldData;
+                }
+            }
+        }
+
         $restfmMessage->addRecord(new \RESTfm\Message\Record(
             $record['recordId'],
             NULL,
