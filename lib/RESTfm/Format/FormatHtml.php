@@ -148,6 +148,11 @@ class FormatHtml implements FormatInterface {
                         // No link column
                     }
                     foreach($row as $fieldName => $val) {
+                        if (is_bool($val)) {
+                            // DataAPI backend now returns bools in field metadata,
+                            // we need to convert this to a string.
+                            $val = $val ? 'true' : 'false';
+                        }
                         $str .= '<td><pre>'.htmlspecialchars($val)."</pre></td>\n";
                     }
                     $str .= "</tr>\n";

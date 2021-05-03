@@ -239,6 +239,11 @@ class FormatSimple implements FormatInterface {
     protected function _encodeSingle ($data) {
         $fields = array();
         foreach ($data as $fieldName => $value) {
+            if (is_bool($value)) {
+                // DataAPI backend now returns bools in field metadata,
+                // we need to convert this to an int.
+                $value = $value ? 1 : 0;
+            }
             $fields[] = $fieldName . '="' . $this->_encodeSpecialChars($value) . '"';
         }
 
