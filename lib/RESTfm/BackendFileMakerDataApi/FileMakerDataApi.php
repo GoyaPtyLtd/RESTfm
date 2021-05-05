@@ -28,7 +28,7 @@ class FileMakerDataApi {
      * FMS Data API version that we support.
      * This is the required version string as used in all backend query URLs.
      */
-    const BACKEND_VERSION = 'v1';
+    const BACKEND_VERSION = 'v2';
 
     const DEFAULT_LIMIT = 24;
     const DEFAULT_OFFSET = 1;
@@ -580,20 +580,55 @@ class FileMakerDataApi {
     /**
      * Get container data from URL.
      *
-     * @param string $URL
+     * @param string $url
      *  URL to fetch container data from.
+     *   - Must be absolute (not relative).
+     *   - May not be same host as the dataAPI is using.
      *
      * @return string
      *  Raw data returned from URL
      */
-    function getContainerData ($URL) {
+    function getContainerData ($url) {
         // TODO:
         //  - Initially this is very simple, just raw data returned
-        //  - We probably want to change this when adding field-level operations
+        //  - Probably want to change this when adding field-level operations
         //      - We will want to capture headers (CURLOPT_HEADERFUNCTION),
         //        so we can grab Content-type to pass through.
         //      - Or look at CURLINFO_CONTENT_TYPE after request
-        return '<container_data_here>';
+
+        // Fetching container data is independent of the dataAPI and it's
+        // authentication mechanism, so we don't use this class's private curl
+        // handle or curl helper methods.
+        $ch = curl_init();
+
+        // We will use this class's default curl options, they are sensible.
+        $options = $this->_curlDefaultOptions + array(
+            CURLOPT_URL             => $url,
+            CURLOPT_HTTPHEADER      => array(),
+        );
+
+        curl_setopt_array($ch, $options);
+
+        $result = curl_exec($ch);
+
+        if (curl_errno($ch)) {
+            $curlError = curl_error($ch);
+            $curlErrno = curl_errno($ch);
+
+            throw new \RESTfm\ResponseException(
+                            'cURL error: ' . $curlErrno . ': ' . $curlError,
+                            \RESTfm\ResponseException::INTERNALSERVERERROR);
+        }
+
+        $responseCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if ($responseCode !== 200) {
+            throw new \RESTfm\ResponseException(
+                            'container server response code: ' .
+                                $responseCode . ' for URL: ' . $url,
+                            \RESTfm\ResponseException::INTERNALSERVERERROR);
+        }
+
+        return($result);
     }
 
 
