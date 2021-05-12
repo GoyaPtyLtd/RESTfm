@@ -24,7 +24,7 @@ namespace RESTfm;
  *
  * Class encapsulating all parameters applicable to a RESTfm request.
  * Parameters are populated from multiple sources, in the following lowest
- * to heighest priority:
+ * to highest priority:
  *  3) Any RFM* parameters inside the 'info' section of the submitted
  *     HTTP data.
  *  2) Any RFM* parameters in application/x-www-form-urlencoded or

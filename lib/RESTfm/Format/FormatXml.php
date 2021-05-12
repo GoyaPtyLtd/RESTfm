@@ -138,6 +138,11 @@ class FormatXml implements \RESTfm\FormatInterface {
      */
     protected function _row2xml(\XMLWriter $xml, array $assoc) {
         foreach($assoc as $key => $val) {
+            if (is_bool($val)) {
+                // DataAPI backend now returns bools in field metadata,
+                // we need to convert this to a string.
+                $val = $val ? 'true' : 'false';
+            }
             $xml->startElement('field');
                 $xml->writeAttribute('name', $key);
                 if (is_array($val)) {

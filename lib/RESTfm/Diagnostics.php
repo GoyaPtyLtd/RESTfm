@@ -41,8 +41,9 @@ class Diagnostics {
         'hostSystemDate',
         'documentRoot',
         'baseURI',
+        'restfmDataApi',
         'webserverRedirect',
-        'filemakerAPI',
+        'filemakerPhpApi',
         'filemakerConnect',
         'sslEnforced',
         'xslExtension',
@@ -260,6 +261,14 @@ class Diagnostics {
         $reportItem->details = $configBaseURI . "\n" . $reportItem->details;
     }
 
+    public function test_restfmDataApi($reportItem) {
+        $reportItem->name = 'Use Data API (' . Config::CONFIG_INI . ')';
+
+        $dataApi = Config::getVar('database', 'dataApi');
+        $reportItem->status = ReportItem::OK;
+        $reportItem->details = ($dataApi ? 'TRUE' : 'FALSE') . "\n";
+    }
+
     public function test_webserverRedirect($reportItem) {
         $reportItem->name = 'Web server redirect to RESTfm.php';
 
@@ -349,7 +358,11 @@ class Diagnostics {
         curl_close($ch);
     }
 
-    public function test_filemakerAPI($reportItem) {
+    public function test_filemakerPhpApi($reportItem) {
+        if (Config::getVar('database', 'dataApi')) {
+            // Skip test if we are using Data API.
+            return;
+        }
         $reportItem->name = 'FileMaker PHP API';
 
         if ($this->_isSSLOnlyAndNotHTTPS()) {
@@ -388,7 +401,17 @@ class Diagnostics {
     }
 
     public function test_filemakerConnect($reportItem) {
-        $reportItem->name = 'FileMaker Server connection test';
+        if (Config::getVar('database', 'dataApi')) {
+            $this->filemakerDataApiConnect($reportItem);
+            return;
+        } else {
+            $this->filemakerPhpApiConnect($reportItem);
+            return;
+        }
+    }
+
+    public function filemakerDataApiConnect($reportItem) {
+        $reportItem->name = 'FileMaker Server connection test (Data API)';
         $reportItem->details = '';
 
         if ($this->_isSSLOnlyAndNotHTTPS()) {
@@ -397,14 +420,80 @@ class Diagnostics {
             return;
         }
 
-        if ($this->_report->filemakerAPI->status != ReportItem::OK) {
+        // Probe hostspec for /fmi/data/v1/productInfo using cURL, this
+        // will verify that FileMaker Data API is really
+        // configured and listening.
+        $hostspec = Config::getVar('database', 'hostspec');
+        $URL = $hostspec . '/fmi/data/v1/productInfo';
+        $reportItem->details .= '<a href="'. $URL . '">' . $URL . '</a>' . "\n";
+
+        $ch = curl_init($URL);
+        curl_setopt($ch, CURLOPT_HEADER, FALSE);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+        if (Config::getVar('settings', 'strictSSLCertsFMS') === FALSE) {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
+        }
+        curl_setopt($ch, CURLOPT_FRESH_CONNECT, TRUE);
+        curl_setopt($ch, CURLOPT_FORBID_REUSE, TRUE);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'RESTfm Diagnostics');
+        $result = curl_exec($ch);
+
+        if (curl_errno($ch)) {
+            $reportItem->status = ReportItem::ERROR;
+            $reportItem->details .=  'cURL failed with error: ' . curl_errno($ch) . ': ' . curl_error($ch) . "\n";
+            if (curl_errno($ch) == 60 ||        // SSL certificate problem: self signed certificate in certificate chain
+                    curl_errno($ch) == 51) {    // OSX 'certificate verification failed (result: 5)'
+                $reportItem->details .= "\n";
+                $reportItem->details .= 'The host\'s SSL certificate has failed a verification check. This may be' . "\n";
+                $reportItem->details .= 'due to the certificate being invalid, or PHP\'s CA root certificates' . "\n";
+                $reportItem->details .= 'being out of date.' . "\n";
+                $reportItem->details .= "\n";
+                $reportItem->details .= 'Please consult ' .
+                                        '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting">SSL Troubleshooting</a>' .
+                                        ' in the RESTfm manual for further details.' . "\n";
+                $reportItem->details .= "\n";
+                $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsFMS" to FALSE in ' . Config::CONFIG_INI ."\n";
+            } elseif (curl_errno($ch) == 35 && strpos(curl_error($ch), 'CA certificate set, but certificate verification is disabled') !== FALSE) {
+                // OSX Secure Transport bug.
+                $reportItem->details .= "\n";
+                $reportItem->details .= 'Unable to disable strict SSL certificate checking in ' . Config::CONFIG_INI . ' (\'strictSSLCertsFMS\' => FALSE)' ."\n";
+                $reportItem->details .= 'while curl.cainfo is set in php.ini due to a compatibility bug in Apple\'s OS X Secure Transport library.' . "\n";
+                $reportItem->details .= "\n";
+                $reportItem->details .= 'Please consult ' .
+                                        '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting-os-x-secure-transport-bug">SSL Troubleshooting - OS X Secure Transport Bug</a>' .
+                                        ' in the RESTfm manual for a workaround.' . "\n";
+                $reportItem->details .= "\n";
+            }
+        } elseif (stripos($result, 'FileMaker Data API Engine') === FALSE) {
+            $reportItem->status = ReportItem::ERROR;
+            $reportItem->details .=  'FileMaker Data API not found at configured hostspec.' . "\n";
+            $reportItem->details .= "\n";
+            $reportItem->details .= 'Please ensure FileMaker Data API is enabled in Admin Console.' . "\n";
+        }
+
+        curl_close($ch);
+        if ($reportItem->status == ReportItem::ERROR) { return; }
+
+        $reportItem->details .= $result . "\n";
+        $reportItem->details .= 'OK' . "\n";
+    }
+
+    public function filemakerPhpApiConnect($reportItem) {
+        $reportItem->name = 'FileMaker Server connection test (PHP)';
+        $reportItem->details = '';
+
+        if ($this->_isSSLOnlyAndNotHTTPS()) {
+            $reportItem->status = ReportItem::WARN;
+            $reportItem->details .= 'Unable to test, SSLOnly is TRUE. Try visiting this page with https instead.' . "\n";
+            return;
+        }
+
+        if ($this->_report->filemakerPhpApi->status != ReportItem::OK) {
             $reportItem->status = ReportItem::ERROR;
             $reportItem->details .= 'Cannot test, FileMaker PHP API not found.' . "\n";
             return;
         }
-
-        $hostspec = Config::getVar('database', 'hostspec');
-        $reportItem->details .= $hostspec . "\n";
 
         // Probe hostspec for fmi/xml/fmresultset.xml path using cURL, this
         // will verify that FileMaker Web Publishing Engine is really
@@ -412,7 +501,11 @@ class Diagnostics {
         // using the FileMaker API can give a false positive as any webserver
         // listening can give a 404 error (which the FM API returns as
         // error 22, which may just be related to bad credentials !).
-        $ch = curl_init($hostspec . '/fmi/xml/fmresultset.xml');
+        $hostspec = Config::getVar('database', 'hostspec');
+        $URL = $hostspec . '/fmi/xml/fmresultset.xml';
+        $reportItem->details .= '<a href="'. $URL . '">' . $URL . '</a>' . "\n";
+
+        $ch = curl_init($URL);
         curl_setopt($ch, CURLOPT_HEADER, FALSE);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
         if (Config::getVar('settings', 'strictSSLCertsFMS') === FALSE) {
@@ -751,7 +844,7 @@ class Diagnostics {
      *  (Apple OSX)
      */
     private function _darwinFMS13InstallerInstructions() {
-        $s = "\nFileMaker Server 13/14/15/16/17 on Apple macOS (OS X) instructions:\n\n";
+        $s = "\nFileMaker Server 13/14/15/16/17/18 on Apple macOS (OS X) instructions:\n\n";
 
         if (strcasecmp(dirname($this->_RESTfmDocumentRoot), '/Library/FileMaker Server/HTTPServer/htdocs') != 0) {
             $s .= '* Custom document root outside of FMS detected. Please contact Goya support: http://www.restfm.com/help' . "\n";

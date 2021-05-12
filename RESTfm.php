@@ -149,6 +149,7 @@ if (RESTfm\Config::getVar('settings', 'diagnostics') === TRUE) {
         // Memory Limit (human readable bytes)
         $profLimitMem = prettyBytes(iniToBytes(ini_get('memory_limit')));
 
+        /** @var \RESTfm\Response $response */
         $response->addInfo('X-RESTfm-Profile',  $profRealTimeMs . 'ms ' .
                                                 $profPeakMem . ' ' .
                                                 $profLimitMem);
@@ -163,6 +164,7 @@ if ( is_a($response, 'RESTfm\Response') &&
     if (! empty($requestUsername)) {
         // All RESTfm URIs perform a database query to validate credentials,
         // so all RESTfm 2xx responses imply successful authorisation.
+        /** @var \RESTfm\Response $response */
         $response->addInfo('X-RESTfm-PHP-memory_limit',
                         prettyBytes(iniToBytes(ini_get('memory_limit'))));
         $response->addInfo('X-RESTfm-PHP-post_max_size',
@@ -186,10 +188,20 @@ exit;
  * @return integer result
  */
 function iniToBytes ($val) {
-    $val = trim($val);
-    $last = strtolower($val[strlen($val)-1]);
-    switch ($last) {
-        // The 'G' modifier is available since PHP 5.1.0
+    if ( preg_match('/([0-9]+)\s*([gmk]?)/i', $val, $matches) !== 1 ) {
+        return "NaN";   // Not a Number
+    }
+
+    if (isset($matches[1])) {
+        $val = $matches[1];
+    }
+
+    $units = '';
+    if (isset($matches[2])) {
+        $units = $matches[2];
+    }
+
+    switch (strtolower($units)) {
         case 'g':
             $val *= 1024;
         case 'm':
@@ -208,6 +220,9 @@ function iniToBytes ($val) {
  * @return string
  */
 function prettyBytes ($val) {
+    if ($val == "NaN") {
+        return $val;   // Not a Number
+    }
     $suffix = '';
     if ($val > 1024) {
         $val /= 1024;

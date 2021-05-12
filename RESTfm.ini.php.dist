@@ -18,11 +18,13 @@ $config['settings'] = array (
     // Comment out unneeded formats.
     'formats' => array (
         //'example',  // Commented out format example.
+        //'chargify', // Chargify multi-dimensional payload format.
         'dict',     // RESTfmSync transfer format.
         'fmpxml',   // FileMaker FMPXMLRESULT Grammar compliant.
         'html',     // Handy for testing, not so useful in production.
         'json',     // JavaScript Object Notation.
         'simple',   // A simple to parse format, spec. in simple_export.xslt
+        'syncMeta',	// Format for simple Sync Meta queries.
         'txt',      // Handy for testing, not so useful in production.
         'xml',      // Extensible Markup Language.
     ),
@@ -84,7 +86,11 @@ $config['database'] = array (
     //'hostspec' => 'http://example.com',
     //'hostspec' => 'https://example.com',
     //'hostspec' => 'http://example.com:8081',
-    'hostspec' => 'http://127.0.0.1',
+    'hostspec' => 'https://127.0.0.1',
+
+    // Set TRUE to use the FMS Data API. Set FALSE to use legacy FMS PHP API.
+    // NOTE: https is required in the hostspec if this is TRUE.
+    'dataApi' => TRUE,
 
     // Default username and password if none supplied in query or no API key
     // supplied. May be empty string for "guest" access.

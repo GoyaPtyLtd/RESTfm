@@ -1,3 +1,28 @@
+### 5.2.6 (Released 2021-01-11) ###
+ - Update Mac support for Big Sur.
+ - Previously released 5.2.4 accidently as 5.2.5 so this just gets all the versions back in sync.
+
+### 5.2.4 (Released 2020-11-25) ###
+ - Update Mac support for Catalina.
+ - Update for FMS 19 and 18.
+ - Update phpunit from v4.8 to v8.5.
+
+### 5.2.3 (Released 2019-06-06) ###
+ - Second fix to clean up "non well formed" notice.
+
+### 5.2.2 (Released 2019-03-07) ###
+ - Fix base64 container encoding warnings in PHP 5.6
+
+### 5.2.1 (Released 2019-02-05) ###
+ - Reset reporting level for production systems.
+
+### 5.2.0 (Released 2019-01-29) ###
+ - Update macOS (Mac OS X) installer to identify OS version 10.14 (Mojave)
+
+### 5.1.0 (Released 2018-06-07) ###
+ - Update diagnostics report for FMS 17.
+ - Update macOS (Mac OS X) installer for FMS 17.
+
 ### 5.0.1 (Released 2017-12-23) ###
  - Update macOS (Mac OS X) installer to identify OS version 10.13 (High Sierra)
 

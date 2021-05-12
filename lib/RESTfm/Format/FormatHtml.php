@@ -85,7 +85,7 @@ class FormatHtml implements FormatInterface {
 
             $str .= '<h3>'.$sectionName.'</h3>'."\n";
             $str .= '<div id="'.$sectionName.'">'."\n";
-            if (count($section) <= 0) {
+            if (count((array)$section) <= 0) {
                 $str .= '<div class="warn">Warning: no records found.</div>'."\n";
             }
             $str .= "<table>\n";
@@ -148,6 +148,11 @@ class FormatHtml implements FormatInterface {
                         // No link column
                     }
                     foreach($row as $fieldName => $val) {
+                        if (is_bool($val)) {
+                            // DataAPI backend now returns bools in field metadata,
+                            // we need to convert this to a string.
+                            $val = $val ? 'true' : 'false';
+                        }
                         $str .= '<td><pre>'.htmlspecialchars($val)."</pre></td>\n";
                     }
                     $str .= "</tr>\n";

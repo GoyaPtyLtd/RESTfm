@@ -114,7 +114,7 @@ class Config {
      */
     public static function getFormats() {
         if (!self::$_config) {
-            self::getConfig();
+            self::_getConfig();
         }
         return self::$_config['settings']['formats'];
     }

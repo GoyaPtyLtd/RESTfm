@@ -21,7 +21,9 @@ namespace RESTfmTests\Message;
 
 use RESTfm\Message\Section;
 
-class SectionTest extends \PHPUnit_Framework_TestCase {
+use PHPUnit\Framework\TestCase;
+
+class SectionTest extends TestCase {
 
     static $data = array(
         0 => array(

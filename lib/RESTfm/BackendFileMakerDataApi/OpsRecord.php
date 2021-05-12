@@ -17,27 +17,30 @@
  *  Gavin Stewart
  */
 
-namespace RESTfm\BackendFileMaker;
+namespace RESTfm\BackendFileMakerDataApi;
 
 /**
- * FileMakerOpsRecord
- *
- * FileMaker specific implementation of OpsRecordAbstract.
+ * FileMaker Data API implementation of OpsLayoutAbstract.
  */
-class FileMakerOpsRecord extends \RESTfm\OpsRecordAbstract {
+class OpsRecord extends \RESTfm\OpsRecordAbstract {
 
-    // --- OpsRecordAbstract implementation ---
+    /**
+     * @var \RESTfm\BackendFileMakerDataApi\Backend
+     *  Handle to backend object.
+     */
+    protected $_backend = NULL;
 
     /**
      * Construct a new Record-level Operation object.
      *
      * @param \RESTfm\BackendAbstract $backend
-     * @param string $database
+     *  Implementation must store $this->_backend if a reference is needed in
+     *  other methods.
+     * @param string $mapName
      * @param string $layout
      */
-    public function __construct (\RESTfm\BackendAbstract $backend, $database, $layout) {
+    public function __construct (\RESTfm\BackendAbstract $backend, $mapName, $layout) {
         $this->_backend = $backend;
-        $this->_database = $database;
         $this->_layout = $layout;
     }
 
@@ -60,32 +63,25 @@ class FileMakerOpsRecord extends \RESTfm\OpsRecordAbstract {
      *  identifier for new record data.
      */
     protected function _createRecord (\RESTfm\Message\Message $restfmMessage, \RESTfm\Message\Record $requestRecord, $index) {
-        $FM = $this->_backend->getFileMaker();
-        $FM->setProperty('database', $this->_database);
+        $fmDataApi = $this->_backend->getFileMakerDataApi(); // @var FileMakerDataApi
 
+        /*
         $valuesRepetitions = $this->_convertValuesToRepetitions($requestRecord);
+        */
 
-        $addCommand = $FM->newAddCommand($this->_layout, $valuesRepetitions);
+        $params = array();
 
         // Script calling.
-        if ($this->_postOpScriptTrigger) {
-            $addCommand->setScript($this->_postOpScript, $this->_postOpScriptParameter);
-            $this->_postOpScriptTrigger = FALSE;
-        }
-        if ($this->_preOpScriptTrigger) {
-            $addCommand->setPreCommandScript($this->_preOpScript, $this->_preOpScriptParameter);
-            $this->_preOpScriptTrigger = FALSE;
-        }
+        $this->_scriptPropertiesToParams($params);
 
         // Commit to database.
-        // NOTE: We add the '@' to suppress PHP warnings in the FileMaker
-        //       PHP API when non-existent fields are provided. We still catch
-        //       the error OK.
-        $result = @ $addCommand->execute();
+        $result = $fmDataApi->createRecord($this->_layout,
+                                           $requestRecord->_getDataReference(),
+                                           $params);
 
-        if (\FileMaker::isError($result)) {
+        if ($result->isError()) {
             if ($this->_isSingle) {
-                throw new FileMakerResponseException($result);
+                throw new FileMakerDataApiResponseException($result);
             }
             $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
                     $result->getCode(),
@@ -95,19 +91,10 @@ class FileMakerOpsRecord extends \RESTfm\OpsRecordAbstract {
             return;                                 // Nothing more to do here.
         }
 
-        // Query the result for the created records.
-        $record = NULL;     // @var FileMaker_Record
-        foreach ($result->getRecords() as $record) {
-            if ($this->_suppressData) {
-                // Insert just the recordID into the 'meta' section.
-                $restfmMessage->addRecord(new \RESTfm\Message\Record(
-                        $record->getRecordId()
-                ));
-            } else {
-                // Parse full record.
-                $this->_parseRecord($restfmMessage, $record);
-            }
-        }
+        // Insert just the recordID into the 'meta' section.
+        $restfmMessage->addRecord(new \RESTfm\Message\Record(
+                $result->getRecordId()
+        ));
     }
 
     /**
@@ -130,20 +117,27 @@ class FileMakerOpsRecord extends \RESTfm\OpsRecordAbstract {
      *  Record containing recordID to retrieve.
      */
     protected function _readRecord (\RESTfm\Message\Message $restfmMessage, \RESTfm\Message\Record $requestRecord) {
-        $FM = $this->_backend->getFileMaker();
-        $FM->setProperty('database', $this->_database);
+        $fmDataApi = $this->_backend->getFileMakerDataApi(); // @var FileMakerDataApi
 
         $recordID = $requestRecord->getRecordId();
+
+        $params = array();
+
+        // Script calling.
+        $this->_scriptPropertiesToParams($params);
 
         // Handle unique-key-recordID OR literal recordID.
         $record = NULL;
         if (strpos($recordID, '=')) {
             list($searchField, $searchValue) = explode('=', $recordID, 2);
-            $findCommand = $FM->newFindCommand($this->_layout);
-            $findCommand->addFindCriterion($searchField, $searchValue);
-            $result = $findCommand->execute();
+            $query = array( array( $searchField => $searchValue ) );
+            $result = $fmDataApi->findRecords(
+                            $this->_layout,
+                            $query,
+                            $params
+                        );
 
-            if (\FileMaker::isError($result)) {
+            if ($result->isError()) {
                 if ($this->_isSingle) {
                     if ($result->getCode() == 401) {
                         // "No records match the request"
@@ -151,7 +145,7 @@ class FileMakerOpsRecord extends \RESTfm\OpsRecordAbstract {
                         // 404. ONLY because we are a unique-key-recordID.
                         throw new \RESTfm\ResponseException(NULL, \RESTfm\ResponseException::NOTFOUND);
                     } else {
-                        throw new FileMakerResponseException($result);
+                        throw new FileMakerDataApiResponseException($result);
                     }
                 }
                 $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
@@ -179,25 +173,74 @@ class FileMakerOpsRecord extends \RESTfm\OpsRecordAbstract {
                 return;                         // Nothing more to do here.
             }
 
-            $record = $result->getFirstRecord();
         } else {
-            $record = $FM->getRecordById($this->_layout, $recordID);
+            $result = $fmDataApi->getRecord($this->_layout, $recordID, $params);
 
-            if (\FileMaker::isError($record)) {
+            if ($result->isError()) {
                 if ($this->_isSingle) {
-                    throw new FileMakerResponseException($record);
+                    throw new FileMakerDataApiResponseException($result);
                 }
                 // Store result codes in multistatus section
                 $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
-                    $record->getCode(),
-                    $record->getMessage(),
+                    $result->getCode(),
+                    $result->getMessage(),
                     $recordID
                 ));
-                return;                             // Nothing more to do here.
+                return;                         // Nothing more to do here.
             }
         }
 
-        $this->_parseRecord($restfmMessage, $record);
+        $record = $result->getFirstRecord();
+
+        if ($this->_containerEncoding !== self::CONTAINER_DEFAULT) {
+            // Since some kind of container encoding is requested, we need to
+            // request field metadata so we can work out which field(s) it is.
+            $metaDataResult = $fmDataApi->layoutMetadata($this->_layout);
+            $fieldMetaData = $metaDataResult->getFieldMetaData();
+            $containerFields = array();
+            foreach ($fieldMetaData as $data) {
+                if (isset($data['name']) &&
+                        isset($data['result']) &&
+                        $data['result'] == 'container') {
+                    $containerFields[$data['name']] = 1;
+                }
+            }
+
+            foreach ($record['fieldData'] as $fieldName => $fieldData) {
+                if (array_key_exists($fieldName, $containerFields)) {
+                    switch ($this->_containerEncoding) {
+                        case self::CONTAINER_BASE64:
+                            $filename = '';
+                            $matches = array();
+                            if (preg_match('/\/([^\/\?]*)\?/', $fieldData, $matches)) {
+                                $filename = $matches[1] . ';';
+                            }
+                            $containerData = $fmDataApi->getContainerData($fieldData);
+                            if (gettype($containerData) !== 'string') {
+                                $containerData = "";
+                            }
+                            $fieldData = $filename . base64_encode($containerData);
+                            break;
+                        case self::CONTAINER_RAW:
+                            // TODO
+                            break;
+                        case self::CONTAINER_DEFAULT:
+                        default:
+                            // Do nothing
+                    }
+                    $record['fieldData'][$fieldName] = $fieldData;
+                }
+            }
+        }
+
+        $restfmMessage->addRecord(new \RESTfm\Message\Record(
+            $record['recordId'],
+            NULL,
+            $record['fieldData']
+        ));
+
+        // Script results.
+        $this->_scriptResultsToInfo($restfmMessage, $result);
     }
 
     /**
@@ -273,8 +316,7 @@ class FileMakerOpsRecord extends \RESTfm\OpsRecordAbstract {
             $recordID = $readMessage->getRecord(0)->getRecordId();
         }
 
-        $FM = $this->_backend->getFileMaker();
-        $FM->setProperty('database', $this->_database);
+        $fmDataApi = $this->_backend->getFileMakerDataApi(); // @var FileMakerDataApi
 
         // Allow appending to existing data.
         if ($this->_updateAppend) {
@@ -304,27 +346,19 @@ class FileMakerOpsRecord extends \RESTfm\OpsRecordAbstract {
             }
         }
 
+        /*
         $updatedValuesRepetitions = $this->_convertValuesToRepetitions($requestRecord);
+        */
 
-        // New edit command on record with values to update.
-        $editCommand = $FM->newEditCommand($this->_layout, $recordID, $updatedValuesRepetitions);
+        $params = array();
 
         // Script calling.
-        if ($this->_postOpScriptTrigger) {
-            $editCommand->setScript($this->_postOpScript, $this->_postOpScriptParameter);
-            $this->_postOpScriptTrigger = FALSE;
-        }
-        if ($this->_preOpScriptTrigger) {
-            $editCommand->setPreCommandScript($this->_preOpScript, $this->_preOpScriptParameter);
-            $this->_preOpScriptTrigger = FALSE;
-        }
+        $this->_scriptPropertiesToParams($params);
 
         // Commit edit back to database.
-        // NOTE: We add the '@' to suppress PHP warnings in the FileMaker
-        //       PHP API when non-existent fields are provided. We still catch
-        //       the error OK.
-        $result = @ $editCommand->execute();
-        if (\FileMaker::isError($result)) {
+        $result = $fmDataApi->editRecord($this->_layout, $recordID, $requestRecord->_getDataReference(), $params);
+
+        if ($result->isError()) {
             // Check for FileMaker error 401: No records match the request
             if ($result->getCode() == 401 && $this->_updateElseCreate) {
                 // No record matching this recordID, create new record instead.
@@ -332,7 +366,7 @@ class FileMakerOpsRecord extends \RESTfm\OpsRecordAbstract {
             }
 
             if ($this->_isSingle) {
-                throw new FileMakerResponseException($result);
+                throw new FileMakerDataApiResponseException($result);
             }
             // Store result codes in multistatus section
             $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
@@ -342,6 +376,9 @@ class FileMakerOpsRecord extends \RESTfm\OpsRecordAbstract {
             ));
             return;                                 // Nothing more to do here.
         }
+
+        // Script results.
+        $this->_scriptResultsToInfo($restfmMessage, $result);
     }
 
     /**
@@ -381,26 +418,18 @@ class FileMakerOpsRecord extends \RESTfm\OpsRecordAbstract {
             $recordID = $readMessage->getRecord(0)->getRecordId();
         }
 
-        $FM = $this->_backend->getFileMaker();
-        $FM->setProperty('database', $this->_database);
+        $fmDataApi = $this->_backend->getFileMakerDataApi(); // @var FileMakerDataApi
 
-        $deleteCommand = $FM->newDeleteCommand($this->_layout, $recordID);
+        $params = array();
 
         // Script calling.
-        if ($this->_postOpScriptTrigger) {
-            $deleteCommand->setScript($this->_postOpScript, $this->_postOpScriptParameter);
-            $this->_postOpScriptTrigger = FALSE;
-        }
-        if ($this->_preOpScriptTrigger) {
-            $deleteCommand->setPreCommandScript($this->_preOpScript, $this->_preOpScriptParameter);
-            $this->_preOpScriptTrigger = FALSE;
-        }
+        $this->_scriptPropertiesToParams($params);
 
-        $result = $deleteCommand->execute();
+        $result = $fmDataApi->deleteRecord($this->_layout, $recordID, $params);
 
-        if (\FileMaker::isError($result)) {
+        if ($result->isError()) {
             if ($this->_isSingle) {
-                throw new FileMakerResponseException($result);
+                throw new FileMakerDataApiResponseException($result);
             }
             // Store result codes in multistatus section
             $restfmMessage->addMultistatus(new \RESTfm\Message\Multistatus(
@@ -410,6 +439,9 @@ class FileMakerOpsRecord extends \RESTfm\OpsRecordAbstract {
             ));
             return;                                 // Nothing more to do here.
         }
+
+        // Script results.
+        $this->_scriptResultsToInfo($restfmMessage, $result);
     }
 
     /**
@@ -427,191 +459,88 @@ class FileMakerOpsRecord extends \RESTfm\OpsRecordAbstract {
      *  - does not contain 'multistatus' this is not a bulk operation.
      */
     public function callScript ($scriptName, $scriptParameter = NULL) {
-        $FM = $this->_backend->getFileMaker();
-        $FM->setProperty('database', $this->_database);
-
-        $restfmMessage = new \RESTfm\Message\Message();
+        $fmDataApi = $this->_backend->getFileMakerDataApi(); // @var FileMakerDataApi
 
         // FileMaker only supports passing a single string parameter into a
         // script. Any requirements for multiple parameters must be handled
         // by string processing within the script.
-        $scriptCommand = $FM->newPerformScriptCommand($this->_layout, $scriptName, $scriptParameter);
+        $result = $fmDataApi->executeScript($this->_layout, $scriptName, $scriptParameter);
 
-        // NOTE: We add the '@' to suppress PHP warnings in the FileMaker
-        //       PHP API when non variable references are returned. We still
-        //       catch the error OK.
-        @ $result = $scriptCommand->execute();
-
-        if (\FileMaker::isError($result)) {
-            throw new FileMakerResponseException($result);
+        if ($result->isError()) {
+            throw new FileMakerDataApiResponseException($result);
         }
 
-        // Something a bit weird here. Every call to newPerformScriptCommand()
-        // will return at least one row of records, even if the script does not
-        // perform a find.
-        // The record appears random.
+        $restfmMessage = new \RESTfm\Message\Message();
+
+        // 20200316 - No records ever returned on scripts - GAV
+        /*
+        $records = $result->getRecords();
+
+        // A script may return a found set of one or more records, or nothing
+        // at all.
+        if ($records === NULL) {
+            return $restfmMessage;
+        }
 
         // Query the result for returned records.
         if (! $this->_suppressData) {
-            foreach ($result->getRecords() as $record) {
-                $this->_parseRecord($restfmMessage, $record);
+            foreach ($records as $record) {
+                $restfmMessage->addRecord(new \RESTfm\Message\Record(
+                    $record['recordId'],
+                    NULL,
+                    $record['fieldData']
+                ));
             }
         }
+        */
+
+        // Script results.
+        $this->_scriptResultsToInfo($restfmMessage, $result);
 
         return $restfmMessage;
     }
 
-    // --- Protected ---
-
     /**
-     * @var string
-     *  Database name.
-     */
-    protected $_database;
-
-    /**
-     * @var string
-     *  Layout name.
-     */
-    protected $_layout;
-
-    /**
-     * Parse FileMaker record into \RESTfm\Message\Message format.
+     * Build an array of FileMakerDataApi "params" from our script related
+     * properties.
      *
-     * @param[out] \RESTfm\Message\Message $restfmMessage
-     * @param[in] \FileMaker_Record $record
+     * @param array &$params
+     *  Array to populate with script related parameters.
      */
-    protected function _parseRecord (\RESTfm\Message\Message $restfmMessage, \FileMaker_Record $record) {
-        $fieldNames = $record->getFields();
-
-        // Only extract field meta data if we haven't done it yet.
-        if ($restfmMessage->getMetaFieldCount() < 1) {
-            // Dig out field meta data from field objects in layout object
-            // returned by record object!
-            $layoutResult = $record->getLayout();
-            foreach ($fieldNames as $fieldName) {
-                $fieldResult = $layoutResult->getField($fieldName);
-
-                $restfmMessageRow = new \RESTfm\Message\Row();
-
-                $restfmMessageRow['name'] = $fieldName;
-                $restfmMessageRow['autoEntered'] = $fieldResult->isAutoEntered() ? 1 : 0;
-                $restfmMessageRow['global'] = $fieldResult->isGlobal() ? 1 : 0;
-                $restfmMessageRow['maxRepeat'] = $fieldResult->getRepetitionCount();
-                $restfmMessageRow['resultType'] = $fieldResult->getResult();
-                //$restfmMessageRow['type'] = $fieldResult->getType();
-
-                $restfmMessage->setMetaField($fieldName, $restfmMessageRow);
-            }
-        }
-
-        $FM = $this->_backend->getFileMaker();
-        $FM->setProperty('database', $this->_database);
-
-        // Process record and store data.
-        $metaFields = $restfmMessage->getMetaFields();
-        $restfmMessageRecord = new \RESTfm\Message\Record($record->getRecordId());
-        foreach ($fieldNames as $fieldName) {
-            $metaFieldRow = NULL; // @var \RESTfm\Message\Row
-            $metaFieldRow = $metaFields[$fieldName];
-
-            // Field repetitions are expanded into multiple fields with
-            // an index operator suffix; fieldName[0], fieldName[1] ...
-            $fieldRepeat = $metaFieldRow['maxRepeat'];
-            for ($repetition = 0; $repetition < $fieldRepeat; $repetition++) {
-                $fieldNameRepeat = $fieldName;
-
-                // Apply index suffix only when more than one $fieldRepeat.
-                if ($fieldRepeat > 1) {
-                    $fieldNameRepeat .= '[' . $repetition . ']';
+    protected function _scriptPropertiesToParams (array &$params) {
+        if ($this->_postOpScriptTrigger) {
+            if ($this->_postOpScript !== NULL) {
+                $params['script'] = $this->_postOpScript;
+                if ($this->_postOpScriptParameter !== NULL) {
+                    $params['script.param'] = $this->_postOpScriptParameter;
                 }
-
-                // Get un-mangled field data, usually this is all we need.
-                $fieldData = $record->getFieldUnencoded($fieldName, $repetition);
-
-                // Handle container types differently.
-                if ($metaFieldRow['resultType'] == 'container') {
-                    switch ($this->_containerEncoding) {
-                        case self::CONTAINER_BASE64:
-                            $filename = '';
-                            $matches = array();
-                            if (preg_match('/^\/fmi\/xml\/cnt\/([^\?]*)\?/', $fieldData, $matches)) {
-                                $filename = $matches[1] . ';';
-                            }
-                            $containerData = $FM->getContainerData($record->getField($fieldName, $repetition));
-							if (gettype($containerData) !== 'string') {
-								$containerData = "";
-							}
-                            $fieldData = $filename . base64_encode($containerData);
-                            break;
-                        case self::CONTAINER_RAW:
-                            // TODO
-                            break;
-                        case self::CONTAINER_DEFAULT:
-                        default:
-                            if (method_exists($FM, 'getContainerDataURL')) {
-                                // Note: FileMaker::getContainerDataURL() only exists in the FMSv12 PHP API
-                                $fieldData = $FM->getContainerDataURL($record->getField($fieldName, $repetition));
-                            }
-                    }
-                }
-
-                // Store this field's data for this row.
-                $restfmMessageRecord[$fieldNameRepeat] = $fieldData;
             }
+            $this->_postOpScriptTrigger = FALSE;
         }
-        $restfmMessage->addRecord($restfmMessageRecord);
+        if ($this->_preOpScriptTrigger) {
+            if ($this->_preOpScript !== NULL) {
+                $params['script.prerequest'] = $this->_preOpScript;
+                if ($this->_preOpScriptParameter !== NULL) {
+                    $params['script.prerequest.param'] = $this->_preOpScriptParameter;
+                }
+            }
+            $this->_preOpScriptTrigger = FALSE;
+        }
     }
 
     /**
-     * Convert an associative array of fieldName => value pairs, where
-     * repetitions are expressed as "fieldName[numericalIndex]" => "value",
-     * into the form "fieldName" => array( numericalIndex => "value", ... )
-     * i.e. convert from "\RESTfm\Message\Message format" into "FileMaker add/edit
-     * $values format".
-     *
-     * @param Array $values
-     *  Associative array of fieldName => value pairs.
-     *
-     * @return Array
-     *  Associative array where repetitions are converted into a format
-     *  suitable for $values parameter of FileMaker API add/edit functions.
+     * Insert any script responses into 'info' section of restfmMessage.
+     * 
+     * @param \RESTfm\Message\Message $restfmMessage
+     *  Message object to set 'info'.
+     * @param \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult $result
+     *  Result from querying FileMaker Data API.
      */
-    protected function _convertValuesToRepetitions ($values) {
-        // Reprocess $values for repetitions compatibility.
-        //
-        // FileMaker::newAddCommand() / FileMaker::newEditCommand() state
-        // that $values / $updatedValues, which contain fieldName => value
-        // pairs, should supply a numerically indexed array for the value of
-        // any fields with repetitions.
-        //
-        // The obfuscated constructor of AddImpl.php / EditImpl.php shows
-        // that it converts all non-array values into single element arrays
-        // internally. This also verifies that the array index must start at
-        // zero.
-        $valuesRepetitions = array();
-        foreach ($values as $fieldName => $value) {
-            $matches = array();
-            if (preg_match('/^(.+)\[(\d+)\]$/', $fieldName, $matches)) {
-                $fieldName = $matches[1];   // Real fieldName minus index.
-                $repetition = intval($matches[2]);
-
-                // Use existing array, else construct a new one.
-                if ( isset($valuesRepetitions[$fieldName]) &&
-                        is_array($valuesRepetitions[$fieldName]) ) {
-                    $repeatArray = $valuesRepetitions[$fieldName];
-                } else {
-                    $repeatArray = array();
-                }
-
-                $repeatArray[$repetition] = $value;
-                $valuesRepetitions[$fieldName] = $repeatArray;
-            } else {
-                $valuesRepetitions[$fieldName] = $value;
-            }
+    protected function _scriptResultsToInfo (\RESTfm\Message\Message $restfmMessage, \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult $result) {
+        $scriptResults = $result->getScriptResults();
+        foreach ($scriptResults as $res => $val) {
+            $restfmMessage->setInfo($res, $val);
         }
-
-        return $valuesRepetitions;
     }
 
 };

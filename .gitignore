@@ -9,4 +9,7 @@ RESTfm.ini.php
 RESTfm.komodoproject
 tools
 unit_coverage_report
+.phpunit.result.cache
 .DS_Store
+.phpunit.result.cache
+.vscode
