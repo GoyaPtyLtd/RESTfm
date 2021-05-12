@@ -132,6 +132,59 @@ class Config {
             self::$_config = $config;
         }
 
+        // DEBUG current config and new ini format
+        //var_export(self::$_config);
+        //echo "\n";
+
+        $iniConfig = parse_ini_file('RESTfm.ini', true, INI_SCANNER_TYPED);
+        var_export($iniConfig);
+        echo "\n";
+
+        // Include other ini files
+        $iniFiles = array();
+        if (isset($iniConfig['config']['include']) &&
+                is_array($iniConfig['config']['include'])) {
+            foreach ($iniConfig['config']['include'] as $dir) {
+                if (is_dir($dir)) {
+                    if ($dh = opendir($dir)) {
+                        while (($filename = readdir($dh)) !== false) {
+                            $withPath = $dir . DIRECTORY_SEPARATOR . $filename;
+                            if (is_file($withPath) &&
+                                    substr_compare($filename, '.ini', -4, 4, true) === 0) {
+                                    $iniFiles[] = $withPath;
+                            }
+                        }
+                        closedir($dh);
+                    }
+                }
+            }
+        }
+        sort($iniFiles);
+        while (! empty($iniFiles)) {
+            $filename = array_shift($iniFiles);
+            echo "Parse: $filename\n";
+            $iniInclude = parse_ini_file($filename, true, INI_SCANNER_TYPED);
+            var_export($iniInclude);
+            echo "\n";
+            $iniConfig = array_merge_recursive($iniConfig, $iniInclude);
+        }
+
+        var_export($iniConfig);
+        echo "\n";
+
+        // Notes on how we want to recurse the inclusion of ini files:
+        //  - read whole ini, relative include dir(s) discovered
+        //  - foreach relative dir:
+        //      - read all *.ini filenames, sort
+        //      - foreach ini filename:
+        //          - read whole ini, relative include dir(s) discovered
+        //          . . .
+        //
+        // $path = '.';
+        // $config = recursiveMergeIni($path, $config)
+
+        exit;
+
         return self::$_config;
     }
 
