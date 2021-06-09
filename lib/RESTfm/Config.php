@@ -176,6 +176,8 @@ class Config {
             // Failed to parse file as ini.
             return;
         }
+        // Keep a record of config files in order they were included
+        $configData['config']['included'][] = $relativeName;
 
         // Merge loaded config with existing config.
         $config = self::_arrayMergeRecursive($config, $configData);
@@ -212,6 +214,11 @@ class Config {
                 }
             }
         }
+
+        // Remove ['config']['include'] section as data is nonsensical without
+        // path data relative to top level config. We use ['config']['included']
+        // section to describe this better.
+        unset($config['config']['include']);
     }
 
     /**
