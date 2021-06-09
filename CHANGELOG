@@ -1,6 +1,13 @@
+### 6.0.0beta ###
+ - FileMaker Data API support. This is now the default backend configured in
+   new RESTfm deployments. RESTfm provides the same interface and features,
+   this change is mostly transparent (backend server error codes have changed).
+   The FileMaker PHP API is still supported as an optional backend.
+
 ### 5.2.6 (Released 2021-01-11) ###
  - Update Mac support for Big Sur.
- - Previously released 5.2.4 accidently as 5.2.5 so this just gets all the versions back in sync.
+ - Previously released 5.2.4 accidentally as 5.2.5 so this just gets all the
+   versions back in sync.
 
 ### 5.2.4 (Released 2020-11-25) ###
  - Update Mac support for Catalina.
