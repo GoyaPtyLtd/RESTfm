@@ -20,11 +20,12 @@
 namespace RESTfm\Message;
 
 use RESTfm\MessageInterface\SectionInterface;
+use Countable;
 
 /**
  * Section access interface for export formats.
  */
-class Section implements SectionInterface {
+class Section implements SectionInterface, Countable {
 
     // @var integer number of dimensions.
     protected $_dimensions = 0;
@@ -91,5 +92,18 @@ class Section implements SectionInterface {
      */
     public function &_getRowsReference () {
         return $this->_rows;
+    }
+
+    /**
+     * Returns an integer count of the number of rows.
+     */
+    public function count() {
+      if ($this->getDimensions() == 1 && count($this->getRows()) > 0) {
+        return 1;
+      }
+      if ($this->getDimensions() > 1) {
+        return count($this->getRows());
+      }
+      return 0;
     }
 };
