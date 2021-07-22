@@ -85,11 +85,11 @@ class FormatHtml implements FormatInterface {
 
             $str .= '<h3>'.$sectionName.'</h3>'."\n";
             $str .= '<div id="'.$sectionName.'">'."\n";
-            if (count((array)$section) <= 0) {
+            $sectionRows = $section->getRows();
+            if (count($sectionRows) <= 0) {
                 $str .= '<div class="warn">Warning: no records found.</div>'."\n";
             }
             $str .= "<table>\n";
-            $sectionRows = $section->getRows();
             if ($section->getDimensions() == 1) {
                 $row_num = 0;
                 foreach($sectionRows[0] as $fieldName => $val) {
