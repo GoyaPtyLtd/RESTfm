@@ -33,8 +33,8 @@ DirectoryIndex index.html
     # Block access to .htaccess files.
     RewriteRule "(^|/)\.htaccess" - [F]
 
-    # Block access to RESTfm.ini.php
-    RewriteRule "RESTfm.ini.php" - [F]
+    # Block access to all .ini files
+    RewriteRule "\.ini$" - [F]
 
     # Set RewriteBase if RESTfm is in a subdirectory.
     # Must also set baseURI in RESTfm.ini.php
