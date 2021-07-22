@@ -29,7 +29,7 @@ class Config {
      */
     private static $_config;
 
-    const CONFIG_INI = 'RESTfm.ini.php';
+    const CONFIG_INI = 'RESTfm.ini';
 
     /**
      * Checks the existence of the config variable requested.
@@ -78,7 +78,7 @@ class Config {
      *  e.g.:
      *    Returns an associative array: 'settings', 'formats'
      *    Returns a single element: 'settings', 'SSLOnly'
-     *    (See RESTfm.ini.php to understand why these two similar looking
+     *    (See RESTfm.ini to understand why these two similar looking
      *     argument pairs return different data types.)
      *
      * @return mixed
@@ -131,24 +131,19 @@ class Config {
      */
     private static function _getConfig($configFilename = self::CONFIG_INI) {
         if (!self::$_config) {
-            include_once $configFilename;
+            // DEBUG old config
+            //include_once 'RESTfm.ini.php';
+            //echo "Old config:\n"; var_export($config); echo "\n";
+
+            $config = array();
+            $path = '.';
+            self::_recursiveMergeConfig($config, $path, $configFilename);
+
+            // DEBUG new config
+            //echo "Final config:\n"; var_export($config); echo "\n"; exit;
+
             self::$_config = $config;
         }
-
-        // DEBUG current config and new ini format
-        //var_export(self::$_config);
-        //echo "\n";
-
-        $config = array();
-        $path = '.';
-        $filename = 'RESTfm.ini';
-        self::_recursiveMergeConfig($config, $path, $filename);
-
-        echo "Final config:\n";
-        var_export($config);
-        echo "\n";
-
-        exit;
 
         return self::$_config;
     }
@@ -168,14 +163,15 @@ class Config {
 
         // Load specified config file.
         $relativeName = $path . DIRECTORY_SEPARATOR . $filename;
-        echo "Parse: $relativeName\n";
         $configData = parse_ini_file($relativeName, true, INI_SCANNER_TYPED);
-        var_export($configData);
-        echo "\n";
+        // DEBUG parsed data
+        //echo "Parsed: $relativeName\n"; var_export($configData); echo "\n";
+
         if ($configData === false) {
             // Failed to parse file as ini.
             return;
         }
+
         // Keep a record of config files in order they were included
         $configData['config']['included'][] = $relativeName;
 
