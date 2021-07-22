@@ -1,0 +1,122 @@
+; RESTfm configuration file.
+;
+; This file initially distributed with version: %%VERSION%%
+
+[settings]
+; If we are located in a subdirectory off the web root, set this.
+; Must also be configured in .htaccess if using Apache web server.
+; No trailing slash!
+baseURI = '/RESTfm'
+
+; List of formats we will converse in.
+; Comment out unneeded formats.
+;
+;formats[] = example     ; Commented out format example.
+;formats[] = chargify    ; Chargify multi-dimensional payload format.
+formats[] = dict        ; RESTfmSync transfer format.
+formats[] = fmpxml      ; FileMaker FMPXMLRESULT Grammar compliant.
+formats[] = html        ; Handy for testing, not so useful in production.
+formats[] = json        ; JavaScript Object Notation.
+formats[] = simple      ; A simple to parse format, spec. in simple_export.xslt
+formats[] = syncMeta    ; Format for simple Sync Meta queries.
+formats[] = txt         ; Handy for testing, not so useful in production.
+formats[] = xml         ; Extensible Markup Language.
+
+; Render formats nicely.
+; Improves readability of the native json and xml formats at the expense
+; of increased data size. Increased processing overhead for json with
+; PHP < 5.4.0. Not recommended in production.
+formatNicely = false
+
+; Enforce SSL access for clients connecting to RESTfm.
+; Should also be configured in .htaccess if using Apache web server.
+; Should also be configured in web.config if using IIS web server.
+; Do not set this true until after the report page (report.php) states
+; that RESTfm is fully functional when accessed via http and https.
+SSLOnly = false
+
+; Enforce strict SSL certificate checking when RESTfm is connecting to
+; the FileMaker Server Web Publishing Engine back-end. This setting is
+; relevant only when the database hostspec is using https.
+; Check http:;www.restfm.com/restfm-manual/install/ssl-troubleshooting
+; for further details.
+strictSSLCertsFMS = true
+
+; Enforce strict SSL certificate checking for RESTfm connecting to
+; itself when executing the diagnostics report page (report.php). This
+; setting is used only in determining if clients are able to connect to
+; the RESTfm front-end.
+; Check http:;www.restfm.com/restfm-manual/install/ssl-troubleshooting
+; for further details.
+strictSSLCertsReport = true
+
+; Respond 403 Forbidden on 401 Unauthorized.
+; Makes browser side applications run nicer when HTTP basic authentication
+; fails. Stops the browser popping up a Username/Password dialogue,
+; allowing the developer to handle usernames and passwords in JavaScript.
+; Note: Setting is ignored for html and txt formats.
+forbiddenOnUnauthorized = true
+
+; Dump raw received data, parsed received data, and response data to a
+; generated subdirectory (restfmdump.xxxxxxx) of the php.ini configured
+; temporary directory. WARNING: This is a verbose diagnostic aid, it will
+; generate a new subdirectory for every single HTTP request!
+dumpData = false
+
+; Diagnostic reporting.
+; This is enabled by default to assist in initial configuration.
+; Should be disabled once deployed to improve performance, and prevent
+; leakage of privileged information.
+diagnostics = true
+
+[database]
+; FileMaker Server HTTP URL.
+;hostspec = https://example.com
+;hostspec = https://example.com:8081
+hostspec = https://127.0.0.1
+
+; Set true to use the FMS Data API. Set false to use legacy FMS PHP API.
+; NOTE: https is required in the hostspec if this is true.
+dataApi = true
+
+; Default username and password if none supplied in query or no API key
+; supplied. May be empty string for "guest" access.
+; Only applies if useDefaultAuthentication is true.
+useDefaultAuthentication = false
+defaultUsername = read
+defaultPassword = read
+
+[databasePDOMap]
+; EXPERIMENTAL:
+; Optional database names that map to DSNs as supported by PHP's PDO interface
+; drivers.
+; http://php.net/manual/en/pdo.drivers.php
+;
+;example1 = 'mysql:host=127.0.0.1;dbname=testdb'
+;example2 = 'sqlite:/export/databases/testdb.sqlite3'
+
+[keys]
+; Each line is a unique API key associated with a username and password, where
+; each username and password must be separated by a colon.
+;
+;EXAMPLEKEY = exampleuser:examplepass
+
+[origins]
+; List of allowed origins for cross-site HTTP requests.
+; https://developer.mozilla.org/en-US/docs/HTTP_access_control
+;
+; It is not necessary to set these for most installations. Only web
+; applications being served from a different domain to RESTfm will need
+; this.
+;
+; An origin of '*' (wildcard) will match all domains.
+; WARNING: This is probably not what you want!
+;
+;allowed[] = http://example.com
+
+[config]
+; List of include directories relative to this ini file containing further ini
+; files.
+;
+include[] = conf.d
+

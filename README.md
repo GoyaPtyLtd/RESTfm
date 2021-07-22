@@ -49,7 +49,7 @@ With a little extra configuration, it is possible to run RESTfm directly from a 
     cd /<your web doc dir>
     git clone https://github.com/GoyaPtyLtd/RESTfm.git
     cd RESTfm
-    cp RESTfm.ini.php.dist RESTfm.ini.php
+    cp RESTfm.ini.dist RESTfm.ini
     cp .htaccess.dist .htaccess
     cp -a FileMaker.dist FileMaker
   * When setting up on IIS, also ensure `web.config.dist` is copied to `web.config`
