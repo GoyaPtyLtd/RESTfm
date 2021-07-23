@@ -41,11 +41,11 @@ class Diagnostics {
         'hostSystemDate',
         'documentRoot',
         'baseURI',
-        'iniSafety',
         'restfmDataApi',
         'webserverRedirect',
         'filemakerPhpApi',
         'filemakerConnect',
+        'iniSafety',
         'sslEnforced',
         'xslExtension',
         );
@@ -260,47 +260,6 @@ class Diagnostics {
 
         // Prefix the configured baseURI details to the very start.
         $reportItem->details = $configBaseURI . "\n" . $reportItem->details;
-    }
-
-    public function test_iniSafety($reportItem) {
-        $reportItem->name = 'Config INI file safety';
-
-        $curlOpts = array(
-            CURLOPT_HEADER          => FALSE,
-            CURLOPT_CONNECTTIMEOUT  => 2,
-            CURLOPT_RETURNTRANSFER  => TRUE,
-            CURLOPT_USERAGENT       => 'RESTfn Diagnostics',
-        );
-        $ch = curl_init();
-        curl_setopt_array($ch, $curlOpts);
-        if (Config::getVar('settings', 'strictSSLCertsReport') === FALSE) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
-        }
-
-        $iniFiles = Config::getVar('config', 'included');
-        $restfmUrl = $this->_calculatedRESTfmURL();
-        $unsafeIniUrls = array();
-        foreach ($iniFiles as $iniFile) {
-            $testURL = $restfmUrl . '/' . $iniFile;
-            curl_setopt($ch, CURLOPT_URL, $testURL);
-            $result = curl_exec($ch);
-            $returnCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            if ($returnCode >= 200 && $returnCode < 300) {
-                $unsafeIniUrls[] = '<a href="' . $testURL . '">' . $iniFile . '</a>';
-            }
-        }
-        curl_close($ch);
-
-        if (count($unsafeIniUrls) <= 0) {
-            $reportItem->status = ReportItem::OK;
-            $reportItem->details = 'OK' . "\n";
-            return;
-        }
-
-        $reportItem->status = ReportItem::ERROR;
-        $reportItem->details = 'The following config INI files are unsafe, please configure your Web Server to block them from being requested.' . "\n";
-        $reportItem->details .= join("\n", $unsafeIniUrls);
     }
 
     public function test_restfmDataApi($reportItem) {
@@ -638,6 +597,46 @@ class Diagnostics {
             $reportItem->details .= 'The FileMaker Server Admin Console should be used to set Database Server -> Security to: ' . "\n";
             $reportItem->details .= "  'List only the databases each user is authorized to access'" . "\n";
         }
+    }
+
+    public function test_iniSafety($reportItem) {
+        $reportItem->name = 'Config INI file safety';
+        $reportItem->status = ReportItem::OK;
+
+        $curlOpts = array(
+            CURLOPT_HEADER          => FALSE,
+            CURLOPT_CONNECTTIMEOUT  => 2,
+            CURLOPT_RETURNTRANSFER  => TRUE,
+            CURLOPT_USERAGENT       => 'RESTfn Diagnostics',
+        );
+        $ch = curl_init();
+        curl_setopt_array($ch, $curlOpts);
+        if (Config::getVar('settings', 'strictSSLCertsReport') === FALSE) {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
+        }
+
+        $iniFiles = Config::getVar('config', 'included');
+        $restfmUrl = $this->_calculatedRESTfmURL();
+        $iniFileReports = array();
+        foreach ($iniFiles as $iniFile) {
+            $testURL = $restfmUrl . '/' . $iniFile;
+            curl_setopt($ch, CURLOPT_URL, $testURL);
+            $result = curl_exec($ch);
+            $responseCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            if ($responseCode >= 200 && $responseCode < 300) {
+                $reportItem->status = ReportItem::ERROR;
+                $iniFileReports[] = '<a href="' . $testURL . '">' . $iniFile . '</a> Unsafe (' . $responseCode . ')';
+            } else {
+                $iniFileReports[] = $iniFile . ' OK (' . $responseCode . ')';
+            }
+        }
+        curl_close($ch);
+
+        if ($reportItem->status == ReportItem::ERROR) {
+            $reportItem->details .= 'One or more config INI files have been detected as unsafe, please configure your Web Server to deny access to these files.' . "\n";
+        }
+        $reportItem->details .= join("\n", $iniFileReports);
     }
 
     public function test_sslEnforced($reportItem) {
