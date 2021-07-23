@@ -37,7 +37,7 @@ DirectoryIndex index.html
     RewriteRule "\.ini$" - [F]
 
     # Set RewriteBase if RESTfm is in a subdirectory.
-    # Must also set baseURI in RESTfm.ini.php
+    # Must also set baseURI in RESTfm.ini
     # Example for: http://example.com/~user/RESTfm
     #    would be: RewriteBase /~user/RESTfm
     RewriteBase /RESTfm

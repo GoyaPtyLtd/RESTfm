@@ -131,15 +131,11 @@ class Config {
      */
     private static function _getConfig($configFilename = self::CONFIG_INI) {
         if (!self::$_config) {
-            // DEBUG old config
-            //include_once 'RESTfm.ini.php';
-            //echo "Old config:\n"; var_export($config); echo "\n";
-
             $config = array();
             $path = '.';
             self::_recursiveMergeConfig($config, $path, $configFilename);
 
-            // DEBUG new config
+            // DEBUG dump config
             //echo "Final config:\n"; var_export($config); echo "\n"; exit;
 
             self::$_config = $config;
