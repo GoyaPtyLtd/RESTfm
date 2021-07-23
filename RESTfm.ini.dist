@@ -38,7 +38,7 @@ SSLOnly = false
 ; Enforce strict SSL certificate checking when RESTfm is connecting to
 ; the FileMaker Server Web Publishing Engine back-end. This setting is
 ; relevant only when the database hostspec is using https.
-; Check http:;www.restfm.com/restfm-manual/install/ssl-troubleshooting
+; Check https://docs.restfm.com/article/22-ssl-troubleshooting
 ; for further details.
 strictSSLCertsFMS = true
 
@@ -46,7 +46,7 @@ strictSSLCertsFMS = true
 ; itself when executing the diagnostics report page (report.php). This
 ; setting is used only in determining if clients are able to connect to
 ; the RESTfm front-end.
-; Check http:;www.restfm.com/restfm-manual/install/ssl-troubleshooting
+; Check https://docs.restfm.com/article/22-ssl-troubleshooting
 ; for further details.
 strictSSLCertsReport = true
 
@@ -90,7 +90,7 @@ defaultPassword = read
 ; EXPERIMENTAL:
 ; Optional database names that map to DSNs as supported by PHP's PDO interface
 ; drivers.
-; http://php.net/manual/en/pdo.drivers.php
+; https://www.php.net/manual/en/pdo.drivers.php
 ;
 ;example1 = 'mysql:host=127.0.0.1;dbname=testdb'
 ;example2 = 'sqlite:/export/databases/testdb.sqlite3'
@@ -103,7 +103,7 @@ defaultPassword = read
 
 [origins]
 ; List of allowed origins for cross-site HTTP requests.
-; https://developer.mozilla.org/en-US/docs/HTTP_access_control
+; https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
 ;
 ; It is not necessary to set these for most installations. Only web
 ; applications being served from a different domain to RESTfm will need
@@ -113,6 +113,7 @@ defaultPassword = read
 ; WARNING: This is probably not what you want!
 ;
 ;allowed[] = http://example.com
+;allowed[] = https://example.com
 
 [config]
 ; List of include directories relative to this ini file containing further ini

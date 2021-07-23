@@ -228,7 +228,7 @@ class Diagnostics {
                 }
             } else {
                 $reportItem->status = ReportItem::ERROR;
-                $reportItem->details .= "\n* Unable to locate RewriteBase in .htaccess. Please contact Goya support: http://www.restfm.com/help\n\n";
+                $reportItem->details .= "\n* Unable to locate RewriteBase in .htaccess. Please contact Goya support: https://restfm.com/support\n\n";
             }
         }
 
@@ -306,7 +306,7 @@ class Diagnostics {
                 $reportItem->details .= 'being out of date.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'Please consult ' .
-                                        '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting">SSL Troubleshooting</a>' .
+                                        '<a target="_blank" href="https://docs.restfm.com/article/22-ssl-troubleshooting">SSL Troubleshooting</a>' .
                                         ' in the RESTfm manual for further details.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsReport" to FALSE in config INI' ."\n";
@@ -317,7 +317,7 @@ class Diagnostics {
                 $reportItem->details .= 'while curl.cainfo is set in php.ini due to a compatibility bug in Apple\'s OS X Secure Transport library.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'Please consult ' .
-                                        '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting-os-x-secure-transport-bug">SSL Troubleshooting - OS X Secure Transport Bug</a>' .
+                                        '<a target="_blank" href="https://docs.restfm.com/article/23-ssl-troubleshooting-os-x-secure-transport-bug">SSL Troubleshooting - OS X Secure Transport Bug</a>' .
                                         ' in the RESTfm manual for a workaround.' . "\n";
                 $reportItem->details .= "\n";
             }
@@ -452,7 +452,7 @@ class Diagnostics {
                 $reportItem->details .= 'being out of date.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'Please consult ' .
-                                        '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting">SSL Troubleshooting</a>' .
+                                        '<a target="_blank" href="https://docs.restfm.com/article/22-ssl-troubleshooting">SSL Troubleshooting</a>' .
                                         ' in the RESTfm manual for further details.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsFMS" to FALSE in config INI' ."\n";
@@ -463,7 +463,7 @@ class Diagnostics {
                 $reportItem->details .= 'while curl.cainfo is set in php.ini due to a compatibility bug in Apple\'s OS X Secure Transport library.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'Please consult ' .
-                                        '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting-os-x-secure-transport-bug">SSL Troubleshooting - OS X Secure Transport Bug</a>' .
+                                        '<a target="_blank" href="https://docs.restfm.com/article/23-ssl-troubleshooting-os-x-secure-transport-bug">SSL Troubleshooting - OS X Secure Transport Bug</a>' .
                                         ' in the RESTfm manual for a workaround.' . "\n";
                 $reportItem->details .= "\n";
             }
@@ -530,7 +530,7 @@ class Diagnostics {
                 $reportItem->details .= 'being out of date.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'Please consult ' .
-                                        '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting">SSL Troubleshooting</a>' .
+                                        '<a target="_blank" href="https://docs.restfm.com/article/22-ssl-troubleshooting">SSL Troubleshooting</a>' .
                                         ' in the RESTfm manual for further details.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsFMS" to FALSE in config INI' . "\n";
@@ -541,7 +541,7 @@ class Diagnostics {
                 $reportItem->details .= 'while curl.cainfo is set in php.ini due to a compatibility bug in Apple\'s OS X Secure Transport library.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'Please consult ' .
-                                        '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting-os-x-secure-transport-bug">SSL Troubleshooting - OS X Secure Transport Bug</a>' .
+                                        '<a target="_blank" href="https://docs.restfm.com/article/23-ssl-troubleshooting-os-x-secure-transport-bug">SSL Troubleshooting - OS X Secure Transport Bug</a>' .
                                         ' in the RESTfm manual for a workaround.' . "\n";
                 $reportItem->details .= "\n";
             }
@@ -889,7 +889,7 @@ class Diagnostics {
         $s = "\nFileMaker Server 13/14/15/16/17/18 on Apple macOS (OS X) instructions:\n\n";
 
         if (strcasecmp(dirname($this->_RESTfmDocumentRoot), '/Library/FileMaker Server/HTTPServer/htdocs') != 0) {
-            $s .= '* Custom document root outside of FMS detected. Please contact Goya support: http://www.restfm.com/help' . "\n";
+            $s .= '* Custom document root outside of FMS detected. Please contact Goya support: https://restfm.com/support' . "\n";
             return $s;
         }
 
@@ -957,7 +957,7 @@ class Diagnostics {
             $s .= '- Reload this page.' . "\n";
         } else {
             # No chance to work out what path the SSL document root is.
-            $s .= '* Custom document root outside of FMS13 detected. Please contact Goya support: http://www.restfm.com/help' . "\n";
+            $s .= '* Custom document root outside of FMS13 detected. Please contact Goya support: https://restfm.com/support' . "\n";
         }
 
         return $s;
@@ -1041,13 +1041,13 @@ class Diagnostics {
                 $apacheInstallDir = '/Library/Server/Web/Config/apache2/sites';
             }
         } else {
-            return ("\nUnknown Apple OSX release (Darwin ". $darwinRelease . '), please contact Goya for support: http://www.restfm.com/help');
+            return ("\nUnknown Apple OSX release (Darwin ". $darwinRelease . '), please contact Goya for support: https://restfm.com/support');
         }
 
         $s = "\nApple OSX (Darwin " . $darwinRelease . " - " . $darwinReleaseName . ") instructions:\n\n";
 
         if (! is_dir($apacheInstallDir)) {
-            $s .= 'Cannot find '. $apacheInstallDir . ', please contact Goya for support: http://www.restfm.com/help';
+            $s .= 'Cannot find '. $apacheInstallDir . ', please contact Goya for support: https://restfm.com/support';
             return ($s);
         }
 

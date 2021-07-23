@@ -2,16 +2,16 @@
 RESTful Web Services for FileMaker Server
 
 RESTfm turns a FileMaker Server into a RESTful Web Service, so you can
-access your FileMaker Server databases via HTTP using a common REST
+access your FileMaker Server databases via HTTP(S) using a common REST
 architecture with easy to understand API calls.
 
 **Website:**
-http://restfm.com/
+https://restfm.com
 
 **RESTfm Installation and Programming Interface Manual:**
-http://restfm.com/manual
+https://docs.restfm.com
 
-RESTfm is Copyright (c) 2011-2017 Goya Pty Ltd, and is licensed under The
+RESTfm is Copyright (c) 2011-2021 Goya Pty Ltd, and is licensed under The
 MIT License. For full copyright and license information, please see the LICENSE
 file distributed with this package.
 
@@ -26,11 +26,11 @@ https://github.com/GoyaPtyLtd/RESTfm/releases
 
 ### Installation
 The installation process is described in the online RESTfm manual:
-http://www.restfm.com/restfm-manual/install
+https://docs.restfm.com/category/5-install
 
 ### Support
 Product support is available via paid sponsorship:
-http://restfm.com/help
+https://restfm.com/support
 
 ----------------------------------------
 
@@ -42,7 +42,7 @@ With a little extra configuration, it is possible to run RESTfm directly from a 
 #### Prerequisites
   * A webserver (Apache >= 2.2, or IIS >= 7.0) with write access to the document directory.
   * FileMaker Server 11 or above is required, but does not need to reside on the same machine as RESTfm.
-  * PHP version 5.3 or above.
+  * PHP version 7.0 or above.
   * If running Apache, configure with `AllowOverride All` for the RESTfm directory so that `.htaccess` functions correctly.
 
 #### Setup example suitable for OS X/Linux
@@ -54,7 +54,7 @@ With a little extra configuration, it is possible to run RESTfm directly from a 
     cp -a FileMaker.dist FileMaker
   * When setting up on IIS, also ensure `web.config.dist` is copied to `web.config`
   * Use a browser to see if RESTfm needs further configuration: http://example.com/RESTfm/report.php
-  * Refer to the RESTfm manual for further configuration information: http://restfm.com/manual
+  * Refer to the RESTfm manual for further configuration information: https://docs.restfm.com
 
 ----------------------------------------
 
