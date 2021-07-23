@@ -111,7 +111,7 @@ check_OSXVersion() {
     # Ensure we have sw_vers, and we are Mac OS X.
     local PRODUCTNAME=''
     [ -x "`which sw_vers`" ] && PRODUCTNAME=`sw_vers -productName`
-    if [ "$PRODUCTNAME" != 'Mac OS X' ]&&[ "$PRODUCTNAME" != 'macOS' ]; then
+    if [ "$PRODUCTNAME" != 'Mac OS X' -a "$PRODUCTNAME" != 'macOS' ]; then
         log_failure_msg "$MSGPREFIX macOS (Mac OS X) not detected"
         exit 1
     fi
@@ -182,7 +182,8 @@ check_FMSVersion() {
     fi
 
     # Ensure FMS is a supported version.
-    local FMS_VERSION=`xpath -e '/jwpcconfig/build-settings/parameter[@name="product-version"]/text()' "$FMSVERSION_XML" 2>/dev/null`
+    local XPATH_QUERY='/jwpcconfig/build-settings/parameter[@name="product-version"]/text()'
+    local FMS_VERSION=$(xpath "$FMSVERSION_XML" "$XPATH_QUERY" 2>/dev/null)
     FMS_VERSION_MAJOR=$(echo "$FMS_VERSION" | cut -d . -f 1)
     FMS_VERSION_MINOR=$(echo "$FMS_VERSION" | cut -d . -f 2)
     FMS_VERSION_PATCH=$(echo "$FMS_VERSION" | cut -d . -f 3)
@@ -205,6 +206,30 @@ check_FMSVersion() {
 }
 
 ##
+# Run xpath with the correct parameters.
+#
+# Between macOS Catalina and Big Sur the xpath utility changed the parameter 
+# order and required flags.
+#
+xpath() {
+    local filename="$1"
+    local query="$2"
+    local XPATH_EXE=/usr/bin/xpath
+    local XPATH_PARAM_ORDER=$("$XPATH_EXE" 2>&1 | grep -oE '\[filename\] query|\[-e query\.\.\.\] \[filename\.\.\.\]')
+
+    case "$XPATH_PARAM_ORDER" in
+        '[filename] query')
+            # xpath <= macOS Catalina
+            "$XPATH_EXE" "$filename" "$query"
+            ;;
+        '[-e query...] [filename...]')
+            # xpath >= macOS Big Sur
+            "$XPATH_EXE" -e "$query" "$filename"
+            ;;
+    esac
+}
+
+##
 # Check:
 #   - that the Apache version is supported.
 #
@@ -214,7 +239,7 @@ check_FMSVersion() {
 #   APACHE_LISTEN - Port that Apache is listening on.
 #   APACHE_LISTEN_SSL - Port that Apache is listening on for SSL.
 #
-function check_ApacheVersion() {
+check_ApacheVersion() {
     local MSGPREFIX='Check Apache version:'
 
     # Match usage in FMS /Library/FileMaker Server/HTTPServer/bin/httpdctl
