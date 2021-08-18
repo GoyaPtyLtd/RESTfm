@@ -28,7 +28,7 @@ class FileMakerDataApi {
      * FMS Data API version that we support.
      * This is the required version string as used in all backend query URLs.
      */
-    const BACKEND_VERSION = 'v2';
+    const BACKEND_VERSION = 'v1';
 
     const DEFAULT_LIMIT = 24;
     const DEFAULT_OFFSET = 1;
