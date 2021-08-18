@@ -441,8 +441,15 @@ class Request {
             $mountPoint = '';
         }
 
+        // GOYA - Work around PHP 7.2 issue with empty URI string
+        $constantUri = $resourceReflector->getConstant('URI');
+        if ($constantUri == '' && PHP_VERSION_ID > 70000 && PHP_VERSION_ID < 70400) {
+            $constantUri = '/';
+        }
+        // GOYA
+
         return array(
-            'uri' => $resourceReflector->getConstant('URI'),    // GOYA
+            'uri' => $constantUri,    // GOYA
             'comment' => $comment,
             'className' => $className,
             'namespaceName' => $namespaceName,

@@ -139,9 +139,9 @@ class Diagnostics {
     public function test_phpVersion($reportItem) {
         $reportItem->name = 'PHP version';
         $reportItem->details = phpversion() . "\n";
-        if (PHP_VERSION_ID < 70400) {
+        if (PHP_VERSION_ID < 70100) {
             $reportItem->status = ReportItem::ERROR;
-            $reportItem->details .= "Minimum supported PHP version is: 7.4\n";
+            $reportItem->details .= "Minimum supported PHP version is: 7.1\n";
         }
         $reportItem->details .= php_ini_loaded_file() . "\n";
     }
