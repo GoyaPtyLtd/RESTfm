@@ -1,8 +1,11 @@
 ### 6.0.0beta ###
- - FileMaker Data API support. This is now the default backend configured in
-   new RESTfm deployments. RESTfm provides the same interface and features,
+ - Added FileMaker Data API support. This is now the default backend for new
+   RESTfm deployments. RESTfm provides the same frontend interface and features,
    this change is mostly transparent (backend server error codes have changed).
    The FileMaker PHP API is still supported as an optional backend.
+ - Changed RESTfm configuration to use INI file format (now RESTfm.ini).
+ - Added include directive to RESTfm.ini to read further INI files from other
+   directories.
 
 ### 5.2.6 (Released 2021-01-11) ###
  - Update Mac support for Big Sur.
