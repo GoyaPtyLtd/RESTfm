@@ -45,7 +45,7 @@ MANIFEST="MANIFEST"
 INJECTREVISION="lib/RESTfm/Version.php"
 
 # Files to inject Version into (replaces %%VERSION%%)
-INJECTVERSION="RESTfm.ini.dist demo.html js/demo.js"
+INJECTVERSION="RESTfm.ini demo.html js/demo.js"
 
 # PHPUnit command.
 PHPUNIT="PHPUnit/phpunit --bootstrap lib/autoload.php"
