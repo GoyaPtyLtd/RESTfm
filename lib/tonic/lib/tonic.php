@@ -441,9 +441,9 @@ class Request {
             $mountPoint = '';
         }
 
-        // GOYA - Work around PHP 7.3+ change when processing root URI '/'
+        // GOYA - Work around PHP 7.4+ change when processing root URI '/'
         $constantUri = $resourceReflector->getConstant('URI');
-        if ($constantUri == '/' && PHP_VERSION_ID >= 70300) {
+        if ($constantUri == '/' && PHP_VERSION_ID >= 70400) {
             $constantUri = '';
         }
         // GOYA
