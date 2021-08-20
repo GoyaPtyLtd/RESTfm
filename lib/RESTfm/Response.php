@@ -131,7 +131,7 @@ class Response extends \Tonic\Response {
         $this->addHeader('X-RESTfm-Method', $this->request->method);
 
         // Check if we need to authorise this origin (CORS)
-        $configOrigins = Config::getVar('allowed_origins');
+        $configOrigins = Config::getVar('origins', 'allowed');
         if (isset($_SERVER["HTTP_ORIGIN"]) && is_array($configOrigins)) {
             $request_origin = $_SERVER['HTTP_ORIGIN'];
             $allow_origin = null;

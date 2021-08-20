@@ -78,7 +78,7 @@ $diagnostics->setDocumentRoot(dirname($_SERVER['SCRIPT_FILENAME']));
     <body>
 <?php if (RESTfm\Config::getVar('settings', 'diagnostics') === TRUE): // Diagnostics enabled. ?>
         <div id="logo">
-            <a target="_blank" href="http://www.restfm.com"><img width="106" height="33" src="css/RESTfm.logo.png" alt="RESTfm logo"></a>
+            <a target="_blank" href="https://restfm.com"><img width="106" height="33" src="css/RESTfm.logo.png" alt="RESTfm logo"></a>
             <span><?php echo RESTfm\Version::getRelease() ?></span>
         </div>
         <h2>RESTfm report</h2>

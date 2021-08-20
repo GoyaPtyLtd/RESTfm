@@ -1,11 +1,13 @@
 .htaccess
 web.config
 code
+conf.d
 Build
 FileMaker
 FileMaker.*
 Packages
 RESTfm.ini.php
+RESTfm.ini
 RESTfm.komodoproject
 tools
 unit_coverage_report

@@ -111,7 +111,7 @@ check_OSXVersion() {
     # Ensure we have sw_vers, and we are Mac OS X.
     local PRODUCTNAME=''
     [ -x "`which sw_vers`" ] && PRODUCTNAME=`sw_vers -productName`
-    if [ "$PRODUCTNAME" != 'Mac OS X' ]&&[ "$PRODUCTNAME" != 'macOS' ]; then
+    if [ "$PRODUCTNAME" != 'Mac OS X' -a "$PRODUCTNAME" != 'macOS' ]; then
         log_failure_msg "$MSGPREFIX macOS (Mac OS X) not detected"
         exit 1
     fi
@@ -182,7 +182,8 @@ check_FMSVersion() {
     fi
 
     # Ensure FMS is a supported version.
-    local FMS_VERSION=`xpath -e '/jwpcconfig/build-settings/parameter[@name="product-version"]/text()' "$FMSVERSION_XML" 2>/dev/null`
+    local XPATH_QUERY='/jwpcconfig/build-settings/parameter[@name="product-version"]/text()'
+    local FMS_VERSION=$(xpath "$FMSVERSION_XML" "$XPATH_QUERY" 2>/dev/null)
     FMS_VERSION_MAJOR=$(echo "$FMS_VERSION" | cut -d . -f 1)
     FMS_VERSION_MINOR=$(echo "$FMS_VERSION" | cut -d . -f 2)
     FMS_VERSION_PATCH=$(echo "$FMS_VERSION" | cut -d . -f 3)
@@ -205,6 +206,30 @@ check_FMSVersion() {
 }
 
 ##
+# Run xpath with the correct parameters.
+#
+# Between macOS Catalina and Big Sur the xpath utility changed the parameter 
+# order and required flags.
+#
+xpath() {
+    local filename="$1"
+    local query="$2"
+    local XPATH_EXE=/usr/bin/xpath
+    local XPATH_PARAM_ORDER=$("$XPATH_EXE" 2>&1 | grep -oE '\[filename\] query|\[-e query\.\.\.\] \[filename\.\.\.\]')
+
+    case "$XPATH_PARAM_ORDER" in
+        '[filename] query')
+            # xpath <= macOS Catalina
+            "$XPATH_EXE" "$filename" "$query"
+            ;;
+        '[-e query...] [filename...]')
+            # xpath >= macOS Big Sur
+            "$XPATH_EXE" -e "$query" "$filename"
+            ;;
+    esac
+}
+
+##
 # Check:
 #   - that the Apache version is supported.
 #
@@ -214,7 +239,7 @@ check_FMSVersion() {
 #   APACHE_LISTEN - Port that Apache is listening on.
 #   APACHE_LISTEN_SSL - Port that Apache is listening on for SSL.
 #
-function check_ApacheVersion() {
+check_ApacheVersion() {
     local MSGPREFIX='Check Apache version:'
 
     # Match usage in FMS /Library/FileMaker Server/HTTPServer/bin/httpdctl
@@ -241,17 +266,17 @@ function check_ApacheVersion() {
 
 ##
 # Check:
-#   - if dataApi is set TRUE in RESTfm.ini.php
+#   - if dataApi is set TRUE in RESTfm.ini
 #
 # Initialises global variable:
 #   RESTFM_USE_DATAAPI
 #
 check_UseDataApi() {
     local MSGPREFIX="Check RESTfm using Data API:"
-    local RESTFMINI="${RESTFM_DIRNAME}/${RESTFM_BASENAME}/RESTfm.ini.php"
+    local RESTFMINI="${RESTFM_DIRNAME}/${RESTFM_BASENAME}/RESTfm.ini"
 
-    # Use grep to determine if dataApi is set TRUE in RESTfm.ini.php
-    grep -Eq "^\s*'dataApi'\s+=>\s+(TRUE|true)" "${RESTFMINI}"
+    # Use grep to determine if dataApi is set TRUE in RESTfm.ini
+    grep -Eq "^\s*dataApi\s+=\s+(TRUE|true)" "${RESTFMINI}"
 
     if [ $? -eq 0 ]; then
         RESTFM_USE_DATAAPI=1
@@ -806,20 +831,20 @@ update_RESTfmHtaccess() {
 }
 
 ##
-# Update RESTfm.ini.php
+# Update RESTfm.ini
 #   - set baseURI.
 #   - set hostspec.
 #   - set strictSSLCerts* (if FMS_SELFSIGNEDSSLCERT)
 #
 update_RESTfmIni() {
-    local MSGPREFIX="Update RESTfm.ini.php"
-    local RESTFMINI="${RESTFM_DIRNAME}/${RESTFM_BASENAME}/RESTfm.ini.php"
+    local MSGPREFIX="Update RESTfm.ini"
+    local RESTFMINI="${RESTFM_DIRNAME}/${RESTFM_BASENAME}/RESTfm.ini"
 
     log_daemon_msg "${MSGPREFIX}"
 
     # Use sed to update baseURI.
     log_progress_msg "baseURI,"
-    sed -i.bak -E "s/^([[:space:]]*\'baseURI\'[[:space:]]*\=\>[[:space:]]*\')(.*)(\'[,[:space:]]*)/\1\/${RESTFM_BASENAME_URLENCODED}\3/" "${RESTFMINI}"
+    sed -i.bak -E "s/^([[:space:]]*baseURI[[:space:]]*\=[[:space:]]*\')(.*)(\'[,[:space:]]*)/\1\/${RESTFM_BASENAME_URLENCODED}\3/" "${RESTFMINI}"
     local RET=$?
 
     if [ "$RET" != "0" ]; then
@@ -832,11 +857,11 @@ update_RESTfmIni() {
     log_progress_msg "hostspec,"
     if [[ ${RESTFM_USE_DATAAPI} -eq 1 ]]; then
         # FMS Data API requires https to work.
-        sed -i.bak -E "s/^([[:space:]]*\'hostspec\'[[:space:]]*\=\>[[:space:]]*\')(.*)(\'[,[:space:]]*)/\1https:\/\/127.0.0.1:${APACHE_LISTEN_SSL}\3/" "${RESTFMINI}"
+        sed -i.bak -E "s/^([[:space:]]*hostspec[[:space:]]*\=[[:space:]]*\')(.*)(\'[,[:space:]]*)/\1https:\/\/127.0.0.1:${APACHE_LISTEN_SSL}\3/" "${RESTFMINI}"
         local RET=$?
     else
         # Default to http for PHP API.
-        sed -i.bak -E "s/^([[:space:]]*\'hostspec\'[[:space:]]*\=\>[[:space:]]*\')(.*)(\'[,[:space:]]*)/\1http:\/\/127.0.0.1:${APACHE_LISTEN}\3/" "${RESTFMINI}"
+        sed -i.bak -E "s/^([[:space:]]*hostspec[[:space:]]*\=[[:space:]]*\')(.*)(\'[,[:space:]]*)/\1http:\/\/127.0.0.1:${APACHE_LISTEN}\3/" "${RESTFMINI}"
         local RET=$?
     fi
 
@@ -850,7 +875,7 @@ update_RESTfmIni() {
         # Use sed to update strictSSLCerts.
         log_progress_msg "strictSSLCerts"
 
-        sed -i.bak -E "s/^([[:space:]]*\'strictSSLCertsFMS\'[[:space:]]*\=\>[[:space:]]*)(.*)(,[:space:]*)/\1FALSE\3/" "${RESTFMINI}"
+        sed -i.bak -E "s/^([[:space:]]*strictSSLCertsFMS[[:space:]]*\=[[:space:]]*)(.*)(,[:space:]*)/\1false\3/" "${RESTFMINI}"
         local RET=$?
         if [ "$RET" != "0" ]; then
             # fail
@@ -858,7 +883,7 @@ update_RESTfmIni() {
             exit 1
         fi
 
-        sed -i.bak -E "s/^([[:space:]]*\'strictSSLCertsReport\'[[:space:]]*\=\>[[:space:]]*)(.*)(,[:space:]*)/\1FALSE\3/" "${RESTFMINI}"
+        sed -i.bak -E "s/^([[:space:]]*strictSSLCertsReport[[:space:]]*\=[[:space:]]*)(.*)(,[:space:]*)/\1false\3/" "${RESTFMINI}"
         local RET=$?
         if [ "$RET" != "0" ]; then
             # fail

@@ -45,6 +45,7 @@ class Diagnostics {
         'webserverRedirect',
         'filemakerPhpApi',
         'filemakerConnect',
+        'iniSafety',
         'sslEnforced',
         'xslExtension',
         );
@@ -138,9 +139,9 @@ class Diagnostics {
     public function test_phpVersion($reportItem) {
         $reportItem->name = 'PHP version';
         $reportItem->details = phpversion() . "\n";
-        if (PHP_VERSION_ID < 50300) {
+        if (PHP_VERSION_ID < 70000) {
             $reportItem->status = ReportItem::ERROR;
-            $reportItem->details .= "Minimum supported PHP version is: 5.3\n";
+            $reportItem->details .= "Minimum supported PHP version is: 7.0\n";
         }
         $reportItem->details .= php_ini_loaded_file() . "\n";
     }
@@ -197,7 +198,7 @@ class Diagnostics {
 
     public function test_baseURI($reportItem) {
         $configBaseURI = Config::getVar('settings', 'baseURI');
-        $reportItem->name = 'baseURI (' . Config::CONFIG_INI . ')';
+        $reportItem->name = 'baseURI';
 
         $calculatedBaseURI = $this->_calculatedBaseURI();
 
@@ -205,7 +206,7 @@ class Diagnostics {
             $reportItem->status = ReportItem::ERROR;
             $reportItem->details .= "\n* Does not match URI determined from web server: $calculatedBaseURI\n\n";
             $reportItem->details .= "Instructions:\n\n";
-            $reportItem->details .= "- Edit " . Config::CONFIG_INI . " and update 'baseURI' to: $calculatedBaseURI\n\n";
+            $reportItem->details .= "- Edit config INI and set 'baseURI' to: $calculatedBaseURI\n\n";
         }
 
         if ($this->_isApache()) {
@@ -227,7 +228,7 @@ class Diagnostics {
                 }
             } else {
                 $reportItem->status = ReportItem::ERROR;
-                $reportItem->details .= "\n* Unable to locate RewriteBase in .htaccess. Please contact Goya support: http://www.restfm.com/help\n\n";
+                $reportItem->details .= "\n* Unable to locate RewriteBase in .htaccess. Please contact Goya support: https://restfm.com/support\n\n";
             }
         }
 
@@ -262,7 +263,7 @@ class Diagnostics {
     }
 
     public function test_restfmDataApi($reportItem) {
-        $reportItem->name = 'Use Data API (' . Config::CONFIG_INI . ')';
+        $reportItem->name = 'Use Data API';
 
         $dataApi = Config::getVar('database', 'dataApi');
         $reportItem->status = ReportItem::OK;
@@ -305,18 +306,18 @@ class Diagnostics {
                 $reportItem->details .= 'being out of date.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'Please consult ' .
-                                        '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting">SSL Troubleshooting</a>' .
+                                        '<a target="_blank" href="https://docs.restfm.com/article/22-ssl-troubleshooting">SSL Troubleshooting</a>' .
                                         ' in the RESTfm manual for further details.' . "\n";
                 $reportItem->details .= "\n";
-                $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsReport" to FALSE in ' . Config::CONFIG_INI ."\n";
+                $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsReport" to FALSE in config INI' ."\n";
             } elseif (curl_errno($ch) == 35 && strpos(curl_error($ch), 'CA certificate set, but certificate verification is disabled') !== FALSE) {
                 // OSX Secure Transport bug.
                 $reportItem->details .= "\n";
-                $reportItem->details .= 'Unable to disable strict SSL certificate checking in ' . Config::CONFIG_INI . ' (\'strictSSLCertsReport\' => FALSE)' ."\n";
+                $reportItem->details .= 'Unable to disable strict SSL certificate checking in config INI (\'strictSSLCertsReport\' => FALSE)' ."\n";
                 $reportItem->details .= 'while curl.cainfo is set in php.ini due to a compatibility bug in Apple\'s OS X Secure Transport library.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'Please consult ' .
-                                        '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting-os-x-secure-transport-bug">SSL Troubleshooting - OS X Secure Transport Bug</a>' .
+                                        '<a target="_blank" href="https://docs.restfm.com/article/23-ssl-troubleshooting-os-x-secure-transport-bug">SSL Troubleshooting - OS X Secure Transport Bug</a>' .
                                         ' in the RESTfm manual for a workaround.' . "\n";
                 $reportItem->details .= "\n";
             }
@@ -361,6 +362,7 @@ class Diagnostics {
     public function test_filemakerPhpApi($reportItem) {
         if (Config::getVar('database', 'dataApi')) {
             // Skip test if we are using Data API.
+            $reportItem->status = ReportItem::NA;
             return;
         }
         $reportItem->name = 'FileMaker PHP API';
@@ -450,18 +452,18 @@ class Diagnostics {
                 $reportItem->details .= 'being out of date.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'Please consult ' .
-                                        '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting">SSL Troubleshooting</a>' .
+                                        '<a target="_blank" href="https://docs.restfm.com/article/22-ssl-troubleshooting">SSL Troubleshooting</a>' .
                                         ' in the RESTfm manual for further details.' . "\n";
                 $reportItem->details .= "\n";
-                $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsFMS" to FALSE in ' . Config::CONFIG_INI ."\n";
+                $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsFMS" to FALSE in config INI' ."\n";
             } elseif (curl_errno($ch) == 35 && strpos(curl_error($ch), 'CA certificate set, but certificate verification is disabled') !== FALSE) {
                 // OSX Secure Transport bug.
                 $reportItem->details .= "\n";
-                $reportItem->details .= 'Unable to disable strict SSL certificate checking in ' . Config::CONFIG_INI . ' (\'strictSSLCertsFMS\' => FALSE)' ."\n";
+                $reportItem->details .= 'Unable to disable strict SSL certificate checking in config INI (\'strictSSLCertsFMS\' => FALSE)' ."\n";
                 $reportItem->details .= 'while curl.cainfo is set in php.ini due to a compatibility bug in Apple\'s OS X Secure Transport library.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'Please consult ' .
-                                        '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting-os-x-secure-transport-bug">SSL Troubleshooting - OS X Secure Transport Bug</a>' .
+                                        '<a target="_blank" href="https://docs.restfm.com/article/23-ssl-troubleshooting-os-x-secure-transport-bug">SSL Troubleshooting - OS X Secure Transport Bug</a>' .
                                         ' in the RESTfm manual for a workaround.' . "\n";
                 $reportItem->details .= "\n";
             }
@@ -528,18 +530,18 @@ class Diagnostics {
                 $reportItem->details .= 'being out of date.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'Please consult ' .
-                                        '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting">SSL Troubleshooting</a>' .
+                                        '<a target="_blank" href="https://docs.restfm.com/article/22-ssl-troubleshooting">SSL Troubleshooting</a>' .
                                         ' in the RESTfm manual for further details.' . "\n";
                 $reportItem->details .= "\n";
-                $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsFMS" to FALSE in ' . Config::CONFIG_INI ."\n";
+                $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsFMS" to FALSE in config INI' . "\n";
             } elseif (curl_errno($ch) == 35 && strpos(curl_error($ch), 'CA certificate set, but certificate verification is disabled') !== FALSE) {
                 // OSX Secure Transport bug.
                 $reportItem->details .= "\n";
-                $reportItem->details .= 'Unable to disable strict SSL certificate checking in ' . Config::CONFIG_INI . ' (\'strictSSLCertsFMS\' => FALSE)' ."\n";
+                $reportItem->details .= 'Unable to disable strict SSL certificate checking in config INI (\'strictSSLCertsFMS\' => FALSE)' ."\n";
                 $reportItem->details .= 'while curl.cainfo is set in php.ini due to a compatibility bug in Apple\'s OS X Secure Transport library.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'Please consult ' .
-                                        '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting-os-x-secure-transport-bug">SSL Troubleshooting - OS X Secure Transport Bug</a>' .
+                                        '<a target="_blank" href="https://docs.restfm.com/article/23-ssl-troubleshooting-os-x-secure-transport-bug">SSL Troubleshooting - OS X Secure Transport Bug</a>' .
                                         ' in the RESTfm manual for a workaround.' . "\n";
                 $reportItem->details .= "\n";
             }
@@ -597,14 +599,54 @@ class Diagnostics {
         }
     }
 
+    public function test_iniSafety($reportItem) {
+        $reportItem->name = 'Config INI file safety';
+        $reportItem->status = ReportItem::OK;
+
+        $curlOpts = array(
+            CURLOPT_HEADER          => FALSE,
+            CURLOPT_CONNECTTIMEOUT  => 2,
+            CURLOPT_RETURNTRANSFER  => TRUE,
+            CURLOPT_USERAGENT       => 'RESTfn Diagnostics',
+        );
+        $ch = curl_init();
+        curl_setopt_array($ch, $curlOpts);
+        if (Config::getVar('settings', 'strictSSLCertsReport') === FALSE) {
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
+        }
+
+        $iniFiles = Config::getVar('config', 'included');
+        $restfmUrl = $this->_calculatedRESTfmURL();
+        $iniFileReports = array();
+        foreach ($iniFiles as $iniFile) {
+            $testURL = $restfmUrl . '/' . $iniFile;
+            curl_setopt($ch, CURLOPT_URL, $testURL);
+            $result = curl_exec($ch);
+            $responseCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            if ($responseCode >= 200 && $responseCode < 300) {
+                $reportItem->status = ReportItem::ERROR;
+                $iniFileReports[] = '<a href="' . $testURL . '">' . $iniFile . '</a> Unsafe (' . $responseCode . ')';
+            } else {
+                $iniFileReports[] = $iniFile . ' OK (' . $responseCode . ')';
+            }
+        }
+        curl_close($ch);
+
+        if ($reportItem->status == ReportItem::ERROR) {
+            $reportItem->details .= 'One or more config INI files have been detected as unsafe, please configure your Web Server to deny access to these files.' . "\n";
+        }
+        $reportItem->details .= join("\n", $iniFileReports);
+    }
+
     public function test_sslEnforced($reportItem) {
-        $reportItem->name = 'SSL enforced (' . Config::CONFIG_INI . ')';
+        $reportItem->name = 'SSL enforced';
 
         if (Config::getVar('settings', 'SSLOnly') === TRUE) {
-            $reportItem->details .= 'SSLOnly is TRUE in ' . Config::CONFIG_INI . "\n";
+            $reportItem->details .= 'SSLOnly is TRUE' . "\n";
         } else {
             $reportItem->status = ReportItem::WARN;
-            $reportItem->details .= "SSLOnly not TRUE in " . Config::CONFIG_INI . "\n";
+            $reportItem->details .= 'SSLOnly not TRUE' . "\n";
             $reportItem->details .= 'SSL is highly recommended to protect data, usernames and passwords from eavesdropping.' . "\n";
         }
     }
@@ -847,7 +889,7 @@ class Diagnostics {
         $s = "\nFileMaker Server 13/14/15/16/17/18 on Apple macOS (OS X) instructions:\n\n";
 
         if (strcasecmp(dirname($this->_RESTfmDocumentRoot), '/Library/FileMaker Server/HTTPServer/htdocs') != 0) {
-            $s .= '* Custom document root outside of FMS detected. Please contact Goya support: http://www.restfm.com/help' . "\n";
+            $s .= '* Custom document root outside of FMS detected. Please contact Goya support: https://restfm.com/support' . "\n";
             return $s;
         }
 
@@ -915,7 +957,7 @@ class Diagnostics {
             $s .= '- Reload this page.' . "\n";
         } else {
             # No chance to work out what path the SSL document root is.
-            $s .= '* Custom document root outside of FMS13 detected. Please contact Goya support: http://www.restfm.com/help' . "\n";
+            $s .= '* Custom document root outside of FMS13 detected. Please contact Goya support: https://restfm.com/support' . "\n";
         }
 
         return $s;
@@ -999,13 +1041,13 @@ class Diagnostics {
                 $apacheInstallDir = '/Library/Server/Web/Config/apache2/sites';
             }
         } else {
-            return ("\nUnknown Apple OSX release (Darwin ". $darwinRelease . '), please contact Goya for support: http://www.restfm.com/help');
+            return ("\nUnknown Apple OSX release (Darwin ". $darwinRelease . '), please contact Goya for support: https://restfm.com/support');
         }
 
         $s = "\nApple OSX (Darwin " . $darwinRelease . " - " . $darwinReleaseName . ") instructions:\n\n";
 
         if (! is_dir($apacheInstallDir)) {
-            $s .= 'Cannot find '. $apacheInstallDir . ', please contact Goya for support: http://www.restfm.com/help';
+            $s .= 'Cannot find '. $apacheInstallDir . ', please contact Goya for support: https://restfm.com/support';
             return ($s);
         }
 

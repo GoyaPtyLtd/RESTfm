@@ -115,7 +115,7 @@ class Request extends \Tonic\Request {
      *    RFC 3986) document in a RESTfm accepted format.
      *
      *    A RFMformat parameter must be present if RFMdata exists, and
-     *    must specify a RESTfm accepted format as listed in RESTfm.ini.php
+     *    must specify a RESTfm accepted format as listed in RESTfm.ini
      *    The RFMformat parameter may be used alone to override HTTP
      *    Content-type headers for POST data.
      *

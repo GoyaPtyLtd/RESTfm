@@ -48,6 +48,9 @@ class FileMakerDataApiResponseException extends \RESTfm\ResponseException {
         } elseif ($fmDataApiCode == 212) {
             // "Invalid user account and/or password; please try again"
             $code = \RESTfm\ResponseException::UNAUTHORIZED;
+        } elseif ($fmDataApiCode == 9) {
+            // "Insufficient privileges"
+            $code = \RESTfm\ResponseException::UNAUTHORIZED;
         }
 
         // Additional headers for this exception.

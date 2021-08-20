@@ -29,7 +29,7 @@ class Config {
      */
     private static $_config;
 
-    const CONFIG_INI = 'RESTfm.ini.php';
+    const CONFIG_INI = 'RESTfm.ini';
 
     /**
      * Checks the existence of the config variable requested.
@@ -78,7 +78,7 @@ class Config {
      *  e.g.:
      *    Returns an associative array: 'settings', 'formats'
      *    Returns a single element: 'settings', 'SSLOnly'
-     *    (See RESTfm.ini.php to understand why these two similar looking
+     *    (See RESTfm.ini to understand why these two similar looking
      *     argument pairs return different data types.)
      *
      * @return mixed
@@ -124,15 +124,124 @@ class Config {
     /**
      * Returns an associative array of the configuration structure.
      *
+     * @param string $configFilename
+     *  Filename to read config from.
+     *
      * @return array
      */
-    private static function _getConfig() {
+    private static function _getConfig($configFilename = self::CONFIG_INI) {
         if (!self::$_config) {
-            include_once self::CONFIG_INI;
+            $config = array();
+            $path = '.';
+            self::_recursiveMergeConfig($config, $path, $configFilename);
+
+            // DEBUG dump config
+            //echo "Final config:\n"; var_export($config); echo "\n"; exit;
+
             self::$_config = $config;
         }
 
         return self::$_config;
+    }
+
+    /**
+     * Load config from $path + $filename and merge into $config array,
+     * recursively merging config files from include directories.
+     *
+     * @param array $config
+     *  Associative array containing config loaded so far.
+     * @param string $path
+     *  Relative path we are loading $filename from.
+     * @param string $filename
+     *  Filename of config to load and merge into $config.
+     */
+    private static function _recursiveMergeConfig(&$config, $path, $filename) {
+
+        // Load specified config file.
+        $relativeName = $path . DIRECTORY_SEPARATOR . $filename;
+        $configData = parse_ini_file($relativeName, true, INI_SCANNER_TYPED);
+        // DEBUG parsed data
+        //echo "Parsed: $relativeName\n"; var_export($configData); echo "\n";
+
+        if ($configData === false) {
+            // Failed to parse file as ini.
+            return;
+        }
+
+        // Keep a record of config files in order they were included
+        $configData['config']['included'][] = $relativeName;
+
+        // Merge loaded config with existing config.
+        $config = self::_arrayMergeRecursive($config, $configData);
+
+        // Identify other config files from include directories just loaded.
+        if (isset($configData['config']['include']) &&
+                    is_array($configData['config']['include'])) {
+            foreach ($configData['config']['include'] as $dir) {
+                $relativePath = $path . DIRECTORY_SEPARATOR . $dir;
+                if (is_dir($relativePath)) {
+                    if ($dh = opendir($relativePath)) {
+                        $configFileList = array();
+                        while (($checkName = readdir($dh)) !== false) {
+                            // Remember all files that look like *.ini
+                            if (substr_compare(
+                                    $checkName, '.ini', -4, 4, true) === 0) {
+                                $configFileList[] = $checkName;
+                            }
+                        }
+                        closedir($dh);
+
+                        // Sort array of filenames into alphanumeric order.
+                        sort($configFileList);
+
+                        // Recursively load and merge config files include dir.
+                        foreach ($configFileList as $configFileName) {
+                            self::_recursiveMergeConfig(
+                                    $config,
+                                    $relativePath,
+                                    $configFileName
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
+        // Remove ['config']['include'] section as data is nonsensical without
+        // path data relative to top level config. We use ['config']['included']
+        // section to describe this better.
+        unset($config['config']['include']);
+    }
+
+    /**
+     * Reimplementation of PHP's array_merge_recursive(), but without
+     * ever modifying the first array's value's types. PHP's version will
+     * change a value to an array if two non-array values for the same key
+     * are merged, this is dumb, we let the merged value overwrite instead.
+     *
+     * @param array $a1
+     * @param array $a2
+     *
+     * @return array
+     *  Result of merging $a2 into $a1.
+     */
+    private static function _arrayMergeRecursive (array &$a1, array &$a2) {
+        $dest = $a1;                        // Start with a copy of $a1.
+
+        foreach ($a2 as $key => &$val) {    // Walk $a2 (this is src).
+            if (is_array($val) && isset($dest[$key]) && is_array($dest[$key])) {
+                // iff $key exists in src and dest, and val is array in both.
+                $dest[$key] = self::_arrayMergeRecursive($dest[$key], $val);
+            } elseif (is_integer($key) && isset($dest[$key])) {
+                // We guess dest is a sequential array so append src val.
+                $dest[] = $val;
+            } else {
+                // Fallthrough: force src val.
+                $dest[$key] = $val;
+            }
+        }
+
+        return $dest;
     }
 
     /**
