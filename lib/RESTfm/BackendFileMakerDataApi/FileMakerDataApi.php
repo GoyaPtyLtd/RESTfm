@@ -96,6 +96,9 @@ class FileMakerDataApi {
             CURLOPT_FOLLOWLOCATION  => FALSE, // Redirects don't work. Must use
                                               // https in hostspec with FMS16+
                                               // Data API.
+            CURLOPT_HTTP_VERSION    => CURL_HTTP_VERSION_1_1, // some libcurl
+                                              // versions are broken when
+                                              // server supports HTTP/2
         );
         if (\RESTfm\Config::getVar('settings', 'strictSSLCertsFMS') === FALSE) {
             $this->_curlDefaultOptions = $this->_curlDefaultOptions +
