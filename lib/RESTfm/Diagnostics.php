@@ -607,7 +607,7 @@ class Diagnostics {
             CURLOPT_HEADER          => FALSE,
             CURLOPT_CONNECTTIMEOUT  => 2,
             CURLOPT_RETURNTRANSFER  => TRUE,
-            CURLOPT_USERAGENT       => 'RESTfn Diagnostics',
+            CURLOPT_USERAGENT       => 'RESTfm Diagnostics',
         );
         $ch = curl_init();
         curl_setopt_array($ch, $curlOpts);
