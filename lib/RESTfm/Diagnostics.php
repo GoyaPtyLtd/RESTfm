@@ -133,7 +133,21 @@ class Diagnostics {
 
     public function test_version($reportItem) {
         $reportItem->name = 'RESTfm version';
-        $reportItem->details = Version::getVersion();
+        $reportItem->details = Version::getVersion() . "\n";
+
+        $gitRoot = '.git';
+        if (file_exists($gitRoot) && is_dir($gitRoot)) {
+            $gitHeadRef = file_get_contents($gitRoot . DIRECTORY_SEPARATOR .
+                                            'HEAD');
+            $gitBranch = rtrim(preg_replace("/(.*?\/){2}/", '', $gitHeadRef));
+            $gitCommitHash = file_get_contents($gitRoot . DIRECTORY_SEPARATOR .
+                                                'refs' . DIRECTORY_SEPARATOR .
+                                                'heads' . DIRECTORY_SEPARATOR .
+                                                $gitBranch);
+            $gitShortHash = substr($gitCommitHash, 0, 7);
+            $reportItem->details .= 'Git branch: ' . $gitBranch . ' (' .
+                                        $gitShortHash . ')' . "\n";
+        }
     }
 
     public function test_phpVersion($reportItem) {
