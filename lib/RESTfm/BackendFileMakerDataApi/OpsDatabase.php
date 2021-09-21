@@ -98,10 +98,7 @@ class OpsDatabase extends \RESTfm\OpsDatabaseAbstract {
         }
 
         $layouts = $result->getLayouts();
-        $layoutNames = array();
-        foreach ($layouts as $layout) {
-            array_push($layoutNames, $layout['name']);
-        }
+        $layoutNames = $this->_flattenFolders($layouts);
         natsort($layoutNames);
 
         $restfmMessage = new \RESTfm\Message\Message();
@@ -150,4 +147,63 @@ class OpsDatabase extends \RESTfm\OpsDatabaseAbstract {
         return $restfmMessage;
     }
 
+    /**
+     * Traverse and recurse the given layout hierarchy and flatten any
+     * folders found. We understand that layout names should be unique, and
+     * absent folder names will not alter how they are called by RESTfm.
+     *
+     * @param array $layouts
+     *  Array of layouts as returned by the Data API, in the form of:
+     * array (
+     *  0 =>
+     *  array (
+     *    'name' => 'full postcodes',
+     *  ),
+     *  1 =>
+     *  array (
+     *    'name' => 'Folder',
+     *    'isFolder' => true,
+     *    'folderLayoutNames' =>
+     *    array (
+     *      0 =>
+     *      array (
+     *        'name' => 'postcodes',
+     *      ),
+     *      1 =>
+     *      array (
+     *        'name' => 'postcodes.2',
+     *      ),
+     *      2 =>
+     *      array (
+     *        'name' => 'Folder.2',
+     *        'isFolder' => true,
+     *        'folderLayoutNames' =>
+     *        array (
+     *          0 =>
+     *          array (
+     *            'name' => 'postcodes.3',
+     *          ),
+     *        ),
+     *      ),
+     *    ),
+     *  ),
+     *
+     * @return array
+     *  of flattened layout names.
+     */
+    private function _flattenFolders (array $layouts) {
+        $layoutNames = array();
+        foreach ($layouts as $layout) {
+            if (isset($layout['isFolder']) && $layout['isFolder'] === true) {
+                $flattened = array();
+                if (isset($layout['folderLayoutNames'])) {
+                    $flattened = $this->_flattenFolders($layout['folderLayoutNames']);
+                }
+                $layoutNames = array_merge($layoutNames, $flattened);
+            } else {
+                array_push($layoutNames, $layout['name']);
+            }
+        }
+        return $layoutNames;
+    }
 };
