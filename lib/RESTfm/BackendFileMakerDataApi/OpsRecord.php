@@ -530,7 +530,7 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
 
     /**
      * Insert any script responses into 'info' section of restfmMessage.
-     * 
+     *
      * @param \RESTfm\Message\Message $restfmMessage
      *  Message object to set 'info'.
      * @param \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult $result
