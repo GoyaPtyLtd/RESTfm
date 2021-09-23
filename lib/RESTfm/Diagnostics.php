@@ -71,6 +71,13 @@ class Diagnostics {
 
     private $_report = NULL;
 
+    /**
+     * @var array
+     */
+    private $_curlDefaultOptions = array(
+
+    );
+
     // -- Public properties and methods -- //
     /**
      * @var
@@ -83,6 +90,31 @@ class Diagnostics {
      *  Set TRUE when a report contains errors.
      */
     public $hasErrors = FALSE;
+
+    /**
+     * Diagnostics constructor
+     */
+    public function __construct () {
+        // Set cURL default options.
+        $this->_curlDefaultOptions = array(
+            CURLOPT_USERAGENT       => 'RESTfm Diagnostics',
+            CURLOPT_CONNECTTIMEOUT  => 2,
+            CURLOPT_HEADER          => FALSE,
+            CURLOPT_RETURNTRANSFER  => TRUE,
+            CURLOPT_FRESH_CONNECT   => TRUE,
+            CURLOPT_FORBID_REUSE    => TRUE,
+            CURLOPT_HTTP_VERSION    => CURL_HTTP_VERSION_1_1, // some libcurl
+                                              // versions are broken when
+                                              // server supports HTTP/2
+        );
+        if (Config::getVar('settings', 'strictSSLCertsReport') === FALSE) {
+            $this->_curlDefaultOptions = $this->_curlDefaultOptions +
+                array(
+                    CURLOPT_SSL_VERIFYPEER => FALSE,
+                    CURLOPT_SSL_VERIFYHOST => FALSE,
+                );
+        }
+    }
 
     /**
      * Run diagnostic tests.
@@ -297,16 +329,7 @@ class Diagnostics {
         $reportItem->details .= '<a href="'. $URL . '">' . $URL . '</a>' . "\n";
 
         $ch = curl_init($URL);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        if (Config::getVar('settings', 'strictSSLCertsReport') === FALSE) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
-        }
-        curl_setopt($ch, CURLOPT_FRESH_CONNECT, TRUE);
-        curl_setopt($ch, CURLOPT_FORBID_REUSE, TRUE);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'RESTfm Diagnostics');
+        curl_setopt_array($ch, $this->_curlDefaultOptions);
         $result = curl_exec($ch);
 
         if (curl_errno($ch)) {
@@ -391,16 +414,7 @@ class Diagnostics {
         $reportItem->details .= '<a href="'. $URL . '">' . $URL . '</a>' . "\n";
 
         $ch = curl_init($URL);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        if (Config::getVar('settings', 'strictSSLCertsReport') === FALSE) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
-        }
-        curl_setopt($ch, CURLOPT_FRESH_CONNECT, TRUE);
-        curl_setopt($ch, CURLOPT_FORBID_REUSE, TRUE);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'RESTfm Diagnostics');
+        curl_setopt_array($ch, $this->_curlDefaultOptions);
         $result = curl_exec($ch);
 
         if (curl_errno($ch)) {
@@ -444,15 +458,7 @@ class Diagnostics {
         $reportItem->details .= '<a href="'. $URL . '">' . $URL . '</a>' . "\n";
 
         $ch = curl_init($URL);
-        curl_setopt($ch, CURLOPT_HEADER, FALSE);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        if (Config::getVar('settings', 'strictSSLCertsFMS') === FALSE) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
-        }
-        curl_setopt($ch, CURLOPT_FRESH_CONNECT, TRUE);
-        curl_setopt($ch, CURLOPT_FORBID_REUSE, TRUE);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'RESTfm Diagnostics');
+        curl_setopt_array($ch, $this->_curlDefaultOptions);
         $result = curl_exec($ch);
 
         if (curl_errno($ch)) {
@@ -491,7 +497,12 @@ class Diagnostics {
         curl_close($ch);
         if ($reportItem->status == ReportItem::ERROR) { return; }
 
-        $reportItem->details .= $result . "\n";
+        if (($data = json_decode($result, TRUE)) === NULL) {
+            $reportItem->details .= $result . "\n";
+        } else {
+            $reportItem->details .= json_encode($data, JSON_PRETTY_PRINT |
+                                                JSON_UNESCAPED_SLASHES) . "\n";
+        }
         $reportItem->details .= 'OK' . "\n";
     }
 
@@ -522,15 +533,7 @@ class Diagnostics {
         $reportItem->details .= '<a href="'. $URL . '">' . $URL . '</a>' . "\n";
 
         $ch = curl_init($URL);
-        curl_setopt($ch, CURLOPT_HEADER, FALSE);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        if (Config::getVar('settings', 'strictSSLCertsFMS') === FALSE) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
-        }
-        curl_setopt($ch, CURLOPT_FRESH_CONNECT, TRUE);
-        curl_setopt($ch, CURLOPT_FORBID_REUSE, TRUE);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'RESTfm Diagnostics');
+        curl_setopt_array($ch, $this->_curlDefaultOptions);
         $result = curl_exec($ch);
 
         if (curl_errno($ch)) {
@@ -617,18 +620,8 @@ class Diagnostics {
         $reportItem->name = 'Config INI file safety';
         $reportItem->status = ReportItem::OK;
 
-        $curlOpts = array(
-            CURLOPT_HEADER          => FALSE,
-            CURLOPT_CONNECTTIMEOUT  => 2,
-            CURLOPT_RETURNTRANSFER  => TRUE,
-            CURLOPT_USERAGENT       => 'RESTfm Diagnostics',
-        );
         $ch = curl_init();
-        curl_setopt_array($ch, $curlOpts);
-        if (Config::getVar('settings', 'strictSSLCertsReport') === FALSE) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
-        }
+        curl_setopt_array($ch, $this->_curlDefaultOptions);
 
         $iniFiles = Config::getVar('config', 'included');
         $restfmUrl = $this->_calculatedRESTfmURL();
