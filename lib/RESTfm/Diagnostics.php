@@ -441,7 +441,7 @@ class Diagnostics {
     }
 
     public function filemakerDataApiConnect($reportItem) {
-        $reportItem->name = 'FileMaker Server connection test (Data API)';
+        $reportItem->name = 'FileMaker Server Data API test';
         $reportItem->details = '';
 
         if ($this->_isSSLOnlyAndNotHTTPS()) {
@@ -503,11 +503,10 @@ class Diagnostics {
             $reportItem->details .= json_encode($data, JSON_PRETTY_PRINT |
                                                 JSON_UNESCAPED_SLASHES) . "\n";
         }
-        $reportItem->details .= 'OK' . "\n";
     }
 
     public function filemakerPhpApiConnect($reportItem) {
-        $reportItem->name = 'FileMaker Server connection test (PHP)';
+        $reportItem->name = 'FileMaker Server PHP API test';
         $reportItem->details = '';
 
         if ($this->_isSSLOnlyAndNotHTTPS()) {
