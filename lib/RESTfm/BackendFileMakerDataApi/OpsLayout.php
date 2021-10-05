@@ -115,8 +115,7 @@ class OpsLayout extends \RESTfm\OpsLayoutAbstract {
                                              $params);
         }
 
-
-        if ($result->isError()) {
+        if ($result->isError() || $result->getFetchCount() < 1) {
             throw new FileMakerDataApiResponseException($result);
         }
 
