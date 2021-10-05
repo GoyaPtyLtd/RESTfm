@@ -80,7 +80,7 @@ if (RESTfm\Config::getVar('settings', 'SSLOnly')) {
 // Setup tonic config for new request.
 $requestConfig = array(
     'baseUri' => RESTfm\Config::getVar('settings', 'baseURI'),
-    'acceptFormats' => RESTfm\Config::getVar('settings', 'formats'),
+    'acceptFormats' => RESTfm\Config::getFormats(),
 );
 // Work around IIS7 mangling of REQUEST_URI when rewriting URLs.
 if (isset($_SERVER['HTTP_X_ORIGINAL_URL'])) {

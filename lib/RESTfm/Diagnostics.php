@@ -46,6 +46,7 @@ class Diagnostics {
         'filemakerPhpApi',
         'filemakerConnect',
         'iniSafety',
+        'formatsEnabled',
         'sslEnforced',
         'xslExtension',
         );
@@ -643,6 +644,20 @@ class Diagnostics {
             $reportItem->details .= 'One or more config INI files have been detected as unsafe, please configure your Web Server to deny access to these files.' . "\n";
         }
         $reportItem->details .= join("\n", $iniFileReports);
+    }
+
+    public function test_formatsEnabled($reportItem) {
+        $reportItem->name = 'Formats Enabled';
+        $reportItem->status = ReportItem::OK;
+
+        $formatsEnabled = Config::getFormats();
+
+        if (count($formatsEnabled) <= 0) {
+            $reportItem->status = ReportItem::ERROR;
+            $reportItem->details = "Please ensure INI file(s) have at least one format enabled.\n";
+        } else {
+            $reportItem->details = join(', ', $formatsEnabled);
+        }
     }
 
     public function test_sslEnforced($reportItem) {
