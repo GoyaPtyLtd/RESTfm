@@ -681,8 +681,7 @@ class Diagnostics {
         }
 
         $reportItem->status = ReportItem::ERROR;
-        $reportItem->details .= 'Not Loaded. XSLT will not function.' . "\n";
-        $reportItem->details .= 'Only RESTfm .simple, .xml, .json and .html formats are available.' . "\n\n";
+        $reportItem->details .= 'Not Loaded. XSLT-based formats will not function.' . "\n\n";
         if ($this->_isIIS()) {
             $reportItem->details .= "Instructions:\n\n";
             $reportItem->details .= '- Edit the php.ini file: ' . php_ini_loaded_file() . "\n";
