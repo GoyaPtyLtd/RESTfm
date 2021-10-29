@@ -18,7 +18,7 @@ Copyright © Goya Pty Ltd 2014, All Rights Reserved.
 
 				<xsl:text> "global": </xsl:text><xsl:value-of select="restfm:field[@name='global']"/><xsl:text>, </xsl:text>
 				<xsl:text> "maxRepeat": </xsl:text><xsl:value-of select="restfm:field[@name='maxRepeat']"/><xsl:text>, </xsl:text>
-				<xsl:text> "resultType": "</xsl:text><xsl:value-of select="restfm:field[@name='resultType']"/><xsl:text>" } </xsl:text>
+				<xsl:text> "resultType": "</xsl:text><xsl:value-of select="restfm:field[@name='result']"/><xsl:text>" } </xsl:text>
 				<xsl:if test="position() != last()" ><xsl:text>, </xsl:text></xsl:if>
 			</xsl:for-each>				
 		</xsl:if>
