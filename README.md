@@ -18,11 +18,11 @@ file distributed with this package.
 -----------------------------------
 
 ### Download
-Officially packaged releases are the quickest way to start, are available in tar and zip formats, and may be downloaded from the "releases" link at the top of the github repository:
+Officially packaged releases are the quickest way to start, are available in tar and zip formats, and may be downloaded directly from github:
 https://github.com/GoyaPtyLtd/RESTfm/releases
 
 *Note:* The officially packaged releases are called `RESTfm-{version}.zip` and `RESTfm-{version}.tgz`.
-(Please don't be confused by the links to "Source code" that GitHub always includes. "Source code" has not gone through the "build" process, and requires additional configuration to get working.)
+(Please don't be confused by the links to "Source code" that GitHub also includes. "Source code" has not gone through the "build" process, and requires additional configuration to get working.)
 
 ### Installation
 The installation process is described in the online RESTfm manual:
@@ -40,24 +40,32 @@ With a little extra configuration, it is possible to run RESTfm directly from a 
 
 ### Installation
 #### Prerequisites
-  * A webserver (Apache >= 2.2, or IIS >= 7.0) with write access to the document directory.
-  * FileMaker Server 11 or above is required, but does not need to reside on the same machine as RESTfm.
-  * PHP version 7.0 or above.
-  * If running Apache, configure with `AllowOverride All` for the RESTfm directory so that `.htaccess` functions correctly.
+  * A webserver (Apache >= 2.4, or IIS >= 7.0).
+  * FileMaker Server 18 or above, but does not need to reside on the same machine as RESTfm.
+  * PHP 7.0 or above.
+  * If running Apache, the RESTfm directory must be configured with `AllowOverride All` so that `.htaccess` functions correctly.
 
-#### Setup example suitable for OS X/Linux
-    cd /<your web doc dir>
-    git clone https://github.com/GoyaPtyLtd/RESTfm.git
-    cd RESTfm
-    cp RESTfm.ini.dist RESTfm.ini
-    cp .htaccess.dist .htaccess
-    cp -a FileMaker.dist FileMaker
-  * When setting up on IIS, also ensure `web.config.dist` is copied to `web.config`
+#### Setup example suitable for Linux / macOS
+```
+cd /{your web document root}
+git clone --branch master https://github.com/GoyaPtyLtd/RESTfm.git
+cd RESTfm
+cp .htaccess.dist .htaccess
+cp -a conf.d.dist conf.d
+
+# The following is only required if not using the FMS Data API:
+cp -a FileMaker.dist FileMaker
+
+# To retrieve the latest updates to RESTfm:
+git pull
+```
+  * Create a custom `conf.d/{your config name}.ini` file to override default settings in `RESTfm.ini` rather than modifying it directly, this will save from merge conflicts when pulling future updates.
+  * When using IIS, ensure `web.config.dist` is copied to `web.config`
   * Use a browser to see if RESTfm needs further configuration: http://example.com/RESTfm/report.php
-  * Refer to the RESTfm manual for further configuration information: https://docs.restfm.com
+  * Refer to the RESTfm manual for further information: https://docs.restfm.com
 
 ----------------------------------------
 
 ### Bugs
-Bug reports are welcome via the GitHub issue tracker:
+Bug reports, via the GitHub issue tracker, are welcome:
 https://github.com/GoyaPtyLtd/RESTfm/issues
