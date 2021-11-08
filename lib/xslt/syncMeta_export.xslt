@@ -15,18 +15,20 @@ Copyright © Goya Pty Ltd 2014, All Rights Reserved.
 		<xsl:if test="restfm:info/restfm:field[@name = 'X-RESTfm-Status'] &lt; 300">
 			<xsl:for-each select="restfm:metaField/restfm:row">
 				<xsl:text> "</xsl:text><xsl:value-of select="restfm:field[@name='name']"/><xsl:text>": { </xsl:text>
-
 				<xsl:text> "global": </xsl:text><xsl:value-of select="restfm:field[@name='global']"/><xsl:text>, </xsl:text>
 				<xsl:text> "maxRepeat": </xsl:text><xsl:value-of select="restfm:field[@name='maxRepeat']"/><xsl:text>, </xsl:text>
-				<xsl:text> "resultType": "</xsl:text><xsl:value-of select="restfm:field[@name='result']"/><xsl:text>" } </xsl:text>
+				<xsl:text> "resultType": "</xsl:text>
+                            	<xsl:if test="restfm:field[@name='result'] != ''"><xsl:value-of select="restfm:field[@name='result']"/></xsl:if>
+                            	<xsl:if test="restfm:field[@name='resultType'] != ''"><xsl:value-of select="restfm:field[@name='resultType']"/></xsl:if>
+				<xsl:text>" } </xsl:text>
 				<xsl:if test="position() != last()" ><xsl:text>, </xsl:text></xsl:if>
-			</xsl:for-each>				
+			</xsl:for-each>
 		</xsl:if>
 		<xsl:text> }, </xsl:text>
         <xsl:apply-templates select="restfm:info"/>
 		<xsl:text> } </xsl:text>
 	</xsl:template>
-	
+
 	<xsl:template match="restfm:info">
 		<xsl:text>"info": { </xsl:text>
 		<xsl:for-each select="child::*">
