@@ -721,13 +721,17 @@ class Diagnostics {
     }
 
     /**
-     * Returns Version number if Apache is the server. Returns FALSE
+     * Returns Version number if Apache is the server.
+     * Returns 'unknown' if Apache is the server, and version number not found.
+     * Else Returns FALSE
      * otherwise.
      */
     private function _isApache() {
         $matches = array();
         if (preg_match('/Apache\/(\d+\.\d+\.\d+)/', $_SERVER['SERVER_SOFTWARE'], $matches)) {
             return $matches[1];
+        } elseif (preg_match('/Apache/', $_SERVER['SERVER_SOFTWARE'], $matches)) {
+            return 'unknown';
         }
         return FALSE;
     }
