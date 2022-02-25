@@ -78,7 +78,7 @@ class FileMakerDataApiResult {
     public function getFields () {
         /** @var array $a */
         $a = @$this->_result['response']['data'][0]['fieldData'];
-        return array_keys($a);
+        return @array_keys($a);
     }
 
     /**

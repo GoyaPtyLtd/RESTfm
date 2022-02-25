@@ -96,6 +96,9 @@ class FileMakerDataApi {
             CURLOPT_FOLLOWLOCATION  => FALSE, // Redirects don't work. Must use
                                               // https in hostspec with FMS16+
                                               // Data API.
+            CURLOPT_HTTP_VERSION    => CURL_HTTP_VERSION_1_1, // some libcurl
+                                              // versions are broken when
+                                              // server supports HTTP/2
         );
         if (\RESTfm\Config::getVar('settings', 'strictSSLCertsFMS') === FALSE) {
             $this->_curlDefaultOptions = $this->_curlDefaultOptions +
@@ -583,7 +586,7 @@ class FileMakerDataApi {
      * @param string $url
      *  URL to fetch container data from.
      *   - Must be absolute (not relative).
-     *   - May not be same host as the dataAPI is using.
+     *   - Must be the same host as the dataAPI is using for auth to work.
      *
      * @return string
      *  Raw data returned from URL
@@ -596,15 +599,28 @@ class FileMakerDataApi {
         //        so we can grab Content-type to pass through.
         //      - Or look at CURLINFO_CONTENT_TYPE after request
 
-        // Fetching container data is independent of the dataAPI and it's
-        // authentication mechanism, so we don't use this class's private curl
-        // handle or curl helper methods.
+        // Use a clean curl handle, don't dirty up this class's private curl
+        // handle used for non-container data API transactions.
         $ch = curl_init();
 
-        // We will use this class's default curl options, they are sensible.
-        $options = $this->_curlDefaultOptions + array(
-            CURLOPT_URL             => $url,
-            CURLOPT_HTTPHEADER      => array(),
+        $options = array_replace($this->_curlDefaultOptions, array(
+                CURLOPT_URL             => $url,
+                CURLOPT_HTTPHEADER      => array(),
+
+                // We need to accept cookies and have curl follow locations
+                // (redirect) for FMS > 19.3.1 Data API to work.
+                CURLOPT_COOKIEFILE      => '',
+                CURLOPT_FOLLOWLOCATION  => true,
+                // The initial GET from the URL responds 302 and includes an
+                // X-FMS-Session-Key cookie and Location: header. Curl will
+                // then transparently try the Location: using that cookie. The
+                // new location appears to be the same as $url with '&Redirect'
+                // appended. The (unique) container data URL appears to be what
+                // associates this request with a valid authorisation token,
+                // making the function of the cookie unknown, and not requiring
+                // the GET to set the header Authorization: bearer {token}
+                // This took some time to trace and debug.
+            )
         );
 
         curl_setopt_array($ch, $options);
@@ -691,6 +707,15 @@ class FileMakerDataApi {
     }
 
     /**
+     * Returns the base URL for backend 'validateSession' query.
+     *
+     * @return string
+     */
+    protected function validateSessionUrl () {
+        return('/fmi/data/' . self::BACKEND_VERSION . '/validateSession');
+    }
+
+    /**
      * Setup cURL options from given parameters.
      *
      * @param string $url
@@ -706,9 +731,10 @@ class FileMakerDataApi {
      */
     protected function curl_setup ($url, $method, $data = NULL, $headers = NULL) {
 
-        $options = $this->_curlDefaultOptions + array(
-            CURLOPT_URL             => $this->_hostspec . $url,
-            CURLOPT_CUSTOMREQUEST   => $method,
+        $options = array_replace($this->_curlDefaultOptions, array(
+                CURLOPT_URL             => $this->_hostspec . $url,
+                CURLOPT_CUSTOMREQUEST   => $method,
+            )
         );
 
         if ($headers === NULL) {

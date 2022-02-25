@@ -116,7 +116,13 @@ class Config {
         if (!self::$_config) {
             self::_getConfig();
         }
-        return self::$_config['settings']['formats'];
+        $formats = array();
+        foreach (self::$_config['formats'] as $format => $enabled) {
+            if ($enabled === TRUE) {
+                $formats[] = $format;
+            }
+        }
+        return $formats;
     }
 
     // -- Private Methods --

@@ -6,6 +6,7 @@
  - Changed RESTfm configuration to use INI file format (now RESTfm.ini).
  - Added include directive to RESTfm.ini to read further INI files from other
    directories.
+ - Added workaround for cURL errors with HTTP/2 streams
 
 ### 5.2.6 (Released 2021-01-11) ###
  - Update Mac support for Big Sur.

@@ -51,11 +51,21 @@ class FileMakerDataApiResponseException extends \RESTfm\ResponseException {
         } elseif ($fmDataApiCode == 9) {
             // "Insufficient privileges"
             $code = \RESTfm\ResponseException::UNAUTHORIZED;
+        } elseif ($fmDataApiCode == 0) {
+            // No error was returned. Further checks required.
+            if ($result->getFetchCount() < 1) {
+                // No record data returned
+                $code = \RESTfm\ResponseException::NOTFOUND;
+            }
         }
 
         // Additional headers for this exception.
         $this->addHeader('X-RESTfm-FMDataAPI-Status', $fmDataApiCode);
         $this->addHeader('X-RESTfm-FMDataAPI-Reason', $fmDataApiMessage);
+        $scriptResults = $result->getScriptResults();
+        foreach ($scriptResults as $res => $val) {
+            $this->addHeader('X-RESTfm-FMDataAPI-' . $res, $val);
+        }
 
         // Set a generic reason for status 500 if not already set.
         if ($code == 500 && empty($reason)) {

@@ -31,6 +31,12 @@ class OpsLayout extends \RESTfm\OpsLayoutAbstract {
     protected $_backend = NULL;
 
     /**
+     * @var string
+     *  Layout name.
+     */
+    protected $_layout;
+
+    /**
      * Construct a new Record-level Operation object.
      *
      * @param \RESTfm\BackendAbstract $backend
@@ -55,6 +61,11 @@ class OpsLayout extends \RESTfm\OpsLayoutAbstract {
     public function read () {
         $fmDataApi = $this->_backend->getFileMakerDataApi(); // @var FileMakerDataApi
 
+        $params = array();
+
+        // Script calling.
+        $this->_scriptPropertiesToParams($params);
+
         $selectList = array();
 
         $findSkip = $this->_readOffset;
@@ -73,7 +84,7 @@ class OpsLayout extends \RESTfm\OpsLayoutAbstract {
 
             $result = $fmDataApi->findRecords($this->_layout,
                                               $query,
-                                              array(),
+                                              $params,
                                               array(),
                                               $findSkip + 1,
                                               $findMax);
@@ -91,17 +102,20 @@ class OpsLayout extends \RESTfm\OpsLayoutAbstract {
 
             $result = $fmDataApi->findRecords($this->_layout,
                                               $parser->getQuery(),
-                                              array(),
+                                              $params,
                                               $parser->getSort(),
                                               $findSkip + 1,
                                               $parser->getLimit());
             $selectList = $parser->getSelectList();
         } else {
-            $result = $fmDataApi->getRecords($this->_layout, $findMax, $findSkip + 1);
+            $result = $fmDataApi->getRecords($this->_layout,
+                                             $findMax,
+                                             $findSkip + 1,
+                                             NULL,
+                                             $params);
         }
 
-
-        if ($result->isError()) {
+        if ($result->isError() || $result->getFetchCount() < 1) {
             throw new FileMakerDataApiResponseException($result);
         }
 
@@ -169,6 +183,9 @@ class OpsLayout extends \RESTfm\OpsLayoutAbstract {
         $restfmMessage->setInfo('foundSetCount', $result->getFoundCount());
         $restfmMessage->setInfo('fetchCount', $result->getReturnedCount());
 
+        // Script results.
+        $this->_scriptResultsToInfo($restfmMessage, $result);
+
         return $restfmMessage;
     }
 
@@ -199,8 +216,40 @@ class OpsLayout extends \RESTfm\OpsLayoutAbstract {
     }
 
     /**
-     * @var string
-     *  Layout name.
+     * Build an array of FileMakerDataApi "params" from our script related
+     * properties.
+     *
+     * @param array &$params
+     *  Array to populate with script related parameters.
      */
-    protected $_layout;
+    protected function _scriptPropertiesToParams (array &$params) {
+        if ($this->_postOpScript !== NULL) {
+            $params['script'] = $this->_postOpScript;
+            if ($this->_postOpScriptParameter !== NULL) {
+                $params['script.param'] = $this->_postOpScriptParameter;
+            }
+        }
+        if ($this->_preOpScript !== NULL) {
+            $params['script.prerequest'] = $this->_preOpScript;
+            if ($this->_preOpScriptParameter !== NULL) {
+                $params['script.prerequest.param'] = $this->_preOpScriptParameter;
+            }
+        }
+    }
+
+    /**
+     * Insert any script responses into 'info' section of restfmMessage.
+     *
+     * @param \RESTfm\Message\Message $restfmMessage
+     *  Message object to set 'info'.
+     * @param \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult $result
+     *  Result from querying FileMaker Data API.
+     */
+    protected function _scriptResultsToInfo (\RESTfm\Message\Message $restfmMessage, \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult $result) {
+        $scriptResults = $result->getScriptResults();
+        foreach ($scriptResults as $res => $val) {
+            $restfmMessage->setInfo($res, $val);
+        }
+    }
+
 };

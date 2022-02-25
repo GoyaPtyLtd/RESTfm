@@ -26,8 +26,8 @@
 $startTimeUs = microtime(TRUE);
 
 // Ensure E_STRICT is removed for PHP 5.4+
-//error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
-error_reporting(E_ALL & ~E_STRICT);   // Dev. level reporting
+error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
+//error_reporting(E_ALL & ~E_STRICT);   // Dev. level reporting
 
 // x-debug's html error output makes CLI debugging with cURL a problem.
 ini_set('html_errors', FALSE);
@@ -80,7 +80,7 @@ if (RESTfm\Config::getVar('settings', 'SSLOnly')) {
 // Setup tonic config for new request.
 $requestConfig = array(
     'baseUri' => RESTfm\Config::getVar('settings', 'baseURI'),
-    'acceptFormats' => RESTfm\Config::getVar('settings', 'formats'),
+    'acceptFormats' => RESTfm\Config::getFormats(),
 );
 // Work around IIS7 mangling of REQUEST_URI when rewriting URLs.
 if (isset($_SERVER['HTTP_X_ORIGINAL_URL'])) {
