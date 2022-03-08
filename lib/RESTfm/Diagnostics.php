@@ -99,7 +99,7 @@ class Diagnostics {
         // Set cURL default options.
         $this->_curlDefaultOptions = array(
             CURLOPT_USERAGENT       => 'RESTfm Diagnostics',
-            CURLOPT_CONNECTTIMEOUT  => 2,
+            CURLOPT_CONNECTTIMEOUT  => 5,
             CURLOPT_HEADER          => FALSE,
             CURLOPT_RETURNTRANSFER  => TRUE,
             CURLOPT_FRESH_CONNECT   => TRUE,

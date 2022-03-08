@@ -17,10 +17,7 @@
  *  Gavin Stewart
  */
 
-/***
- *** WARNING: Not in use, out of date, will not function completely.
- *** WARNING: No repetitions support.
- ***/
+use RESTfm\FieldResponse;
 
 /**
  * RESTfm Field handler for Tonic
@@ -44,57 +41,37 @@ class uriField extends RESTfm\Resource {
      * @param string $field
      *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}
      *
-     * @return Response
+     * @return FieldResponse
      */
     function get($request, $database, $layout, $rawRecordID, $field) {
+        $database = RESTfm\Url::decode($database);
+        $layout = RESTfm\Url::decode($layout);
+        $rawRecordID = RESTfm\Url::decode($rawRecordID);
+        $field = RESTfm\Url::decode($field);
 
-        $response = new RESTfm\Response($request);
-        $recordID = new RESTfmRecordID($rawRecordID);
+        $backend = RESTfm\BackendFactory::make($request, $database);
 
-        $record = $recordID->getRecord(urldecode($database), urldecode($layout));
+        $opsField = $backend->makeOpsField($database, $layout);
+        $restfmParameters = $request->getParameters();
 
-        if (\FileMaker::isError($record)) {
-            throw new FileMakerResponseException($record);
+        // Determine requirements for container encoding.
+        if (isset($restfmParameters->RFMcontainer)) {
+            $containerEncoding = strtoupper($restfmParameters->RFMcontainer);
+            if ($containerEncoding == 'BASE64') {
+                $containerEncoding = $opsField::CONTAINER_BASE64;
+            } elseif ($containerEncoding == 'RAW') {
+                $containerEncoding = $opsField::CONTAINER_RAW;
+            } else {
+                $containerEncoding = $opsField::CONTAINER_DEFAULT;
+            }
+            $opsField->setContainerEncoding($containerEncoding);
         }
 
-        $format = $response->format;
+        $response = new RESTfm\FieldResponse($request);
 
-        $resourceData = new ResourceData();
-
-        $urldecodeField = urldecode($field);
-
-        // Dig out field meta data from field objects in layout object returned
-        // by record object!
-        $layoutResult = $record->getLayout();
-        $fieldMeta = array();
-        $fieldResult = $layoutResult->getField($urldecodeField);
-        if (\FileMaker::isError($fieldResult)) {
-            throw new FileMakerResponseException($fieldResult);
-        }
-        $fieldMeta['autoEntered'] = $fieldResult->isAutoEntered() ? 1 : 0;
-        $fieldMeta['global'] = $fieldResult->isGlobal() ? 1 : 0;
-        $fieldMeta['maxRepeat'] = $fieldResult->getRepetitionCount();
-        $fieldMeta['resultType'] = $fieldResult->getResult();
-        //$fieldMeta['type'] = $fieldResult->getType();
-
-        $fieldResultType = $fieldMeta['resultType'];
-
-        $resourceData->pushFieldMeta($urldecodeField, $fieldMeta);
-
-
-        // Process field and push data.
-        $recordRow = array();
-        $href = $request->baseUri.'/'.$database.'/layout/'.$layout.'/'.$recordID.'/'.$field.'.'.$format;
-        if ($fieldResultType == 'container' && method_exists($FM, 'getContainerDataURL')) {
-            // Note: FileMaker::getContainerDataURL() only exists in the FMSv12 PHP API
-            $recordRow[$urldecodeField] = $FM->getContainerDataURL($record->getField($urldecodeField));
-        } else {
-            $recordRow[$urldecodeField] = $record->getFieldUnencoded($urldecodeField);
-        }
-        $resourceData->pushData($recordRow, $href, urldecode($recordID));
+        $opsField->read($response, $rawRecordID, $field);
 
         $response->setStatus(RESTfm\Response::OK);
-        $response->setResourceData($resourceData);
         return $response;
     }
 

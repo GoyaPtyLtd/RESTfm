@@ -112,7 +112,7 @@ class Request {
 
     /**
      * HTTP request method of incoming request
-     * @var str
+     * @var string
      */
     public $method = 'GET';
 

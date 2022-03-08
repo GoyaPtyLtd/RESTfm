@@ -581,6 +581,49 @@ class FileMakerDataApi {
     }
 
     /**
+     * @var array
+     *  curl headers from last getContainerData() call.
+     */
+    static private $_getContainerDataHeaders = array();
+
+    /**
+     * Returns curl headers from last getContainerData() call.
+     *
+     * @return array
+     */
+    function getContainerDataHeaders () {
+        return self::$_getContainerDataHeaders;
+    }
+
+    /**
+     * Returns specified curl header from last getContainerData() call.
+     *
+     * @return string
+     *  Returns NULL if not found
+     */
+    function getContainerDataHeader ($headerKey) {
+        $found = NULL;
+        foreach (self::$_getContainerDataHeaders as $header) {
+            list($key, $val) = explode(':', $header, 2);
+            if (strcasecmp($headerKey, $key) == 0) {
+                $found = ltrim($val);
+            }
+        }
+        return $found;
+    }
+
+    /**
+     * Callback function stores curl headers for getContainerData().
+     *
+     * @param \CurlHandle $ch
+     * @param string $header
+     */
+    static function _getContainerData_headerCallback ($ch, $header) {
+        self::$_getContainerDataHeaders[] = $header;
+        return strlen($header);
+    }
+
+    /**
      * Get container data from URL.
      *
      * @param string $url
@@ -603,9 +646,12 @@ class FileMakerDataApi {
         // handle used for non-container data API transactions.
         $ch = curl_init();
 
+        self::$_getContainerDataHeaders = array();
+
         $options = array_replace($this->_curlDefaultOptions, array(
                 CURLOPT_URL             => $url,
                 CURLOPT_HTTPHEADER      => array(),
+                CURLOPT_HEADERFUNCTION  => 'RESTfm\BackendFileMakerDataApi\FileMakerDataApi::_getContainerData_headerCallback',
 
                 // We need to accept cookies and have curl follow locations
                 // (redirect) for FMS > 19.3.1 Data API to work.

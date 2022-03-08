@@ -67,4 +67,15 @@ abstract class BackendAbstract {
      */
     abstract public function makeOpsRecord ($database, $layout);
 
+    /**
+     * Instantiate and return the appropriate Field Operations object for
+     * the specified database.
+     *
+     * @param string $database
+     * @param string $layout
+     *
+     * @return OpsFieldAbstract
+     */
+    abstract public function makeOpsField ($database, $layout);
+
 }

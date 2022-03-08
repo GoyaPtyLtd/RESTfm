@@ -20,7 +20,7 @@
 namespace RESTfm\BackendFileMakerDataApi;
 
 /**
- * FileMaker Data API implementation of OpsLayoutAbstract.
+ * FileMaker Data API implementation of OpsRecordAbstract.
  */
 class OpsRecord extends \RESTfm\OpsRecordAbstract {
 

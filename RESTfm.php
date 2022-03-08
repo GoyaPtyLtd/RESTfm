@@ -56,7 +56,8 @@ require_once 'lib/uriDatabaseScript.php';
 require_once 'lib/uriLayout.php';
 require_once 'lib/uriScript.php';
 require_once 'lib/uriRecord.php';
-//require_once 'lib/uriField.php';
+require_once 'lib/uriField.php';
+require_once 'lib/uriFieldName.php';
 require_once 'lib/uriBulk.php';
 
 // Ensure we are using SSL if mandated.

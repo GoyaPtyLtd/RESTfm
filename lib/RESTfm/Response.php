@@ -281,8 +281,10 @@ class Response extends \Tonic\Response {
         // Special case for html format. Needs to be able to display the
         // username for the browser UI.
         if ($formatAs == 'html') {
+            /** @var \RESTfm\Request $request */
+            $request = $this->request;
             $formatter->setUsername(
-                    $this->request->getCredentials()->getUsername() );
+                    $request->getCredentials()->getUsername() );
         }
 
         $this->addHeader('Content-type', $this->contentType($formatAs));
