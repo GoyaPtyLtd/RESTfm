@@ -53,45 +53,8 @@ class OpsField extends \RESTfm\OpsFieldAbstract {
      * @param string $fieldName
      */
     public function read (\RESTfm\FieldResponse $response, $recordID, $fieldName) {
-        $fmDataApi = $this->_backend->getFileMakerDataApi(); // @var FileMakerDataApi
 
-        $params = array();
-
-        // Handle unique-key-recordID OR literal recordID.
-        $record = NULL;
-        if (strpos($recordID, '=')) {
-            list($searchField, $searchValue) = explode('=', $recordID, 2);
-            $query = array( array( $searchField => $searchValue ) );
-            $result = $fmDataApi->findRecords(
-                            $this->_layout,
-                            $query,
-                            $params
-                        );
-
-            if ($result->isError()) {
-                if ($result->getCode() == 401) {
-                    // "No records match the request"
-                    // This is a special case where we actually want to return
-                    // 404. ONLY because we are a unique-key-recordID.
-                    throw new \RESTfm\ResponseException(NULL, \RESTfm\ResponseException::NOTFOUND);
-                } else {
-                    throw new FileMakerDataApiResponseException($result);
-                }
-            }
-
-            if ($result->getFetchCount() > 1) {
-                // We have to abort if the search query recordID is not unique.
-                throw new \RESTfm\ResponseException($result->getFetchCount() .
-                        ' conflicting records found', \RESTfm\ResponseException::CONFLICT);
-            }
-
-        } else {
-            $result = $fmDataApi->getRecord($this->_layout, $recordID, $params);
-
-            if ($result->isError()) {
-                throw new FileMakerDataApiResponseException($result);
-            }
-        }
+        $result = $this->_getRecord($recordID);
 
         $record = $result->getFirstRecord();
 
@@ -99,8 +62,9 @@ class OpsField extends \RESTfm\OpsFieldAbstract {
         if (! isset($record['fieldData'][$fieldName])) {
             throw new \RESTfm\ResponseException(NULL, \RESTfm\ResponseException::NOTFOUND);
         }
-
         $fieldData = $record['fieldData'][$fieldName];
+
+        $fmDataApi = $this->_backend->getFileMakerDataApi();
 
         if ($this->_containerEncoding !== self::CONTAINER_DEFAULT) {
             // Since some kind of container encoding is requested, we need to
@@ -155,6 +119,96 @@ class OpsField extends \RESTfm\OpsFieldAbstract {
 
         // Handle this as an ordinary (non-container) field.
         $response->setBody( $fieldData, 'text/plain');
+    }
+
+    /**
+     * Update field specified by $recordID and $fieldName.
+     *
+     * @param string $recordID
+     * @param string $fieldName
+     *
+     * @throws \RESTfm\ResponseException
+     * @throws FileMakerDataApiResponseException
+     *
+     * @return \RESTfm\Message\Message
+     */
+    public function update ($recordID, $fieldName) {
+
+        // We have to make sure the recordID exists before trying to update
+        // a field.
+        $existingResult = $this->_getRecord($recordID);
+
+        // In case the recordID was a unique-key-recordID, we will use the
+        // found one.
+        $existingRecord = $existingResult->getFirstRecord();
+        $recordID = $existingRecord['recordId'];
+
+        $fmDataApi = $this->_backend->getFileMakerDataApi();
+
+        // Commit new field data back to database.
+        $result = $fmDataApi->editRecord(   $this->_layout,
+                                            $recordID,
+                                            array (
+                                                $fieldName => 'somedata',
+                                            )
+                                        );
+
+        if ($result->isError()) {
+            throw new FileMakerDataApiResponseException($result);
+        }
+    }
+
+    /**
+     * Wraps FileMakerDataApi->getRecord() with handling for
+     * unique-key-recordID, and exceptions for not-found cases.
+     *
+     * @param string $recordID
+     *
+     * @throws \RESTfm\ResponseException
+     *  cURL and JSON errors.
+     * @throws FileMakerDataApiResponseException
+     *  Error from FileMaker Data API Server.
+     *
+     * @return FileMakerDataApiResult
+     */
+    private function _getRecord($recordID) {
+        $fmDataApi = $this->_backend->getFileMakerDataApi();
+
+        // Handle unique-key-recordID OR literal recordID.
+        if (strpos($recordID, '=')) {
+            list($searchField, $searchValue) = explode('=', $recordID, 2);
+            $query = array( array( $searchField => $searchValue ) );
+            $result = $fmDataApi->findRecords(
+                            $this->_layout,
+                            $query
+                        );
+
+            if ($result->isError()) {
+                if ($result->getCode() == 401) {
+                    // "No records match the request"
+                    // This is a special case where we actually want to return
+                    // 404. ONLY because we are a unique-key-recordID.
+                    throw new \RESTfm\ResponseException(NULL, \RESTfm\ResponseException::NOTFOUND);
+                } else {
+                    throw new FileMakerDataApiResponseException($result);
+                }
+            }
+
+            if ($result->getFetchCount() > 1) {
+                // We have to abort if the search query recordID is not unique.
+                throw new \RESTfm\ResponseException($result->getFetchCount() .
+                        ' conflicting records found', \RESTfm\ResponseException::CONFLICT);
+            }
+
+        } else {
+            $result = $fmDataApi->getRecord($this->_layout, $recordID);
+
+            if ($result->isError()) {
+                throw new FileMakerDataApiResponseException($result);
+            }
+        }
+
+        return $result;
     }
 
 };

@@ -41,7 +41,7 @@ class uriField extends RESTfm\Resource {
      * @param string $field
      *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}
      *
-     * @return FieldResponse
+     * @return RESTfm\FieldResponse
      */
     function get($request, $database, $layout, $rawRecordID, $field) {
         $database = RESTfm\Url::decode($database);
@@ -52,6 +52,7 @@ class uriField extends RESTfm\Resource {
         $backend = RESTfm\BackendFactory::make($request, $database);
 
         $opsField = $backend->makeOpsField($database, $layout);
+
         $restfmParameters = $request->getParameters();
 
         // Determine requirements for container encoding.
@@ -78,18 +79,6 @@ class uriField extends RESTfm\Resource {
     /**
      * Handle a PUT request for this resource
      *
-     * Query String Parameters:
-     *  - RFMscript=<name>  : url encoded script name to be called after
-     *                        result set is generated and sorted.
-     *  - RFMscriptParam=<string> : (optional) url encoded parameter string to
-     *                              pass to script.
-     *  - RFMpreScript=<name> : url encoded script name to be called before
-     *                          performing the find and sorting the result set.
-     *  - RFMpreScriptParam=<string> : (optional) url encoded parameter string
-     *                                 to pass to pre-script.
-     *  - RFMappend : Append submitted data to existing field data instead of
-     *                the default overwrite.
-     *
      * @param RESTfm\Request $request
      * @param string $database
      *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}
@@ -100,51 +89,39 @@ class uriField extends RESTfm\Resource {
      * @param string $field
      *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}
      *
-     * @return Response
+     * @return RESTfm\Response
      */
     function put($request, $database, $layout, $rawRecordID, $field) {
+        $database = RESTfm\Url::decode($database);
+        $layout = RESTfm\Url::decode($layout);
+        $rawRecordID = RESTfm\Url::decode($rawRecordID);
+        $field = RESTfm\Url::decode($field);
 
-        // This is identical to uriRecord::put.
-        // In theory we could (should ?) be enforcing only this single field
-        // but it makes no serious difference.
-        return uriRecord::put($request, $database, $layout, $rawRecordID);
-    }
+        $backend = RESTfm\BackendFactory::make($request, $database);
 
-    /**
-     * Handle a DELETE request for this resource
-     *
-     * Query String Parameters:
-     *  - RFMscript=<name>  : url encoded script name to be called after
-     *                        result set is generated and sorted.
-     *  - RFMscriptParam=<string> : (optional) url encoded parameter string to
-     *                              pass to script.
-     *  - RFMpreScript=<name> : url encoded script name to be called before
-     *                          performing the find and sorting the result set.
-     *  - RFMpreScriptParam=<string> : (optional) url encoded parameter string
-     *                                 to pass to pre-script.
-     *
-     * @param RESTfm\Request $request
-     * @param string $database
-     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}
-     * @param string $layout
-     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}
-     * @param string $rawRecordID
-     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}
-     * @param string $field
-     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}
-     *
-     * @return Response
-     */
-    function delete($request, $database, $layout, $rawRecordID, $field) {
+        $opsField = $backend->makeOpsField($database, $layout);
 
-        // Since we can't delete a field per se, we delete it's contents.
-        // This is identical to $this->put() but with empty data for $field.
+        $restfmParameters = $request->getParameters();
 
-        // Inject an empty value for data $field in $request->parseData.
-        $request->parsedData = array( 'data' => array() );
-        $request->parsedData['data'][] = array( urldecode($field) => NULL );
+        // Determine requirements for container encoding.
+        if (isset($restfmParameters->RFMcontainer)) {
+            $containerEncoding = strtoupper($restfmParameters->RFMcontainer);
+            if ($containerEncoding == 'BASE64') {
+                $containerEncoding = $opsField::CONTAINER_BASE64;
+            } elseif ($containerEncoding == 'RAW') {
+                $containerEncoding = $opsField::CONTAINER_RAW;
+            } else {
+                $containerEncoding = $opsField::CONTAINER_DEFAULT;
+            }
+            $opsField->setContainerEncoding($containerEncoding);
+        }
 
-        return $this->put($request, $database, $layout, $rawRecordID, $field);
+        $restfmMessage = $opsField->update($rawRecordID, $field);
+
+        $response = new RESTfm\Response($request);
+        $response->setMessage($restfmMessage);
+        $response->setStatus(RESTfm\Response::OK);
+        return $response;
     }
 
 }

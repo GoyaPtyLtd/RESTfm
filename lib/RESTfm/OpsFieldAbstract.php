@@ -57,6 +57,18 @@ abstract class OpsFieldAbstract {
     abstract public function read (\RESTfm\FieldResponse $response, $recordID, $fieldName);
 
     /**
+     * Update field specified by $recordID and $fieldName.
+     *
+     * @param string $recordID
+     * @param string $fieldName
+     *
+     * @throws \RESTfm\ResponseException
+     *
+     * @return \RESTfm\Message\Message
+     */
+    abstract public function update ($recordID, $fieldName);
+
+    /**
      * Allowed container encoding formats.
      */
     const   CONTAINER_DEFAULT   = 0,
