@@ -20,34 +20,35 @@
 /**
  * RESTfm Field handler for Tonic
  *
- * @uri /{database}/layout/{layout}/{rawRecordID}/{field}/{name}
+ * @uri /{database}/layout/{layout}/{rawRecordID}/{field}/{filename}
  */
-class uriFieldName extends RESTfm\Resource {
+class uriFieldFilename extends RESTfm\Resource {
 
-    const URI = '/{database}/layout/{layout}/{rawRecordID}/{field}/{name}';
+    const URI = '/{database}/layout/{layout}/{rawRecordID}/{field}/{filename}';
 
     /**
      * Handle a GET request for this resource.
-     * This is identical to uriField::get, except for the extra $name parameter
-     * that does nothing other than allow $name to be automatically used when
-     * GETting a raw container.
+     * 
+     * This is identical to uriField::get, except for the extra $filename
+     * parameter. This allows the use of $filename in HTTP Content-Disposition
+     * Header in the same way that RFMfilename works with uriField::get.
      *
      * @param RESTfm\Request $request
      * @param string $database
-     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}/{name}
+     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}/{filename}
      * @param string $layout
-     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}/{name}
+     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}/{filename}
      * @param string $rawRecordID
-     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}/{name}
+     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}/{filename}
      * @param string $field
-     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}/{name}
-     * @param string $name
-     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}/{name}
+     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}/{filename}
+     * @param string $filename
+     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}/{filename}
      *
      * @throws RESTfm\ResponseException
      *   In all cases (returning field data, or on error)
      */
-    function get($request, $database, $layout, $rawRecordID, $field, $name) {
+    function get($request, $database, $layout, $rawRecordID, $field, $filename) {
         $database = RESTfm\Url::decode($database);
         $layout = RESTfm\Url::decode($layout);
         $rawRecordID = RESTfm\Url::decode($rawRecordID);
@@ -72,8 +73,8 @@ class uriFieldName extends RESTfm\Resource {
         }
 
         // Determine container filename.
-        if (!empty($name)) {
-            $opsField->setContainerFilename($name);
+        if (!empty($filename)) {
+            $opsField->setContainerFilename($filename);
         }
 
         $response = new RESTfm\FieldResponse($request);
