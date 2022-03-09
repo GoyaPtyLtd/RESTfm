@@ -81,16 +81,20 @@ class OpsField extends \RESTfm\OpsFieldAbstract {
             }
 
             if (array_key_exists($fieldName, $containerFields)) {
-
                 // Handle this as a container field and return
-                $filename = '';
-                $matches = array();
-                if (preg_match('/\/([^\/\?]*)\?/', $fieldData, $matches)) {
-                    $filename = $matches[1];
+
+                $filename = $this->_containerFilename;
+                if ($filename == NULL) {
+                    // Extract filename from container URL (this is just
+                    // random, but at least has an extension).
+                    $matches = array();
+                    if (preg_match('/\/([^\/\?]*)\?/', $fieldData, $matches)) {
+                        $filename = $matches[1];
+                    }
                 }
                 $containerData = $fmDataApi->getContainerData($fieldData);
                 if (gettype($containerData) !== 'string') {
-                    $containerData = "";
+                    $containerData = '';
                 }
                 switch ($this->_containerEncoding) {
                     case self::CONTAINER_BASE64:

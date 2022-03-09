@@ -71,14 +71,14 @@ class uriFieldName extends RESTfm\Resource {
             $opsField->setContainerEncoding($containerEncoding);
         }
 
+        // Determine container filename.
+        if (!empty($name)) {
+            $opsField->setContainerFilename($name);
+        }
+
         $response = new RESTfm\FieldResponse($request);
 
         $opsField->read($response, $rawRecordID, $field);
-
-        if (!empty($name)) {
-            $response->addHeader('Content-Disposition', 
-                                    'filename="' . $name . '"');
-        }
 
         $response->setStatus(RESTfm\Response::OK);
         return $response;

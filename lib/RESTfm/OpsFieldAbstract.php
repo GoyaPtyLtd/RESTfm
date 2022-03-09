@@ -87,6 +87,16 @@ abstract class OpsFieldAbstract {
         $this->_containerEncoding = $encoding;
     }
 
+    /**
+     * Set the container's 'filename'. This will be used to set (or override)
+     * the HTTP Content-Disposition header when reading a raw container field.
+     *
+     * @param string $filename
+     */
+    public function setContainerFilename (string $filename) {
+        $this->_containerFilename = $filename;
+    }
+
     // -- Protected properties --
 
     /**
@@ -95,4 +105,9 @@ abstract class OpsFieldAbstract {
      */
     protected $_containerEncoding = self::CONTAINER_DEFAULT;
 
+    /**
+     * @var string
+     *  Requested container filename.
+     */
+    protected $_containerFilename = NULL;
 };

@@ -425,6 +425,16 @@ abstract class OpsRecordAbstract {
     }
 
     /**
+     * Set the container's 'filename'. This will be used to set (or override)
+     * the HTTP Content-Disposition header when reading a raw container field.
+     *
+     * @param string $filename
+     */
+    public function setContainerFilename (string $filename) {
+        $this->_containerFilename = $filename;
+    }
+
+    /**
      * Suppress 'data' section in \RESTfm\Message\Message result. Also suppresses
      * 'metaField' section.
      *
@@ -527,6 +537,12 @@ abstract class OpsRecordAbstract {
      *  Requested container encoding format.
      */
     protected $_containerEncoding = self::CONTAINER_DEFAULT;
+
+    /**
+     * @var string
+     *  Requested container filename.
+     */
+    protected $_containerFilename = NULL;
 
     /**
      * @var boolean

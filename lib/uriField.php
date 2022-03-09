@@ -68,6 +68,11 @@ class uriField extends RESTfm\Resource {
             $opsField->setContainerEncoding($containerEncoding);
         }
 
+        // Determine container filename.
+        if (isset($restfmParameters->RFMfilename)) {
+            $opsField->setContainerFilename($restfmParameters->RFMfilename);
+        }
+
         $response = new RESTfm\FieldResponse($request);
 
         $opsField->read($response, $rawRecordID, $field);
