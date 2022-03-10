@@ -19,6 +19,9 @@
 
 namespace RESTfm\BackendFileMakerDataApi;
 
+use CURLFile;
+use CurlHandle;
+
 /**
  * Represents a connection between PHP and a FileMaker Data API Server.
  */
@@ -34,7 +37,7 @@ class FileMakerDataApi {
     const DEFAULT_OFFSET = 1;
 
     /**
-     * @var resource
+     * @var CurlHandle
      *  Curl Handle.
      */
     private $_curlHandle = NULL;
@@ -99,6 +102,7 @@ class FileMakerDataApi {
             CURLOPT_HTTP_VERSION    => CURL_HTTP_VERSION_1_1, // some libcurl
                                               // versions are broken when
                                               // server supports HTTP/2
+            //CURLOPT_VERBOSE         => TRUE,  // DEBUG
         );
         if (\RESTfm\Config::getVar('settings', 'strictSSLCertsFMS') === FALSE) {
             $this->_curlDefaultOptions = $this->_curlDefaultOptions +
@@ -604,7 +608,11 @@ class FileMakerDataApi {
     function getContainerDataHeader ($headerKey) {
         $found = NULL;
         foreach (self::$_getContainerDataHeaders as $header) {
-            list($key, $val) = explode(':', $header, 2);
+            $exp = explode(':', $header, 2);
+            if (count($exp) < 2) {
+                continue;
+            }
+            list($key, $val) = $exp;
             if (strcasecmp($headerKey, $key) == 0) {
                 $found = ltrim($val);
             }
@@ -635,12 +643,9 @@ class FileMakerDataApi {
      *  Raw data returned from URL
      */
     function getContainerData ($url) {
-        // TODO:
-        //  - Initially this is very simple, just raw data returned
-        //  - Probably want to change this when adding field-level operations
-        //      - We will want to capture headers (CURLOPT_HEADERFUNCTION),
-        //        so we can grab Content-type to pass through.
-        //      - Or look at CURLINFO_CONTENT_TYPE after request
+        if (empty($url)) {
+            return '';
+        }
 
         // Use a clean curl handle, don't dirty up this class's private curl
         // handle used for non-container data API transactions.
@@ -693,6 +698,68 @@ class FileMakerDataApi {
         return($result);
     }
 
+    /**
+     * Upload to Container Field.
+     *
+     * @param string $layout
+     * @param string $recordId
+     * @param string $containerFieldName
+     * @param string $data
+     *  Raw binary data
+     * @param string $mimeType
+     *  Mime-type to set for data
+     * @param string $filename
+     *  Filename to set for data
+     * @param array $params
+     *  Associative array of additional FM Data API parameters
+     *  e.g. script, script.presort, etc
+     *
+     * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult
+     *  Object containing decoded JSON response from FileMaker Data API Server.
+     *
+     * @throws \RESTfm\ResponseException
+     *  On cURL and JSON errors.
+     */
+    public function uploadToContainerField ($layout,
+                                            $recordId,
+                                            $containerFieldName,
+                                            $data = NULL,
+                                            $mimeType = NULL,
+                                            $filename = NULL,
+                                            $params = array()) {
+
+        // TODO: look at POST $_FILES, or detect raw container data earlier,
+        // and write php:// to file before tonic gets it.
+        $tmpfile = tempnam(sys_get_temp_dir(), 'RESTfm_container_upload-');
+        file_put_contents($tmpfile, $data);
+        $curlFile = new CURLFile($tmpfile, $mimeType, $filename);
+
+        $this->curl_setup_postFile( $this->databasesUrl() . '/' .
+                                        rawurlencode($this->_database) .
+                                        '/layouts/' .
+                                        rawurlencode($layout) .
+                                        '/records/' .
+                                        rawurlencode($recordId) .
+                                        '/containers/' .
+                                        rawurlencode($containerFieldName),
+                                    $curlFile,
+                                    $params );
+
+        try {
+            $result = $this->curl_exec();
+        } catch (\RESTfm\ResponseException $e) {
+            // Unlink $tmpfile and rethrow
+            unlink($tmpfile);
+            throw $e;
+        }
+
+        unlink($tmpfile);
+
+        // DEBUG
+        //var_export($result);
+
+        return $result;
+    }
 
     // Begin Scripts
 
@@ -814,6 +881,47 @@ class FileMakerDataApi {
         //if ($data !== NULL) {
         //    echo "cURL jsonData: " . $jsonData . "\n";
         //}
+
+        curl_setopt_array($this->_curlHandle, $options);
+    }
+
+    /**
+     * Setup cURL options from given parameters.
+     *
+     * @param string $url
+     *  FM Data API URL not including hostspec.
+     * @param CURLFile $curlFile
+     * @param array $headers
+     *  Optional array containing complete string header:
+     *      array( 'X-Some-Header: 00111010101', [ ... ] )
+     */
+    protected function curl_setup_postFile ($url, CURLFile $curlFile, $headers = NULL) {
+
+        $options = array_replace($this->_curlDefaultOptions, array(
+                CURLOPT_URL             => $this->_hostspec . $url,
+                CURLOPT_CUSTOMREQUEST   => 'POST',
+            )
+        );
+
+        if ($headers === NULL) {
+            $headers = array();
+        }
+
+        if ($this->_token !== NULL) {
+            $headers[] = 'Authorization: Bearer ' . $this->_token;
+        }
+
+        $args['upload'] = $curlFile;
+        $options[CURLOPT_POSTFIELDS] = $args;
+
+        if (count($headers) > 0) {
+            $options[CURLOPT_HTTPHEADER] = $headers;
+        }
+
+        // DEBUG
+        //echo "cURL options: ";
+        //var_export($options);
+        //echo "\n";
 
         curl_setopt_array($this->_curlHandle, $options);
     }

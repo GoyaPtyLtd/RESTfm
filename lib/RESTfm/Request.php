@@ -183,6 +183,15 @@ class Request extends \Tonic\Request {
     }
 
     /**
+     * Returns the raw data string.
+     *
+     * @return string
+     */
+    public function getData () {
+        return $this->data;
+    }
+
+    /**
      * Returns the \RESTfm\Message\Message object populated from the HTTP request data.
      *
      * @return \RESTfm\Message\Message
@@ -339,6 +348,17 @@ class Request extends \Tonic\Request {
 
         // Return immediately if there is no data to parse.
         if (empty($this->data)) {
+            return;
+        }
+
+        // Handle raw container data.
+        if (isset($this->_parametersQueryString['RFMcontainer']) &&
+                strtoupper($this->_parametersQueryString['RFMcontainer']) == 'RAW') {
+            if (! isset($this->_format)) {
+                // Pass through Content-Type as format for container data
+                $this->_format = $_SERVER['CONTENT_TYPE'];
+            }
+            // No parsable data, just return.
             return;
         }
 

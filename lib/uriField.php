@@ -73,6 +73,8 @@ class uriField extends RESTfm\Resource {
             $opsField->setContainerFilename($restfmParameters->RFMfilename);
         }
 
+        $opsField->setContainerMimeType($request->getFormat());
+
         $response = new RESTfm\FieldResponse($request);
 
         $opsField->read($response, $rawRecordID, $field);
@@ -121,10 +123,16 @@ class uriField extends RESTfm\Resource {
             $opsField->setContainerEncoding($containerEncoding);
         }
 
-        $restfmMessage = $opsField->update($rawRecordID, $field);
+        // Determine container filename.
+        if (isset($restfmParameters->RFMfilename)) {
+            $opsField->setContainerFilename($restfmParameters->RFMfilename);
+        }
+
+        $opsField->setContainerMimeType($request->getFormat());
+
+        $opsField->update($rawRecordID, $field, $request->getData());
 
         $response = new RESTfm\Response($request);
-        $response->setMessage($restfmMessage);
         $response->setStatus(RESTfm\Response::OK);
         return $response;
     }

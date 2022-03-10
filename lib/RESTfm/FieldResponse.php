@@ -56,9 +56,9 @@ class FieldResponse extends Response {
             }
         }
 
-        // Ensure we have response data!
-        if ($this->_data == NULL) {
-            $this->_data = '';
+        // Ensure we have a response body!
+        if ($this->body == NULL) {
+            $this->body = '';
         }
 
         // Modification of original tonic version.

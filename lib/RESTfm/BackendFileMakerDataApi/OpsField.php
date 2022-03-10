@@ -68,17 +68,8 @@ class OpsField extends \RESTfm\OpsFieldAbstract {
 
         if ($this->_containerEncoding !== self::CONTAINER_DEFAULT) {
             // Since some kind of container encoding is requested, we need to
-            // request field metadata to verify our field is a container.
-            $metaDataResult = $fmDataApi->layoutMetadata($this->_layout);
-            $fieldMetaData = $metaDataResult->getFieldMetaData();
-            $containerFields = array();
-            foreach ($fieldMetaData as $metaData) {
-                if (isset($metaData['name']) &&
-                        isset($metaData['result']) &&
-                        $metaData['result'] == 'container') {
-                    $containerFields[$metaData['name']] = 1;
-                }
-            }
+            // check if this field is a container.
+            $containerFields = $this->_getContainerFields();
 
             if (array_key_exists($fieldName, $containerFields)) {
                 // Handle this as a container field and return
@@ -103,8 +94,14 @@ class OpsField extends \RESTfm\OpsFieldAbstract {
                                           );
                         break;
                     case self::CONTAINER_RAW:
+                        if ($this->_containerMimeType !== NULL) {
+                            $mimeType = $this->_containerMimeType;
+                        } else {
+                            $mimeType = $fmDataApi->getContainerDataHeader('Content-Type');
+
+                        }
                         $response->setBody( $containerData,
-                                            $fmDataApi->getContainerDataHeader('Content-Type'),
+                                            $mimeType,
                                             $fmDataApi->getContainerDataHeader('Content-Length')
                                           );
                         if (!empty($filename)) {
@@ -130,13 +127,12 @@ class OpsField extends \RESTfm\OpsFieldAbstract {
      *
      * @param string $recordID
      * @param string $fieldName
+     * @param string $data
      *
      * @throws \RESTfm\ResponseException
      * @throws FileMakerDataApiResponseException
-     *
-     * @return \RESTfm\Message\Message
      */
-    public function update ($recordID, $fieldName) {
+    public function update ($recordID, $fieldName, $data) {
 
         // We have to make sure the recordID exists before trying to update
         // a field.
@@ -149,11 +145,42 @@ class OpsField extends \RESTfm\OpsFieldAbstract {
 
         $fmDataApi = $this->_backend->getFileMakerDataApi();
 
+        if ($this->_containerEncoding !== self::CONTAINER_DEFAULT) {
+            // Since some kind of container encoding is requested, we need to
+            // check if this field is a container.
+            $containerFields = $this->_getContainerFields();
+
+            if (array_key_exists($fieldName, $containerFields)) {
+            // Handle this as a container field and return
+
+                switch ($this->_containerEncoding) {
+                    case self::CONTAINER_BASE64:
+                        $data = base64_decode($data);
+                        break;
+                    case self::CONTAINER_RAW:
+                        break;
+                }
+                $result = $fmDataApi->uploadToContainerField(
+                                                $this->_layout,
+                                                $recordID,
+                                                $fieldName,
+                                                $data,
+                                                $this->_containerMimeType,
+                                                $this->_containerFilename);
+            }
+
+            if ($result->isError()) {
+                throw new FileMakerDataApiResponseException($result);
+            }
+
+            return;
+        }
+
         // Commit new field data back to database.
         $result = $fmDataApi->editRecord(   $this->_layout,
                                             $recordID,
                                             array (
-                                                $fieldName => 'somedata',
+                                                $fieldName => $data,
                                             )
                                         );
 
@@ -163,7 +190,31 @@ class OpsField extends \RESTfm\OpsFieldAbstract {
     }
 
     /**
-     * Wraps FileMakerDataApi->getRecord() with handling for
+     * Fetch field metadata and return assoc array of container fields.
+     *
+     * @return array
+     *  Associative array of container fields, in the format:
+     *      ('fieldName' => 1, ...)
+     */
+    private function _getContainerFields () {
+        $fmDataApi = $this->_backend->getFileMakerDataApi();
+
+        $metaDataResult = $fmDataApi->layoutMetadata($this->_layout);
+        $fieldMetaData = $metaDataResult->getFieldMetaData();
+        $containerFields = array();
+        foreach ($fieldMetaData as $metaData) {
+            if (isset($metaData['name']) &&
+                    isset($metaData['result']) &&
+                    $metaData['result'] == 'container') {
+                $containerFields[$metaData['name']] = 1;
+            }
+        }
+
+        return $containerFields;
+    }
+
+    /**
+     * Wraps FileMakerDataApi::getRecord() with handling for
      * unique-key-recordID, and exceptions for not-found cases.
      *
      * @param string $recordID

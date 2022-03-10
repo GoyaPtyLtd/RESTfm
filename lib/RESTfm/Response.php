@@ -252,6 +252,10 @@ class Response extends \Tonic\Response {
     protected function _buildMessage() {
 
         $formatAs = $this->format;
+        if (!isset($formatAs)) {
+            // Null format
+            return;
+        }
 
         // Check if our format is available through a provided xslt.
         $useXSLT = NULL;

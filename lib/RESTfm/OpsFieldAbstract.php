@@ -61,12 +61,11 @@ abstract class OpsFieldAbstract {
      *
      * @param string $recordID
      * @param string $fieldName
+     * @param string $data
      *
      * @throws \RESTfm\ResponseException
-     *
-     * @return \RESTfm\Message\Message
      */
-    abstract public function update ($recordID, $fieldName);
+    abstract public function update ($recordID, $fieldName, $data);
 
     /**
      * Allowed container encoding formats.
@@ -88,14 +87,25 @@ abstract class OpsFieldAbstract {
     }
 
     /**
-     * Set the container's 'filename'. This will be used to set (or override)
-     * the HTTP Content-Disposition header when reading a raw container field.
+     * Set the container's 'filename'. This will be used when uploading to a
+     * container field.
      *
      * @param string $filename
      */
     public function setContainerFilename (string $filename) {
         $this->_containerFilename = $filename;
     }
+
+    /**
+     * Set the container's mime-type. This will be used when uploading to a
+     * container field.
+     *
+     * @param string $mimeType
+     */
+    public function setContainerMimeType (?string $mimeType) {
+        $this->_containerMimeType = $mimeType;
+    }
+
 
     // -- Protected properties --
 
@@ -110,4 +120,10 @@ abstract class OpsFieldAbstract {
      *  Requested container filename.
      */
     protected $_containerFilename = NULL;
+
+    /**
+     * @var string
+     *  Requested container mime-type.
+     */
+    protected $_containerMimeType = NULL;
 };

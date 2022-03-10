@@ -20,7 +20,7 @@ class Request {
 
     /**
      * The requested URI
-     * @var str
+     * @var string
      */
     public $uri;
 
@@ -118,7 +118,7 @@ class Request {
 
     /**
      * Body data of incoming request
-     * @var str
+     * @var string
      */
     public $data;
 
