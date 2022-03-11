@@ -177,9 +177,20 @@ class Diagnostics {
                                                 'refs' . DIRECTORY_SEPARATOR .
                                                 'heads' . DIRECTORY_SEPARATOR .
                                                 $gitBranch);
+            $gitFetchHead = file_get_contents($gitRoot . DIRECTORY_SEPARATOR .
+                                                'FETCH_HEAD');
+            $gitFetchHeadLines = preg_split('/\n|\r|\r\n/', $gitFetchHead);
+            $branchFromOfficialRepo = false;
+            foreach ($gitFetchHeadLines as $line) {
+                if (preg_match('%branch \'' . $gitBranch . '\' of .*/GoyaPtyLtd/RESTfm%', $line)) {
+                    $branchFromOfficialRepo = true;
+                    break;
+                }
+            }
             $gitShortHash = substr($gitCommitHash, 0, 7);
             $urlGithubRestfm = 'https://github.com/GoyaPtyLtd/RESTfm';
-            $reportItem->details .= 'Git branch: ' .
+            if ($branchFromOfficialRepo) {
+                $reportItem->details .= 'Git branch: ' .
                                     '<a href="' . $urlGithubRestfm . '/commits/' . $gitBranch . '" target="_blank">' .
                                     $gitBranch .
                                     '</a>' .
@@ -187,6 +198,14 @@ class Diagnostics {
                                     $gitShortHash .
                                     '</a>)' .
                                     "\n";
+            } else {
+                $reportItem->details .= 'Git branch: ' .
+                                    $gitBranch .
+                                    ' (' .
+                                    $gitShortHash .
+                                    ')' .
+                                    "\n";
+            }
         }
     }
 
