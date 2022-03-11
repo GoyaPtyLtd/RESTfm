@@ -178,8 +178,15 @@ class Diagnostics {
                                                 'heads' . DIRECTORY_SEPARATOR .
                                                 $gitBranch);
             $gitShortHash = substr($gitCommitHash, 0, 7);
-            $reportItem->details .= 'Git branch: ' . $gitBranch . ' (' .
-                                        $gitShortHash . ')' . "\n";
+            $urlGithubRestfm = 'https://github.com/GoyaPtyLtd/RESTfm';
+            $reportItem->details .= 'Git branch: ' .
+                                    '<a href="' . $urlGithubRestfm . '/commits/' . $gitBranch . '" target="_blank">' .
+                                    $gitBranch .
+                                    '</a>' .
+                                    ' (<a href="' . $urlGithubRestfm . '/commit/' . $gitCommitHash . '" target="_blank">' .
+                                    $gitShortHash .
+                                    '</a>)' .
+                                    "\n";
         }
     }
 
@@ -1121,8 +1128,8 @@ class Report implements \Iterator {
         $this->_items = array();
     }
 
-    function rewind() {
-        return reset($this->_items);
+    function rewind(): void {
+        reset($this->_items);
     }
 
     function current() {
@@ -1133,11 +1140,11 @@ class Report implements \Iterator {
         return key($this->_items);
     }
 
-    function next() {
-        return next($this->_items);
+    function next(): void {
+        next($this->_items);
     }
 
-    function valid() {
+    function valid(): bool {
         return key($this->_items) !== NULL;
     }
 
