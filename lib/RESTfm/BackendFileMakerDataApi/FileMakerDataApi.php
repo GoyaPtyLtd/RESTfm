@@ -20,7 +20,6 @@
 namespace RESTfm\BackendFileMakerDataApi;
 
 use CURLFile;
-use CurlHandle;
 
 /**
  * Represents a connection between PHP and a FileMaker Data API Server.
@@ -37,7 +36,7 @@ class FileMakerDataApi {
     const DEFAULT_OFFSET = 1;
 
     /**
-     * @var CurlHandle
+     * @var resource
      *  Curl Handle.
      */
     private $_curlHandle = NULL;
@@ -623,7 +622,7 @@ class FileMakerDataApi {
     /**
      * Callback function stores curl headers for getContainerData().
      *
-     * @param \CurlHandle $ch
+     * @param resource $ch
      * @param string $header
      */
     static function _getContainerData_headerCallback ($ch, $header) {
@@ -734,7 +733,12 @@ class FileMakerDataApi {
         file_put_contents($tmpfile, $data);
         $curlFile = new CURLFile($tmpfile, $mimeType, $filename);
 
-        $this->curl_setup_postFile( $this->databasesUrl() . '/' .
+        // Use a clean curl handle, don't dirty up this class's private curl
+        // handle used for non-container data API transactions.
+        $ch = curl_init();
+
+        $this->curl_setup_postFile( $ch,
+                                    $this->databasesUrl() . '/' .
                                         rawurlencode($this->_database) .
                                         '/layouts/' .
                                         rawurlencode($layout) .
@@ -746,7 +750,7 @@ class FileMakerDataApi {
                                     $params );
 
         try {
-            $result = $this->curl_exec();
+            $result = $this->curl_exec($ch);
         } catch (\RESTfm\ResponseException $e) {
             // Unlink $tmpfile and rethrow
             unlink($tmpfile);
@@ -888,6 +892,7 @@ class FileMakerDataApi {
     /**
      * Setup cURL options from given parameters.
      *
+     * @param resource $ch
      * @param string $url
      *  FM Data API URL not including hostspec.
      * @param CURLFile $curlFile
@@ -895,7 +900,7 @@ class FileMakerDataApi {
      *  Optional array containing complete string header:
      *      array( 'X-Some-Header: 00111010101', [ ... ] )
      */
-    protected function curl_setup_postFile ($url, CURLFile $curlFile, $headers = NULL) {
+    protected function curl_setup_postFile ($ch, $url, CURLFile $curlFile, $headers = NULL) {
 
         $options = array_replace($this->_curlDefaultOptions, array(
                 CURLOPT_URL             => $this->_hostspec . $url,
@@ -923,12 +928,15 @@ class FileMakerDataApi {
         //var_export($options);
         //echo "\n";
 
-        curl_setopt_array($this->_curlHandle, $options);
+        curl_setopt_array($ch, $options);
     }
 
     /**
      * Perform a cURL session on private curl handle, throwing an exception
      * on error.
+     *
+     * @param resource $ch
+     *  Optional curl handle to operate on, otherwise use $this->_curlHandle
      *
      * @return \RESTfm\BackendFileMakerDataApi\FileMakerDataApiResult
      *  Object containing decoded JSON response from FileMaker Data API Server.
@@ -936,8 +944,10 @@ class FileMakerDataApi {
      * @throws \RESTfm\ResponseException
      *  On cURL error.
      */
-    protected function curl_exec () {
-        $ch = $this->_curlHandle;
+    protected function curl_exec ($ch = NULL) {
+        if ($ch === NULL) {
+            $ch = $this->_curlHandle;
+        }
 
         // Submit the requested operation to FileMaker Data API Server.
         $result = \curl_exec($ch);
