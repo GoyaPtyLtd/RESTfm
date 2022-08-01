@@ -68,7 +68,7 @@ class Resource extends \Tonic\Resource {
         // Check request header Origin.
         $request_origin = $_SERVER['HTTP_ORIGIN'];
         $allow_origin = null;
-        $configOrigins = Config::getVar('allowed_origins');
+        $configOrigins = Config::getVar('origins', 'allowed');
         if (is_array($configOrigins)) {
             if (in_array('*', $configOrigins)) {
                 $allow_origin = '*';

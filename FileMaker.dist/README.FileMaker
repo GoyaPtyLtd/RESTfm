@@ -1,9 +1,8 @@
 Install FileMaker PHP API to this directory
 ===========================================
-When installing RESTfm on Linux, or where a specific version of the FileMaker
-PHP API is needed, the API may be unpacked into this folder.
-RESTfm will try to use this version first before others found to be installed
-on the system.
+Nothing needs to be installed here when using the FileMaker Data API, which
+is now the default backend in RESTfm. If the FileMaker PHP API is needed as a
+RESTfm backend, the package may be unpacked into this folder.
 
  1. Locate the zip file from the FMS deployment:
  `FileMaker Server\Web Publishing\FM_API_for_PHP_Standalone.zip`
@@ -12,6 +11,6 @@ on the system.
  This will create a `RESTfm/FileMaker/FileMaker.php` file and a
  `RESTfm/FileMaker/FileMaker` sub-folder.
 
-**Note:** The FileMaker PHP API _must_ be the same version as the FileMaker
-Server. API files from a different version of FileMaker Server are _not_
-compatible.
+**Note:** The FileMaker PHP API has been deprecated and support is expected
+to be removed from FileMaker Server at some point in the future. As of
+FileMaker Server 18 and RESTfm 6.0.0 the FileMaker Data API is the default.

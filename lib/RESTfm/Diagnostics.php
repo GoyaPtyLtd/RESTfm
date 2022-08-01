@@ -41,9 +41,12 @@ class Diagnostics {
         'hostSystemDate',
         'documentRoot',
         'baseURI',
+        'restfmDataApi',
         'webserverRedirect',
-        'filemakerAPI',
+        'filemakerPhpApi',
         'filemakerConnect',
+        'iniSafety',
+        'formatsEnabled',
         'sslEnforced',
         'xslExtension',
         );
@@ -69,6 +72,13 @@ class Diagnostics {
 
     private $_report = NULL;
 
+    /**
+     * @var array
+     */
+    private $_curlDefaultOptions = array(
+
+    );
+
     // -- Public properties and methods -- //
     /**
      * @var
@@ -81,6 +91,31 @@ class Diagnostics {
      *  Set TRUE when a report contains errors.
      */
     public $hasErrors = FALSE;
+
+    /**
+     * Diagnostics constructor
+     */
+    public function __construct () {
+        // Set cURL default options.
+        $this->_curlDefaultOptions = array(
+            CURLOPT_USERAGENT       => 'RESTfm Diagnostics',
+            CURLOPT_CONNECTTIMEOUT  => 5,
+            CURLOPT_HEADER          => FALSE,
+            CURLOPT_RETURNTRANSFER  => TRUE,
+            CURLOPT_FRESH_CONNECT   => TRUE,
+            CURLOPT_FORBID_REUSE    => TRUE,
+            CURLOPT_HTTP_VERSION    => CURL_HTTP_VERSION_1_1, // some libcurl
+                                              // versions are broken when
+                                              // server supports HTTP/2
+        );
+        if (Config::getVar('settings', 'strictSSLCertsReport') === FALSE) {
+            $this->_curlDefaultOptions = $this->_curlDefaultOptions +
+                array(
+                    CURLOPT_SSL_VERIFYPEER => FALSE,
+                    CURLOPT_SSL_VERIFYHOST => FALSE,
+                );
+        }
+    }
 
     /**
      * Run diagnostic tests.
@@ -131,15 +166,55 @@ class Diagnostics {
 
     public function test_version($reportItem) {
         $reportItem->name = 'RESTfm version';
-        $reportItem->details = Version::getVersion();
+        $reportItem->details = Version::getVersion() . "\n";
+
+        $gitRoot = '.git';
+        if (file_exists($gitRoot) && is_dir($gitRoot)) {
+            $gitHeadRef = file_get_contents($gitRoot . DIRECTORY_SEPARATOR .
+                                            'HEAD');
+            $gitBranch = rtrim(preg_replace("/(.*?\/){2}/", '', $gitHeadRef));
+            $gitCommitHash = file_get_contents($gitRoot . DIRECTORY_SEPARATOR .
+                                                'refs' . DIRECTORY_SEPARATOR .
+                                                'heads' . DIRECTORY_SEPARATOR .
+                                                $gitBranch);
+            $gitFetchHead = file_get_contents($gitRoot . DIRECTORY_SEPARATOR .
+                                                'FETCH_HEAD');
+            $gitFetchHeadLines = preg_split('/\n|\r|\r\n/', $gitFetchHead);
+            $branchFromOfficialRepo = false;
+            foreach ($gitFetchHeadLines as $line) {
+                if (preg_match('%branch \'' . $gitBranch . '\' of .*/GoyaPtyLtd/RESTfm%', $line)) {
+                    $branchFromOfficialRepo = true;
+                    break;
+                }
+            }
+            $gitShortHash = substr($gitCommitHash, 0, 7);
+            $urlGithubRestfm = 'https://github.com/GoyaPtyLtd/RESTfm';
+            if ($branchFromOfficialRepo) {
+                $reportItem->details .= 'Git branch: ' .
+                                    '<a href="' . $urlGithubRestfm . '/commits/' . $gitBranch . '" target="_blank">' .
+                                    $gitBranch .
+                                    '</a>' .
+                                    ' (<a href="' . $urlGithubRestfm . '/commit/' . $gitCommitHash . '" target="_blank">' .
+                                    $gitShortHash .
+                                    '</a>)' .
+                                    "\n";
+            } else {
+                $reportItem->details .= 'Git branch: ' .
+                                    $gitBranch .
+                                    ' (' .
+                                    $gitShortHash .
+                                    ')' .
+                                    "\n";
+            }
+        }
     }
 
     public function test_phpVersion($reportItem) {
         $reportItem->name = 'PHP version';
         $reportItem->details = phpversion() . "\n";
-        if (PHP_VERSION_ID < 50300) {
+        if (PHP_VERSION_ID < 70000) {
             $reportItem->status = ReportItem::ERROR;
-            $reportItem->details .= "Minimum supported PHP version is: 5.3\n";
+            $reportItem->details .= "Minimum supported PHP version is: 7.0\n";
         }
         $reportItem->details .= php_ini_loaded_file() . "\n";
     }
@@ -196,7 +271,7 @@ class Diagnostics {
 
     public function test_baseURI($reportItem) {
         $configBaseURI = Config::getVar('settings', 'baseURI');
-        $reportItem->name = 'baseURI (' . Config::CONFIG_INI . ')';
+        $reportItem->name = 'baseURI';
 
         $calculatedBaseURI = $this->_calculatedBaseURI();
 
@@ -204,7 +279,7 @@ class Diagnostics {
             $reportItem->status = ReportItem::ERROR;
             $reportItem->details .= "\n* Does not match URI determined from web server: $calculatedBaseURI\n\n";
             $reportItem->details .= "Instructions:\n\n";
-            $reportItem->details .= "- Edit " . Config::CONFIG_INI . " and update 'baseURI' to: $calculatedBaseURI\n\n";
+            $reportItem->details .= "- Edit config INI and set 'baseURI' to: $calculatedBaseURI\n\n";
         }
 
         if ($this->_isApache()) {
@@ -226,7 +301,7 @@ class Diagnostics {
                 }
             } else {
                 $reportItem->status = ReportItem::ERROR;
-                $reportItem->details .= "\n* Unable to locate RewriteBase in .htaccess. Please contact Goya support: http://www.restfm.com/help\n\n";
+                $reportItem->details .= "\n* Unable to locate RewriteBase in .htaccess. Please contact Goya support: https://restfm.com/support\n\n";
             }
         }
 
@@ -260,6 +335,14 @@ class Diagnostics {
         $reportItem->details = $configBaseURI . "\n" . $reportItem->details;
     }
 
+    public function test_restfmDataApi($reportItem) {
+        $reportItem->name = 'Use Data API';
+
+        $dataApi = Config::getVar('database', 'dataApi');
+        $reportItem->status = ReportItem::OK;
+        $reportItem->details = ($dataApi ? 'TRUE' : 'FALSE') . "\n";
+    }
+
     public function test_webserverRedirect($reportItem) {
         $reportItem->name = 'Web server redirect to RESTfm.php';
 
@@ -273,16 +356,7 @@ class Diagnostics {
         $reportItem->details .= '<a href="'. $URL . '">' . $URL . '</a>' . "\n";
 
         $ch = curl_init($URL);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        if (Config::getVar('settings', 'strictSSLCertsReport') === FALSE) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
-        }
-        curl_setopt($ch, CURLOPT_FRESH_CONNECT, TRUE);
-        curl_setopt($ch, CURLOPT_FORBID_REUSE, TRUE);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'RESTfm Diagnostics');
+        curl_setopt_array($ch, $this->_curlDefaultOptions);
         $result = curl_exec($ch);
 
         if (curl_errno($ch)) {
@@ -296,18 +370,18 @@ class Diagnostics {
                 $reportItem->details .= 'being out of date.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'Please consult ' .
-                                        '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting">SSL Troubleshooting</a>' .
+                                        '<a target="_blank" href="https://docs.restfm.com/article/22-ssl-troubleshooting">SSL Troubleshooting</a>' .
                                         ' in the RESTfm manual for further details.' . "\n";
                 $reportItem->details .= "\n";
-                $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsReport" to FALSE in ' . Config::CONFIG_INI ."\n";
+                $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsReport" to FALSE in config INI' ."\n";
             } elseif (curl_errno($ch) == 35 && strpos(curl_error($ch), 'CA certificate set, but certificate verification is disabled') !== FALSE) {
                 // OSX Secure Transport bug.
                 $reportItem->details .= "\n";
-                $reportItem->details .= 'Unable to disable strict SSL certificate checking in ' . Config::CONFIG_INI . ' (\'strictSSLCertsReport\' => FALSE)' ."\n";
+                $reportItem->details .= 'Unable to disable strict SSL certificate checking in config INI (\'strictSSLCertsReport\' => FALSE)' ."\n";
                 $reportItem->details .= 'while curl.cainfo is set in php.ini due to a compatibility bug in Apple\'s OS X Secure Transport library.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'Please consult ' .
-                                        '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting-os-x-secure-transport-bug">SSL Troubleshooting - OS X Secure Transport Bug</a>' .
+                                        '<a target="_blank" href="https://docs.restfm.com/article/23-ssl-troubleshooting-os-x-secure-transport-bug">SSL Troubleshooting - OS X Secure Transport Bug</a>' .
                                         ' in the RESTfm manual for a workaround.' . "\n";
                 $reportItem->details .= "\n";
             }
@@ -349,7 +423,12 @@ class Diagnostics {
         curl_close($ch);
     }
 
-    public function test_filemakerAPI($reportItem) {
+    public function test_filemakerPhpApi($reportItem) {
+        if (Config::getVar('database', 'dataApi')) {
+            // Skip test if we are using Data API.
+            $reportItem->status = ReportItem::NA;
+            return;
+        }
         $reportItem->name = 'FileMaker PHP API';
 
         if ($this->_isSSLOnlyAndNotHTTPS()) {
@@ -362,16 +441,7 @@ class Diagnostics {
         $reportItem->details .= '<a href="'. $URL . '">' . $URL . '</a>' . "\n";
 
         $ch = curl_init($URL);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        if (Config::getVar('settings', 'strictSSLCertsReport') === FALSE) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
-        }
-        curl_setopt($ch, CURLOPT_FRESH_CONNECT, TRUE);
-        curl_setopt($ch, CURLOPT_FORBID_REUSE, TRUE);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'RESTfm Diagnostics');
+        curl_setopt_array($ch, $this->_curlDefaultOptions);
         $result = curl_exec($ch);
 
         if (curl_errno($ch)) {
@@ -388,7 +458,17 @@ class Diagnostics {
     }
 
     public function test_filemakerConnect($reportItem) {
-        $reportItem->name = 'FileMaker Server connection test';
+        if (Config::getVar('database', 'dataApi')) {
+            $this->filemakerDataApiConnect($reportItem);
+            return;
+        } else {
+            $this->filemakerPhpApiConnect($reportItem);
+            return;
+        }
+    }
+
+    public function filemakerDataApiConnect($reportItem) {
+        $reportItem->name = 'FileMaker Server Data API test';
         $reportItem->details = '';
 
         if ($this->_isSSLOnlyAndNotHTTPS()) {
@@ -397,31 +477,15 @@ class Diagnostics {
             return;
         }
 
-        if ($this->_report->filemakerAPI->status != ReportItem::OK) {
-            $reportItem->status = ReportItem::ERROR;
-            $reportItem->details .= 'Cannot test, FileMaker PHP API not found.' . "\n";
-            return;
-        }
-
+        // Probe hostspec for /fmi/data/v1/productInfo using cURL, this
+        // will verify that FileMaker Data API is really
+        // configured and listening.
         $hostspec = Config::getVar('database', 'hostspec');
-        $reportItem->details .= $hostspec . "\n";
+        $URL = $hostspec . '/fmi/data/v1/productInfo';
+        $reportItem->details .= '<a href="'. $URL . '">' . $URL . '</a>' . "\n";
 
-        // Probe hostspec for fmi/xml/fmresultset.xml path using cURL, this
-        // will verify that FileMaker Web Publishing Engine is really
-        // configured and listening. Otherwise the second part of this test
-        // using the FileMaker API can give a false positive as any webserver
-        // listening can give a 404 error (which the FM API returns as
-        // error 22, which may just be related to bad credentials !).
-        $ch = curl_init($hostspec . '/fmi/xml/fmresultset.xml');
-        curl_setopt($ch, CURLOPT_HEADER, FALSE);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        if (Config::getVar('settings', 'strictSSLCertsFMS') === FALSE) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
-        }
-        curl_setopt($ch, CURLOPT_FRESH_CONNECT, TRUE);
-        curl_setopt($ch, CURLOPT_FORBID_REUSE, TRUE);
-        curl_setopt($ch, CURLOPT_USERAGENT, 'RESTfm Diagnostics');
+        $ch = curl_init($URL);
+        curl_setopt_array($ch, $this->_curlDefaultOptions);
         $result = curl_exec($ch);
 
         if (curl_errno($ch)) {
@@ -435,18 +499,92 @@ class Diagnostics {
                 $reportItem->details .= 'being out of date.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'Please consult ' .
-                                        '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting">SSL Troubleshooting</a>' .
+                                        '<a target="_blank" href="https://docs.restfm.com/article/22-ssl-troubleshooting">SSL Troubleshooting</a>' .
                                         ' in the RESTfm manual for further details.' . "\n";
                 $reportItem->details .= "\n";
-                $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsFMS" to FALSE in ' . Config::CONFIG_INI ."\n";
+                $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsFMS" to FALSE in config INI' ."\n";
             } elseif (curl_errno($ch) == 35 && strpos(curl_error($ch), 'CA certificate set, but certificate verification is disabled') !== FALSE) {
                 // OSX Secure Transport bug.
                 $reportItem->details .= "\n";
-                $reportItem->details .= 'Unable to disable strict SSL certificate checking in ' . Config::CONFIG_INI . ' (\'strictSSLCertsFMS\' => FALSE)' ."\n";
+                $reportItem->details .= 'Unable to disable strict SSL certificate checking in config INI (\'strictSSLCertsFMS\' => FALSE)' ."\n";
                 $reportItem->details .= 'while curl.cainfo is set in php.ini due to a compatibility bug in Apple\'s OS X Secure Transport library.' . "\n";
                 $reportItem->details .= "\n";
                 $reportItem->details .= 'Please consult ' .
-                                        '<a target="_blank" href="http://www.restfm.com/restfm-manual/install/ssl-troubleshooting-os-x-secure-transport-bug">SSL Troubleshooting - OS X Secure Transport Bug</a>' .
+                                        '<a target="_blank" href="https://docs.restfm.com/article/23-ssl-troubleshooting-os-x-secure-transport-bug">SSL Troubleshooting - OS X Secure Transport Bug</a>' .
+                                        ' in the RESTfm manual for a workaround.' . "\n";
+                $reportItem->details .= "\n";
+            }
+        } elseif (stripos($result, 'FileMaker Data API Engine') === FALSE) {
+            $reportItem->status = ReportItem::ERROR;
+            $reportItem->details .=  'FileMaker Data API not found at configured hostspec.' . "\n";
+            $reportItem->details .= "\n";
+            $reportItem->details .= 'Please ensure FileMaker Data API is enabled in Admin Console.' . "\n";
+        }
+
+        curl_close($ch);
+        if ($reportItem->status == ReportItem::ERROR) { return; }
+
+        if (($data = json_decode($result, TRUE)) === NULL) {
+            $reportItem->details .= $result . "\n";
+        } else {
+            $reportItem->details .= json_encode($data, JSON_PRETTY_PRINT |
+                                                JSON_UNESCAPED_SLASHES) . "\n";
+        }
+    }
+
+    public function filemakerPhpApiConnect($reportItem) {
+        $reportItem->name = 'FileMaker Server PHP API test';
+        $reportItem->details = '';
+
+        if ($this->_isSSLOnlyAndNotHTTPS()) {
+            $reportItem->status = ReportItem::WARN;
+            $reportItem->details .= 'Unable to test, SSLOnly is TRUE. Try visiting this page with https instead.' . "\n";
+            return;
+        }
+
+        if ($this->_report->filemakerPhpApi->status != ReportItem::OK) {
+            $reportItem->status = ReportItem::ERROR;
+            $reportItem->details .= 'Cannot test, FileMaker PHP API not found.' . "\n";
+            return;
+        }
+
+        // Probe hostspec for fmi/xml/fmresultset.xml path using cURL, this
+        // will verify that FileMaker Web Publishing Engine is really
+        // configured and listening. Otherwise the second part of this test
+        // using the FileMaker API can give a false positive as any webserver
+        // listening can give a 404 error (which the FM API returns as
+        // error 22, which may just be related to bad credentials !).
+        $hostspec = Config::getVar('database', 'hostspec');
+        $URL = $hostspec . '/fmi/xml/fmresultset.xml';
+        $reportItem->details .= '<a href="'. $URL . '">' . $URL . '</a>' . "\n";
+
+        $ch = curl_init($URL);
+        curl_setopt_array($ch, $this->_curlDefaultOptions);
+        $result = curl_exec($ch);
+
+        if (curl_errno($ch)) {
+            $reportItem->status = ReportItem::ERROR;
+            $reportItem->details .=  'cURL failed with error: ' . curl_errno($ch) . ': ' . curl_error($ch) . "\n";
+            if (curl_errno($ch) == 60 ||        // SSL certificate problem: self signed certificate in certificate chain
+                    curl_errno($ch) == 51) {    // OSX 'certificate verification failed (result: 5)'
+                $reportItem->details .= "\n";
+                $reportItem->details .= 'The host\'s SSL certificate has failed a verification check. This may be' . "\n";
+                $reportItem->details .= 'due to the certificate being invalid, or PHP\'s CA root certificates' . "\n";
+                $reportItem->details .= 'being out of date.' . "\n";
+                $reportItem->details .= "\n";
+                $reportItem->details .= 'Please consult ' .
+                                        '<a target="_blank" href="https://docs.restfm.com/article/22-ssl-troubleshooting">SSL Troubleshooting</a>' .
+                                        ' in the RESTfm manual for further details.' . "\n";
+                $reportItem->details .= "\n";
+                $reportItem->details .= 'It is possible to disable this check by setting "strictSSLCertsFMS" to FALSE in config INI' . "\n";
+            } elseif (curl_errno($ch) == 35 && strpos(curl_error($ch), 'CA certificate set, but certificate verification is disabled') !== FALSE) {
+                // OSX Secure Transport bug.
+                $reportItem->details .= "\n";
+                $reportItem->details .= 'Unable to disable strict SSL certificate checking in config INI (\'strictSSLCertsFMS\' => FALSE)' ."\n";
+                $reportItem->details .= 'while curl.cainfo is set in php.ini due to a compatibility bug in Apple\'s OS X Secure Transport library.' . "\n";
+                $reportItem->details .= "\n";
+                $reportItem->details .= 'Please consult ' .
+                                        '<a target="_blank" href="https://docs.restfm.com/article/23-ssl-troubleshooting-os-x-secure-transport-bug">SSL Troubleshooting - OS X Secure Transport Bug</a>' .
                                         ' in the RESTfm manual for a workaround.' . "\n";
                 $reportItem->details .= "\n";
             }
@@ -504,14 +642,58 @@ class Diagnostics {
         }
     }
 
+    public function test_iniSafety($reportItem) {
+        $reportItem->name = 'Config INI file safety';
+        $reportItem->status = ReportItem::OK;
+
+        $ch = curl_init();
+        curl_setopt_array($ch, $this->_curlDefaultOptions);
+
+        $iniFiles = Config::getVar('config', 'included');
+        $restfmUrl = $this->_calculatedRESTfmURL();
+        $iniFileReports = array();
+        foreach ($iniFiles as $iniFile) {
+            $testURL = $restfmUrl . '/' . $iniFile;
+            curl_setopt($ch, CURLOPT_URL, $testURL);
+            $result = curl_exec($ch);
+            $responseCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            if ($responseCode >= 200 && $responseCode < 300) {
+                $reportItem->status = ReportItem::ERROR;
+                $iniFileReports[] = '<a href="' . $testURL . '">' . $iniFile . '</a> Unsafe (' . $responseCode . ')';
+            } else {
+                $iniFileReports[] = $iniFile . ' OK (' . $responseCode . ')';
+            }
+        }
+        curl_close($ch);
+
+        if ($reportItem->status == ReportItem::ERROR) {
+            $reportItem->details .= 'One or more config INI files have been detected as unsafe, please configure your Web Server to deny access to these files.' . "\n";
+        }
+        $reportItem->details .= join("\n", $iniFileReports);
+    }
+
+    public function test_formatsEnabled($reportItem) {
+        $reportItem->name = 'Formats Enabled';
+        $reportItem->status = ReportItem::OK;
+
+        $formatsEnabled = Config::getFormats();
+
+        if (count($formatsEnabled) <= 0) {
+            $reportItem->status = ReportItem::ERROR;
+            $reportItem->details = "Please ensure INI file(s) have at least one format enabled.\n";
+        } else {
+            $reportItem->details = join(', ', $formatsEnabled);
+        }
+    }
+
     public function test_sslEnforced($reportItem) {
-        $reportItem->name = 'SSL enforced (' . Config::CONFIG_INI . ')';
+        $reportItem->name = 'SSL enforced';
 
         if (Config::getVar('settings', 'SSLOnly') === TRUE) {
-            $reportItem->details .= 'SSLOnly is TRUE in ' . Config::CONFIG_INI . "\n";
+            $reportItem->details .= 'SSLOnly is TRUE' . "\n";
         } else {
             $reportItem->status = ReportItem::WARN;
-            $reportItem->details .= "SSLOnly not TRUE in " . Config::CONFIG_INI . "\n";
+            $reportItem->details .= 'SSLOnly not TRUE' . "\n";
             $reportItem->details .= 'SSL is highly recommended to protect data, usernames and passwords from eavesdropping.' . "\n";
         }
     }
@@ -525,8 +707,7 @@ class Diagnostics {
         }
 
         $reportItem->status = ReportItem::ERROR;
-        $reportItem->details .= 'Not Loaded. XSLT will not function.' . "\n";
-        $reportItem->details .= 'Only RESTfm .simple, .xml, .json and .html formats are available.' . "\n\n";
+        $reportItem->details .= 'Not Loaded. XSLT-based formats will not function.' . "\n\n";
         if ($this->_isIIS()) {
             $reportItem->details .= "Instructions:\n\n";
             $reportItem->details .= '- Edit the php.ini file: ' . php_ini_loaded_file() . "\n";
@@ -566,13 +747,17 @@ class Diagnostics {
     }
 
     /**
-     * Returns Version number if Apache is the server. Returns FALSE
+     * Returns Version number if Apache is the server.
+     * Returns 'unknown' if Apache is the server, and version number not found.
+     * Else Returns FALSE
      * otherwise.
      */
     private function _isApache() {
         $matches = array();
         if (preg_match('/Apache\/(\d+\.\d+\.\d+)/', $_SERVER['SERVER_SOFTWARE'], $matches)) {
             return $matches[1];
+        } elseif (preg_match('/Apache/', $_SERVER['SERVER_SOFTWARE'], $matches)) {
+            return 'unknown';
         }
         return FALSE;
     }
@@ -751,10 +936,10 @@ class Diagnostics {
      *  (Apple OSX)
      */
     private function _darwinFMS13InstallerInstructions() {
-        $s = "\nFileMaker Server 13/14/15/16/17 on Apple macOS (OS X) instructions:\n\n";
+        $s = "\nFileMaker Server 13/14/15/16/17/18 on Apple macOS (OS X) instructions:\n\n";
 
         if (strcasecmp(dirname($this->_RESTfmDocumentRoot), '/Library/FileMaker Server/HTTPServer/htdocs') != 0) {
-            $s .= '* Custom document root outside of FMS detected. Please contact Goya support: http://www.restfm.com/help' . "\n";
+            $s .= '* Custom document root outside of FMS detected. Please contact Goya support: https://restfm.com/support' . "\n";
             return $s;
         }
 
@@ -822,7 +1007,7 @@ class Diagnostics {
             $s .= '- Reload this page.' . "\n";
         } else {
             # No chance to work out what path the SSL document root is.
-            $s .= '* Custom document root outside of FMS13 detected. Please contact Goya support: http://www.restfm.com/help' . "\n";
+            $s .= '* Custom document root outside of FMS13 detected. Please contact Goya support: https://restfm.com/support' . "\n";
         }
 
         return $s;
@@ -906,13 +1091,13 @@ class Diagnostics {
                 $apacheInstallDir = '/Library/Server/Web/Config/apache2/sites';
             }
         } else {
-            return ("\nUnknown Apple OSX release (Darwin ". $darwinRelease . '), please contact Goya for support: http://www.restfm.com/help');
+            return ("\nUnknown Apple OSX release (Darwin ". $darwinRelease . '), please contact Goya for support: https://restfm.com/support');
         }
 
         $s = "\nApple OSX (Darwin " . $darwinRelease . " - " . $darwinReleaseName . ") instructions:\n\n";
 
         if (! is_dir($apacheInstallDir)) {
-            $s .= 'Cannot find '. $apacheInstallDir . ', please contact Goya for support: http://www.restfm.com/help';
+            $s .= 'Cannot find '. $apacheInstallDir . ', please contact Goya for support: https://restfm.com/support';
             return ($s);
         }
 
@@ -962,8 +1147,8 @@ class Report implements \Iterator {
         $this->_items = array();
     }
 
-    function rewind() {
-        return reset($this->_items);
+    function rewind(): void {
+        reset($this->_items);
     }
 
     function current() {
@@ -974,11 +1159,11 @@ class Report implements \Iterator {
         return key($this->_items);
     }
 
-    function next() {
-        return next($this->_items);
+    function next(): void {
+        next($this->_items);
     }
 
-    function valid() {
+    function valid(): bool {
         return key($this->_items) !== NULL;
     }
 

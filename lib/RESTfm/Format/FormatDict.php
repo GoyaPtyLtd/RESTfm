@@ -164,6 +164,11 @@ class FormatDict implements FormatInterface {
      * @return string
      */
     protected function _renderDictPair ($name, $value) {
+        if (is_bool($value)) {
+            // DataAPI backend now returns bools in field metadata,
+            // we need to convert this to an int.
+            $value = $value ? 1 : 0;
+        }
         $s = '';
 
         $s .= '<:';

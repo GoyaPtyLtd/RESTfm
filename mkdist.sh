@@ -45,7 +45,7 @@ MANIFEST="MANIFEST"
 INJECTREVISION="lib/RESTfm/Version.php"
 
 # Files to inject Version into (replaces %%VERSION%%)
-INJECTVERSION="RESTfm.ini.php.dist demo.html js/demo.js"
+INJECTVERSION="RESTfm.ini demo.html js/demo.js"
 
 # PHPUnit command.
 PHPUNIT="PHPUnit/phpunit --bootstrap lib/autoload.php"
@@ -61,7 +61,7 @@ PHPUNITCOVERAGEDIR="unit_coverage_report"
 usage() {
     echo ""
     echo "Usage: ${ARGV0} [<flags>]"
-    echo "  -b | --build            :  build distribution packages."
+    echo "  -b | --build            : build distribution packages."
     echo "  -c | --clean            : clean intermediate build files."
     echo "       --clean-all        : expunge entire build area."
     echo "  -u | --unit             : unit tests only."

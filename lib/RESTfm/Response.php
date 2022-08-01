@@ -131,8 +131,8 @@ class Response extends \Tonic\Response {
         $this->addHeader('X-RESTfm-Method', $this->request->method);
 
         // Check if we need to authorise this origin (CORS)
-        $configOrigins = Config::getVar('allowed_origins');
-        if (isset($_SERVER["HTTP_ORIGIN"]) && is_array($configOrigins)) {
+        if (isset($_SERVER["HTTP_ORIGIN"]) && Config::checkVar('origins', 'allowed')) {
+            $configOrigins = Config::getVar('origins', 'allowed');
             $request_origin = $_SERVER['HTTP_ORIGIN'];
             $allow_origin = null;
             if (in_array('*', $configOrigins)) {
@@ -252,6 +252,10 @@ class Response extends \Tonic\Response {
     protected function _buildMessage() {
 
         $formatAs = $this->format;
+        if (!isset($formatAs)) {
+            // Null format
+            return;
+        }
 
         // Check if our format is available through a provided xslt.
         $useXSLT = NULL;
@@ -281,8 +285,10 @@ class Response extends \Tonic\Response {
         // Special case for html format. Needs to be able to display the
         // username for the browser UI.
         if ($formatAs == 'html') {
+            /** @var \RESTfm\Request $request */
+            $request = $this->request;
             $formatter->setUsername(
-                    $this->request->getCredentials()->getUsername() );
+                    $request->getCredentials()->getUsername() );
         }
 
         $this->addHeader('Content-type', $this->contentType($formatAs));

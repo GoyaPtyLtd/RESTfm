@@ -55,8 +55,7 @@ class Credentials {
         // Check for API key in parameters
         $RFMkey = $parameters->RFMkey;
         if (isset($RFMkey) && Config::checkVar('keys', $RFMkey)) {
-            $username = Config::getVar('keys', $RFMkey, 0);
-            $password = Config::getVar('keys', $RFMkey, 1);
+            list($username, $password) = explode(':', Config::getVar('keys', $RFMkey), 2);
         }
 
         // Work around for HTTP Basic Auth for Apache CGI/FCGI/suExec server modes.
@@ -74,8 +73,7 @@ class Credentials {
         if (isset($_SERVER['PHP_AUTH_USER'])) {
             $RFMkey = $_SERVER['PHP_AUTH_USER'];
             if (isset($RFMkey) && Config::checkVar('keys', $RFMkey)) {
-                $username = Config::getVar('keys', $RFMkey, 0);
-                $password = Config::getVar('keys', $RFMkey, 1);
+                list($username, $password) = explode(':', Config::getVar('keys', $RFMkey), 2);
             } else {
                 $username = $_SERVER['PHP_AUTH_USER'];
                 if (isset($_SERVER['PHP_AUTH_PW'])) {

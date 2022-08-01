@@ -12,10 +12,14 @@
             <requestFiltering>
                 <hiddenSegments>
                     <!-- Block access to .git directories. -->
-                   <add segment=".git" />
+                    <add segment=".git" />
                     <!-- Block access to .svn directories. -->
-                   <add segment=".svn" />
+                    <add segment=".svn" />
                 </hiddenSegments>
+                <fileExtensions>
+                    <!-- Block access to *.ini files. -->
+                    <add fileExtension="*.ini" allowed="false" />
+                </fileExtensions>
             </requestFiltering>
         </security>
 

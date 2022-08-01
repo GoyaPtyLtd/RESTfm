@@ -49,7 +49,7 @@ class FormatHtml implements FormatInterface {
         $str .= '<link type="text/css" rel="stylesheet" href="' . \RESTfm\Config::getVar('settings', 'baseURI') . '/css/RESTfm.css">'."\n";
         $str .= "</head><body>\n";
         $str .= '<div id="logo">' .
-                '<a target="_blank" href="http://www.restfm.com"><img width="106" height="33" src="' . \RESTfm\Config::getVar('settings', 'baseURI') . '/css/RESTfm.logo.png" alt="RESTfm logo"></a>' .
+                '<a target="_blank" href="https://restfm.com"><img width="106" height="33" src="' . \RESTfm\Config::getVar('settings', 'baseURI') . '/css/RESTfm.logo.png" alt="RESTfm logo"></a>' .
                 '<span>' . \RESTfm\Version::getRelease() . '</span>' .
             '</div>' . "\n";
 
@@ -85,11 +85,11 @@ class FormatHtml implements FormatInterface {
 
             $str .= '<h3>'.$sectionName.'</h3>'."\n";
             $str .= '<div id="'.$sectionName.'">'."\n";
-            if (count($section) <= 0) {
+            $sectionRows = $section->getRows();
+            if (count($sectionRows) <= 0) {
                 $str .= '<div class="warn">Warning: no records found.</div>'."\n";
             }
             $str .= "<table>\n";
-            $sectionRows = $section->getRows();
             if ($section->getDimensions() == 1) {
                 $row_num = 0;
                 foreach($sectionRows[0] as $fieldName => $val) {
@@ -148,6 +148,11 @@ class FormatHtml implements FormatInterface {
                         // No link column
                     }
                     foreach($row as $fieldName => $val) {
+                        if (is_bool($val)) {
+                            // DataAPI backend now returns bools in field metadata,
+                            // we need to convert this to a string.
+                            $val = $val ? 'true' : 'false';
+                        }
                         $str .= '<td><pre>'.htmlspecialchars($val)."</pre></td>\n";
                     }
                     $str .= "</tr>\n";

@@ -32,7 +32,7 @@ class uriRoot extends RESTfm\Resource {
      * Query String Parameters:
      *  - RFMlink=layout|script : Provide a link that skips directly to layout
      *          or script. By default the link returned goes to the database
-     *          static page with seperate layout and script links, to maintain
+     *          static page with separate layout and script links, to maintain
      *          the REST URI hierarchy.
      *
      * @param RESTfm\Request $request
@@ -55,8 +55,8 @@ class uriRoot extends RESTfm\Resource {
             unset($queryString->RFMlink);
         }
 
-        // Inject local PDO databases if any.
-        // If we get this far then FM authentication was successfull so this
+        // Inject PDO databases, if any.
+        // If we get this far then FM authentication was successful so this
         // list wont be open access with FM guest access disabled.
         if (RESTfm\Config::checkVar('databasePDOMap')) {
             $pdos = RESTfm\Config::getVar('databasePDOMap');

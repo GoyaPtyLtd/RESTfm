@@ -17,23 +17,37 @@
  *  Gavin Stewart
  */
 
-namespace RESTfm;
+namespace RESTfm\BackendFileMakerDataApi;
 
 /**
- * Defines interface for initialisation of database backend, and factory
- * methods for creating operations objects.
+ * FileMaker Data API implementation of BackendAbstract.
  */
-abstract class BackendAbstract {
+class Backend extends \RESTfm\BackendAbstract {
+
+    /**
+     * @var FileMakerDataApi
+     *      Connection object to FileMaker Data API Server.
+     */
+    private $_FileMakerDataApi;
 
     /**
      * Instantiate backend.
      *
-     * @param string $host
-     *  Hostname/Hostspec for backend database.
+     * @param assoc array $hostspec
+     *  In the form:
+     *  array (
+     *      'hostspec' => https://127.0.0.1:443,
+     *      'database' => <string|NULL>,
+     *  )
      * @param string $username
      * @param string $password
      */
-    abstract public function __construct ($host, $username, $password);
+    public function __construct ($hostspec, $username, $password) {
+        $this->_FileMakerDataApi = new FileMakerDataApi(
+                                        $hostspec['hostspec'],
+                                        $hostspec['database'],
+                                        $username, $password);
+    }
 
     /**
      * Instantiate and return the appropriate Database Operations object for
@@ -43,7 +57,9 @@ abstract class BackendAbstract {
      *
      * @return OpsDatabaseAbstract;
      */
-    abstract public function makeOpsDatabase ($database = NULL);
+    public function makeOpsDatabase ($database = NULL) {
+        return new OpsDatabase($this, $database);
+    }
 
     /**
      * Instantiate and return the appropriate Layout Operations object for
@@ -54,7 +70,9 @@ abstract class BackendAbstract {
      *
      * @return OpsLayoutAbstract;
      */
-    abstract public function makeOpsLayout ($database, $layout);
+    public function makeOpsLayout ($database, $layout) {
+        return new OpsLayout($this, $database, $layout);
+    }
 
     /**
      * Instantiate and return the appropriate Record Operations object for
@@ -65,7 +83,9 @@ abstract class BackendAbstract {
      *
      * @return OpsRecordAbstract
      */
-    abstract public function makeOpsRecord ($database, $layout);
+    public function makeOpsRecord ($database, $layout) {
+        return new OpsRecord($this, $database, $layout);
+    }
 
     /**
      * Instantiate and return the appropriate Field Operations object for
@@ -76,6 +96,17 @@ abstract class BackendAbstract {
      *
      * @return OpsFieldAbstract
      */
-    abstract public function makeOpsField ($database, $layout);
+    public function makeOpsField ($database, $layout) {
+        return new OpsField($this, $database, $layout);
+    }
+
+    // -- Public Functions -- //
+
+    /**
+     * @return FileMakerDataApi
+     */
+    public function getFileMakerDataApi () {
+        return $this->_FileMakerDataApi;
+    }
 
 }

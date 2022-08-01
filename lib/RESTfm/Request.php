@@ -115,7 +115,7 @@ class Request extends \Tonic\Request {
      *    RFC 3986) document in a RESTfm accepted format.
      *
      *    A RFMformat parameter must be present if RFMdata exists, and
-     *    must specify a RESTfm accepted format as listed in RESTfm.ini.php
+     *    must specify a RESTfm accepted format as listed in RESTfm.ini
      *    The RFMformat parameter may be used alone to override HTTP
      *    Content-type headers for POST data.
      *
@@ -180,6 +180,15 @@ class Request extends \Tonic\Request {
         }
 
         $this->_Credentials = new Credentials($this->_Parameters);
+    }
+
+    /**
+     * Returns the raw data string.
+     *
+     * @return string
+     */
+    public function getData () {
+        return $this->data;
     }
 
     /**
@@ -342,9 +351,20 @@ class Request extends \Tonic\Request {
             return;
         }
 
+        // Handle raw container data.
+        if (isset($this->_parametersQueryString['RFMcontainer']) &&
+                strtoupper($this->_parametersQueryString['RFMcontainer']) == 'RAW') {
+            if (! isset($this->_format)) {
+                // Pass through Content-Type as format for container data
+                $this->_format = $_SERVER['CONTENT_TYPE'];
+            }
+            // No parsable data, just return.
+            return;
+        }
+
         // If a format hasn't been determined yet, work one out.
         if (! isset($this->_format)) {
-            if (isset($queryString->RFMurlencoded)) {
+            if (isset($this->_parametersQueryString['RFMurlencoded'])) {
                 // Override uploaded data format.
                 $this->_format = 'application/x-www-form-urlencoded';
             } else {

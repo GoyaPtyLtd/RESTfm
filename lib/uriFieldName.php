@@ -17,33 +17,38 @@
  *  Gavin Stewart
  */
 
-use RESTfm\FieldResponse;
-
 /**
  * RESTfm Field handler for Tonic
  *
- * @uri /{database}/layout/{layout}/{rawRecordID}/{field}
+ * @uri /{database}/layout/{layout}/{rawRecordID}/{field}/{filename}
  */
-class uriField extends RESTfm\Resource {
+class uriFieldFilename extends RESTfm\Resource {
 
-    const URI = '/{database}/layout/{layout}/{rawRecordID}/{field}';
+    const URI = '/{database}/layout/{layout}/{rawRecordID}/{field}/{filename}';
 
     /**
-     * Handle a GET request for this resource
+     * Handle a GET request for this resource.
+     *
+     * This is identical to uriField::get, except for the extra $filename
+     * parameter. This allows the use of $filename in HTTP Content-Disposition
+     * Header in the same way that RFMfilename works with uriField::get.
      *
      * @param RESTfm\Request $request
      * @param string $database
-     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}
+     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}/{filename}
      * @param string $layout
-     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}
+     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}/{filename}
      * @param string $rawRecordID
-     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}
+     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}/{filename}
      * @param string $field
-     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}
+     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}/{filename}
+     * @param string $filename
+     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}/{filename}
      *
-     * @return RESTfm\FieldResponse
+     * @throws RESTfm\ResponseException
+     *   In all cases (returning field data, or on error)
      */
-    function get($request, $database, $layout, $rawRecordID, $field) {
+    function get($request, $database, $layout, $rawRecordID, $field, $filename) {
         $database = RESTfm\Url::decode($database);
         $layout = RESTfm\Url::decode($layout);
         $rawRecordID = RESTfm\Url::decode($rawRecordID);
@@ -69,8 +74,8 @@ class uriField extends RESTfm\Resource {
         }
 
         // Determine container filename.
-        if (isset($restfmParameters->RFMfilename)) {
-            $opsField->setContainerFilename($restfmParameters->RFMfilename);
+        if (!empty($filename)) {
+            $opsField->setContainerFilename($filename);
         }
 
         $opsField->setContainerMimeType($request->getFormat());
@@ -86,19 +91,25 @@ class uriField extends RESTfm\Resource {
     /**
      * Handle a PUT request for this resource
      *
+     * This is identical to uriField::put, except for the extra $filename
+     * parameter. This allows the use of $filename in HTTP Content-Disposition
+     * Header in the same way that RFMfilename works with uriField::put.
+     *
      * @param RESTfm\Request $request
      * @param string $database
-     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}
+     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}/{filename}
      * @param string $layout
-     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}
+     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}/{filename}
      * @param string $rawRecordID
-     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}
+     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}/{filename}
      * @param string $field
-     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}
+     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}/{filename}
+     * @param string $filename
+     *   From URI parsing: /{database}/layout/{layout}/{rawRecordID}/{field}/{filename}
      *
      * @return RESTfm\Response
      */
-    function put($request, $database, $layout, $rawRecordID, $field) {
+    function put($request, $database, $layout, $rawRecordID, $field, $filename) {
         $database = RESTfm\Url::decode($database);
         $layout = RESTfm\Url::decode($layout);
         $rawRecordID = RESTfm\Url::decode($rawRecordID);
@@ -124,8 +135,8 @@ class uriField extends RESTfm\Resource {
         }
 
         // Determine container filename.
-        if (isset($restfmParameters->RFMfilename)) {
-            $opsField->setContainerFilename($restfmParameters->RFMfilename);
+        if (!empty($filename)) {
+            $opsField->setContainerFilename($filename);
         }
 
         $opsField->setContainerMimeType($request->getFormat());

@@ -253,8 +253,25 @@ abstract class OpsRecordAbstract {
 
         $result = new \RESTfm\Message\Message();
 
+        // Trigger preOpScript on the first element.
+        if ($this->_preOpScript !== NULL) {
+            $this->_preOpScriptTrigger = TRUE;
+        }
+
+        // Trigger postOpScript on the last element.
+        if ($this->_postOpScript != NULL) {
+            $postOpTriggerCount = $requestMessage->getRecordCount();
+        } else {
+            $postOpTriggerCount = -1;
+        }
+
         $requestRecord = NULL;  // @var \RESTfm\Message\Record
+        $index = 0;
         foreach($requestMessage->getRecords() as $requestRecord) {
+            $index++;
+            if ($index == $postOpTriggerCount) {
+                $this->_postOpScriptTrigger = TRUE;
+            }
             $this->_readRecord($result, $requestRecord);
         }
 
@@ -403,8 +420,18 @@ abstract class OpsRecordAbstract {
      *  CONTAINER_BASE64: [<filename>;]<base64 encoding>
      *  CONTAINER_RAW: No RESTfm formatting, RAW data for single field returned.
      */
-    public function setContainerEncoding ($encoding = CONTAINER_DEFAULT) {
+    public function setContainerEncoding ($encoding = self::CONTAINER_DEFAULT) {
         $this->_containerEncoding = $encoding;
+    }
+
+    /**
+     * Set the container's 'filename'. This will be used to set (or override)
+     * the HTTP Content-Disposition header when reading a raw container field.
+     *
+     * @param string $filename
+     */
+    public function setContainerFilename (string $filename) {
+        $this->_containerFilename = $filename;
     }
 
     /**
@@ -510,6 +537,12 @@ abstract class OpsRecordAbstract {
      *  Requested container encoding format.
      */
     protected $_containerEncoding = self::CONTAINER_DEFAULT;
+
+    /**
+     * @var string
+     *  Requested container filename.
+     */
+    protected $_containerFilename = NULL;
 
     /**
      * @var boolean
