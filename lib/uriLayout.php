@@ -168,7 +168,8 @@ class uriLayout extends RESTfm\Resource {
 
         // Meta section.
         // Iterate records and set navigation hrefs.
-        $record = NULL;         // @var \RESTfm\Message\Record
+        /** @var \RESTfm\Message\Message $restfmMessage */
+        /** @var \RESTfm\Message\Record $record */
         foreach($restfmMessage->getRecords() as $record) {
             if ($record->getRecordId() === NULL) {
                 continue;

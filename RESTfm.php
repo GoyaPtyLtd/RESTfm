@@ -26,8 +26,8 @@
 $startTimeUs = microtime(TRUE);
 
 // Ensure E_STRICT is removed for PHP 5.4+
-error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
-//error_reporting(E_ALL & ~E_STRICT);   // Dev. level reporting
+//error_reporting(E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED);
+error_reporting(E_ALL & ~E_STRICT);   // Dev. level reporting
 
 // x-debug's html error output makes CLI debugging with cURL a problem.
 ini_set('html_errors', FALSE);
@@ -56,7 +56,8 @@ require_once 'lib/uriDatabaseScript.php';
 require_once 'lib/uriLayout.php';
 require_once 'lib/uriScript.php';
 require_once 'lib/uriRecord.php';
-//require_once 'lib/uriField.php';
+require_once 'lib/uriField.php';
+require_once 'lib/uriFieldName.php';
 require_once 'lib/uriBulk.php';
 
 // Ensure we are using SSL if mandated.
@@ -150,7 +151,7 @@ if (RESTfm\Config::getVar('settings', 'diagnostics') === TRUE) {
         $profLimitMem = prettyBytes(iniToBytes(ini_get('memory_limit')));
 
         /** @var \RESTfm\Response $response */
-        $response->addInfo('X-RESTfm-Profile',  $profRealTimeMs . 'ms ' .
+        $response->addHeader('X-RESTfm-Profile',  $profRealTimeMs . 'ms ' .
                                                 $profPeakMem . ' ' .
                                                 $profLimitMem);
     }
@@ -165,9 +166,9 @@ if ( is_a($response, 'RESTfm\Response') &&
         // All RESTfm URIs perform a database query to validate credentials,
         // so all RESTfm 2xx responses imply successful authorisation.
         /** @var \RESTfm\Response $response */
-        $response->addInfo('X-RESTfm-PHP-memory_limit',
+        $response->addHeader('X-RESTfm-PHP-memory_limit',
                         prettyBytes(iniToBytes(ini_get('memory_limit'))));
-        $response->addInfo('X-RESTfm-PHP-post_max_size',
+        $response->addHeader('X-RESTfm-PHP-post_max_size',
                         prettyBytes(iniToBytes(ini_get('post_max_size'))));
     }
 }

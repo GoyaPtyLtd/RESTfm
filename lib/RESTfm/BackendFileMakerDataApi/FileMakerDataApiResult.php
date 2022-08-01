@@ -26,7 +26,7 @@ namespace RESTfm\BackendFileMakerDataApi;
 class FileMakerDataApiResult {
 
     /**
-     * @var string
+     * @var array
      */
     private $_result = NULL;
 

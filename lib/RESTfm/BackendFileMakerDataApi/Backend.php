@@ -87,6 +87,19 @@ class Backend extends \RESTfm\BackendAbstract {
         return new OpsRecord($this, $database, $layout);
     }
 
+    /**
+     * Instantiate and return the appropriate Field Operations object for
+     * the specified database.
+     *
+     * @param string $database
+     * @param string $layout
+     *
+     * @return OpsFieldAbstract
+     */
+    public function makeOpsField ($database, $layout) {
+        return new OpsField($this, $database, $layout);
+    }
+
     // -- Public Functions -- //
 
     /**

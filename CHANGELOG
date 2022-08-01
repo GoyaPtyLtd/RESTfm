@@ -1,8 +1,10 @@
-### 6.0.0beta ###
+### 6.0.0 (Released 2022-08-01) ###
  - Added FileMaker Data API support. This is now the default backend for new
    RESTfm deployments. RESTfm provides the same frontend interface and features,
    this change is mostly transparent (backend server error codes have changed).
    The FileMaker PHP API is still supported as an optional backend.
+ - New field-level Read and Update operations - FM DataAPI required.
+ - New field-level Write operation to container fields - FM DataAPI required.
  - Changed RESTfm configuration to use INI file format (now RESTfm.ini).
  - Added include directive to RESTfm.ini to read further INI files from other
    directories.

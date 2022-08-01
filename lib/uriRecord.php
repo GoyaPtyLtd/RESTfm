@@ -89,6 +89,11 @@ class uriRecord extends RESTfm\Resource {
             $opsRecord->setContainerEncoding($containerEncoding);
         }
 
+        // Determine container filename.
+        if (isset($restfmParameters->RFMfilename)) {
+            $opsRecord->setContainerFilename($restfmParameters->RFMfilename);
+        }
+
         $restfmMessage = $opsRecord->readSingle(new \RESTfm\Message\Record($rawRecordID));
 
         $response = new RESTfm\Response($request);

@@ -99,7 +99,7 @@ class Diagnostics {
         // Set cURL default options.
         $this->_curlDefaultOptions = array(
             CURLOPT_USERAGENT       => 'RESTfm Diagnostics',
-            CURLOPT_CONNECTTIMEOUT  => 2,
+            CURLOPT_CONNECTTIMEOUT  => 5,
             CURLOPT_HEADER          => FALSE,
             CURLOPT_RETURNTRANSFER  => TRUE,
             CURLOPT_FRESH_CONNECT   => TRUE,
@@ -177,9 +177,35 @@ class Diagnostics {
                                                 'refs' . DIRECTORY_SEPARATOR .
                                                 'heads' . DIRECTORY_SEPARATOR .
                                                 $gitBranch);
+            $gitFetchHead = file_get_contents($gitRoot . DIRECTORY_SEPARATOR .
+                                                'FETCH_HEAD');
+            $gitFetchHeadLines = preg_split('/\n|\r|\r\n/', $gitFetchHead);
+            $branchFromOfficialRepo = false;
+            foreach ($gitFetchHeadLines as $line) {
+                if (preg_match('%branch \'' . $gitBranch . '\' of .*/GoyaPtyLtd/RESTfm%', $line)) {
+                    $branchFromOfficialRepo = true;
+                    break;
+                }
+            }
             $gitShortHash = substr($gitCommitHash, 0, 7);
-            $reportItem->details .= 'Git branch: ' . $gitBranch . ' (' .
-                                        $gitShortHash . ')' . "\n";
+            $urlGithubRestfm = 'https://github.com/GoyaPtyLtd/RESTfm';
+            if ($branchFromOfficialRepo) {
+                $reportItem->details .= 'Git branch: ' .
+                                    '<a href="' . $urlGithubRestfm . '/commits/' . $gitBranch . '" target="_blank">' .
+                                    $gitBranch .
+                                    '</a>' .
+                                    ' (<a href="' . $urlGithubRestfm . '/commit/' . $gitCommitHash . '" target="_blank">' .
+                                    $gitShortHash .
+                                    '</a>)' .
+                                    "\n";
+            } else {
+                $reportItem->details .= 'Git branch: ' .
+                                    $gitBranch .
+                                    ' (' .
+                                    $gitShortHash .
+                                    ')' .
+                                    "\n";
+            }
         }
     }
 
@@ -1121,8 +1147,8 @@ class Report implements \Iterator {
         $this->_items = array();
     }
 
-    function rewind() {
-        return reset($this->_items);
+    function rewind(): void {
+        reset($this->_items);
     }
 
     function current() {
@@ -1133,11 +1159,11 @@ class Report implements \Iterator {
         return key($this->_items);
     }
 
-    function next() {
-        return next($this->_items);
+    function next(): void {
+        next($this->_items);
     }
 
-    function valid() {
+    function valid(): bool {
         return key($this->_items) !== NULL;
     }
 

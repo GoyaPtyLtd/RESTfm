@@ -20,7 +20,7 @@
 namespace RESTfm\BackendFileMakerDataApi;
 
 /**
- * FileMaker Data API implementation of OpsLayoutAbstract.
+ * FileMaker Data API implementation of OpsRecordAbstract.
  */
 class OpsRecord extends \RESTfm\OpsRecordAbstract {
 
@@ -208,25 +208,25 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
 
             foreach ($record['fieldData'] as $fieldName => $fieldData) {
                 if (array_key_exists($fieldName, $containerFields)) {
+                    $filename = $this->_containerFilename;
+                    if ($filename == NULL) {
+                        // Extract filename from container URL (this is just
+                        // random, but at least has an extension).
+                        $matches = array();
+                        if (preg_match('/\/([^\/\?]*)\?/', $fieldData, $matches)) {
+                            $filename = $matches[1];
+                        }
+                    }
                     switch ($this->_containerEncoding) {
                         case self::CONTAINER_BASE64:
-                            $filename = '';
-                            $matches = array();
-                            if (preg_match('/\/([^\/\?]*)\?/', $fieldData, $matches)) {
-                                $filename = $matches[1] . ';';
-                            }
                             $containerData = $fmDataApi->getContainerData($fieldData);
                             if (gettype($containerData) !== 'string') {
-                                $containerData = "";
+                                $containerData = '';
                             }
-                            $fieldData = $filename . base64_encode($containerData);
+                            $fieldData = $filename . ';' . base64_encode($containerData);
                             break;
-                        case self::CONTAINER_RAW:
-                            // TODO
-                            break;
-                        case self::CONTAINER_DEFAULT:
                         default:
-                            // Do nothing
+                            // Leave container URL in $fieldData
                     }
                     $record['fieldData'][$fieldName] = $fieldData;
                 }
