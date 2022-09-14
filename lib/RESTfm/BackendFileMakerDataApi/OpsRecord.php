@@ -95,6 +95,9 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
         $restfmMessage->addRecord(new \RESTfm\Message\Record(
                 $result->getRecordId()
         ));
+
+        // Script results.
+        $this->_scriptResultsToInfo($restfmMessage, $result);
     }
 
     /**
