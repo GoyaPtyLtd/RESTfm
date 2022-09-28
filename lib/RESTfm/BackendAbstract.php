@@ -75,7 +75,15 @@ abstract class BackendAbstract {
      * @param string $layout
      *
      * @return OpsFieldAbstract
+     *
+     * @throws ResponseException
+     *  When this method is not implemented/overridden in a backend.
      */
-    abstract public function makeOpsField ($database, $layout);
+    public function makeOpsField ($database, $layout) {
+        throw new ResponseException(
+            'Field level operations not implemented by this RESTfm backend',
+            Response::METHODNOTALLOWED
+        );
+    }
 
 }

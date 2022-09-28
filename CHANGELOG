@@ -1,5 +1,8 @@
+### 6.0.2 (Released 2022-09-28) ###
+ - Fix regression that stops non Data API backends from working.
+
 ### 6.0.1 (Released 2022-09-14) ###
- - Fix Data API Create Record - include script results
+ - Fix Data API Create Record - include script results.
 
 ### 6.0.0 (Released 2022-08-01) ###
  - Added FileMaker Data API support. This is now the default backend for new
