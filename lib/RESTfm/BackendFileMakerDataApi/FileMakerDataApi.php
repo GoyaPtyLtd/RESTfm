@@ -819,7 +819,7 @@ class FileMakerDataApi {
      *
      * @return string
      */
-    protected function productinfoUrl () {
+    protected function productInfoUrl () {
         return('/fmi/data/' . self::BACKEND_VERSION . '/productinfo');
     }
 

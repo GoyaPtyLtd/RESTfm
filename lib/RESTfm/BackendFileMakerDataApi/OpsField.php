@@ -25,10 +25,16 @@ namespace RESTfm\BackendFileMakerDataApi;
 class OpsField extends \RESTfm\OpsFieldAbstract {
 
     /**
-     * @var \RESTfm\BackendFileMakerDataApi\Backend
+     * @var \RESTfm\BackendFileMakerDataApi\Backend|null
      *  Handle to backend object.
      */
     protected $_backend = NULL;
+
+    /**
+     * @var string
+     *  Layout name.
+     */
+    protected $_layout = '';
 
     /**
      * Construct a new Field-level Operation object.
