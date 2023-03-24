@@ -31,6 +31,12 @@ class OpsRecord extends \RESTfm\OpsRecordAbstract {
     protected $_backend = NULL;
 
     /**
+     * @var string
+     *  Layout name.
+     */
+    protected $_layout = '';
+
+    /**
      * Construct a new Record-level Operation object.
      *
      * @param \RESTfm\BackendAbstract $backend

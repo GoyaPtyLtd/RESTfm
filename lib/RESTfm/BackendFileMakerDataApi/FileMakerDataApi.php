@@ -439,6 +439,10 @@ class FileMakerDataApi {
         $params['_offset'] = $offset;
         $params['_limit']  = $limit;
 
+        if (! empty($sort)) {
+            $params['_sort'] = json_encode($sort);
+        }
+
         $queryString = $this->_dataToQueryString($params);
         if (!empty($queryString)) { $queryString = '?' . $queryString;}
 
@@ -560,6 +564,11 @@ class FileMakerDataApi {
         //    'Pcode' => '==0810',
         //));
 
+        if (empty($query)) {
+            // Do a "get" instead of a "find" if $query is empty
+            return $this->getRecords($layout, $limit, $offset, $sort, $params);
+        }
+
         $params['query']  = $query;
         $params['offset'] = (string)$offset;
         $params['limit']  = (string)$limit;
@@ -573,7 +582,7 @@ class FileMakerDataApi {
                                 '/layouts/' .
                                 rawurlencode($layout) .
                                 '/_find',
-                          'POST', $params);
+                                'POST', $params);
 
         $result = $this->curl_exec();
 
@@ -819,7 +828,7 @@ class FileMakerDataApi {
      *
      * @return string
      */
-    protected function productinfoUrl () {
+    protected function productInfoUrl () {
         return('/fmi/data/' . self::BACKEND_VERSION . '/productinfo');
     }
 

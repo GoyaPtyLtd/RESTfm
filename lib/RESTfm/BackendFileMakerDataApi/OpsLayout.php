@@ -34,7 +34,7 @@ class OpsLayout extends \RESTfm\OpsLayoutAbstract {
      * @var string
      *  Layout name.
      */
-    protected $_layout;
+    protected $_layout = '';
 
     /**
      * Construct a new Record-level Operation object.
