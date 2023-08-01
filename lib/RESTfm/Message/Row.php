@@ -20,6 +20,7 @@
 namespace RESTfm\Message;
 
 use RESTfm\MessageInterface\RowAbstract;
+use Traversable;
 
  /**
   * An array-like object for a single row of fieldName/value pairs.
@@ -67,34 +68,34 @@ class Row extends RowAbstract {
 
     // -- ArrayAccess implementation. -- //
 
-    public function offsetExists ($offset) {
+    public function offsetExists ($offset): bool {
         return (isset($this->_data[$offset]));
     }
 
-    public function offsetGet ($offset) {
+    public function offsetGet ($offset): mixed {
         if (isset($this->_data[$offset])) {
             return $this->_data[$offset];
         }
         return FALSE;
     }
 
-    public function offsetSet ($offset, $value) {
+    public function offsetSet ($offset, $value): void {
         $this->_data[$offset] = $value;
     }
 
-    public function offsetUnset ($offset) {
+    public function offsetUnset ($offset): void {
         unset($this->_data[$offset]);
     }
 
     // -- IteratorAggregate implementation. -- //
 
-    public function getIterator () {
+    public function getIterator (): Traversable {
         return new \ArrayIterator($this->_data);
     }
 
     // -- Countable implementation. -- //
 
-    public function count () {
+    public function count (): int {
         return count($this->_data);
     }
 

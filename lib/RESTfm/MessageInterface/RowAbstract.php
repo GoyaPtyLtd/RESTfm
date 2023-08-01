@@ -19,6 +19,8 @@
 
 namespace RESTfm\MessageInterface;
 
+use Traversable;
+
  /**
   * An array-like object for a single row of fieldName/value pairs.
   */
@@ -47,20 +49,20 @@ abstract class RowAbstract implements \ArrayAccess,
 
     // -- ArrayAccess implementation. -- //
 
-    abstract public function offsetExists ($offset);
+    abstract public function offsetExists ($offset): bool;
 
-    abstract public function offsetGet ($offset);
+    abstract public function offsetGet ($offset): mixed;
 
-    abstract public function offsetSet ($offset, $value);
+    abstract public function offsetSet ($offset, $value): void;
 
-    abstract public function offsetUnset ($offset);
+    abstract public function offsetUnset ($offset): void;
 
     // -- IteratorAggregate implementation. -- //
 
-    abstract public function getIterator ();
+    abstract public function getIterator (): Traversable;
 
     // -- Countable implementation. -- //
 
-    abstract public function count ();
+    abstract public function count (): int;
 
 };
