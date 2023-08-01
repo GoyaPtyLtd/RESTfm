@@ -262,7 +262,8 @@ class Request {
         krsort($this->accept);
 
         // sort lang accept headers
-        $accept = explode(',', strtolower($config['acceptLang']));
+        $acceptLang = isset($config['acceptLang']) ? $config['acceptLang'] : "";
+        $accept = explode(',', strtolower($acceptLang));
         foreach ($accept as $mimetype) {
             $parts = explode(';q=', $mimetype);
             if (isset($parts) && isset($parts[1]) && $parts[1]) {
