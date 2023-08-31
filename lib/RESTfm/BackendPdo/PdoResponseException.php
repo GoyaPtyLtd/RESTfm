@@ -72,12 +72,13 @@ class PdoResponseException extends \RESTfm\ResponseException {
         */
 
         // Additional headers for this exception.
-        $this->addHeader('X-RESTfm-PDO-Status', $pdoCode);
-        $this->addHeader('X-RESTfm-PDO-Reason', $pdoMessage);
+        $this->addHeader('X-RESTfm-Backend', 'PDO API');
+        $this->addHeader('X-RESTfm-Backend-Status', $pdoCode);
+        $this->addHeader('X-RESTfm-Backend-Reason', $pdoMessage);
 
         // Set a generic PDO reason for status 500 if not already set.
         if ($code == 500 && empty($reason)) {
-            $reason = 'PDO Error';
+            $reason = 'PDO API Server Error';
         }
 
         // Finally call superclass constructor.

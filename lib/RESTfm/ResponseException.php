@@ -120,6 +120,18 @@ class ResponseException extends \Tonic\ResponseException {
      */
     protected function addHeader($header, $value) {
         $this->_addHeader[$header] = $value;
+
+        // See RESTfm.ini for details on this flag.
+        if (Config::getVar('settings', 'enableLegacyStatusHeaders') === TRUE) {
+            switch ($header) {
+                case 'X-RESTfm-Backend-Status':
+                    $this->_addHeader['X-RESTfm-FM-Status'] = $value;
+                    break;
+                case 'X-RESTfm-Backend-Reason':
+                    $this->_addHeader['X-RESTfm-FM-Reason'] = $value;
+                    break;
+            }
+        }
     }
 
     /**

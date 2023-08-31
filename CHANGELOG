@@ -1,3 +1,15 @@
+### 6.1.0beta ###
+  - Unify status headers for backend errors. All backends now generate the
+    following headers on error:
+    - X-RESTfm-Backend: {backend}
+    - X-RESTfm-Backend-Status: ...
+    - X-RESTfm-Backend-Reason: ...
+  - The new headers replace per-backend naming of headers which looked like:
+    - X-RESTfm-{backend}-Status: ...
+    - X-RESTfm-{backend}-Reason: ...
+  - Add "enableLegacyStatusHeaders" configuration option (see RESTfm.ini) to
+    assist client software not yet aware of the new backend status headers.
+
 ### 6.0.3 (Released 2023-03-24) ###
  - Fix for empty query in find for Data API backend.
 

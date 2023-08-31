@@ -62,12 +62,13 @@ class FileMakerResponseException extends \RESTfm\ResponseException {
         }
 
         // Additional headers for this exception.
-        $this->addHeader('X-RESTfm-FM-Status', $fmCode);
-        $this->addHeader('X-RESTfm-FM-Reason', $fmMessage);
+        $this->addHeader('X-RESTfm-Backend', 'FileMaker PHP API');
+        $this->addHeader('X-RESTfm-Backend-Status', $fmCode);
+        $this->addHeader('X-RESTfm-Backend-Reason', $fmMessage);
 
         // Set a generic FileMaker reason for status 500 if not already set.
         if ($code == 500 && empty($reason)) {
-            $reason = 'FileMaker Error';
+            $reason = 'FileMaker PHP API Server Error';
         }
 
         // Finally call superclass constructor.
