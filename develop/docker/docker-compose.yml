@@ -1,0 +1,43 @@
+
+version: "2.4"
+
+services:
+
+  restfm:
+    build:
+      context: .
+      dockerfile: Dockerfile.RESTfm
+      args:
+        BUID: ${BUID:-4242}
+        BGID: ${BGID:-4242}
+    image: restfm
+    container_name: restfm
+    hostname: restfm
+    restart: unless-stopped
+    #environment:
+    volumes:
+      - ../..:/var/www/html/RESTfm
+      - ./files/conf.d:/var/www/html/RESTfm/conf.d
+    ports:
+      - 8012:80
+
+  filemaker:
+    build:
+      context: .
+      dockerfile: Dockerfile.FileMaker
+      args:
+        BUID: ${BUID:-4242}
+        BGID: ${BGID:-4242}
+    image: filemaker
+    container_name: filemaker
+    hostname: filemaker
+    restart: unless-stopped
+    #environment:
+    volumes:
+      - /export/gavin/docker/bind-mounts/snakepit-chia/home-chia-pooled:/home/chia
+      - /export/gavin/docker/bind-mounts/snakepit-chia/mnt:/mnt:ro
+    ports:
+      - 8013:80
+      - 8014:443
+      - 2399:2399
+      - 5003:5003
