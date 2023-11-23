@@ -1,0 +1,36 @@
+{
+    "search.exclude": {
+        "**/Build": true
+    },
+    "intelephense.files.exclude": [
+        "**/Build"
+    ],
+    "cSpell.words": [
+        "BADREQUEST",
+        "Chargify",
+        "dbname",
+        "EXAMPLEKEY",
+        "examplepass",
+        "exampleuser",
+        "FMPHP",
+        "fmpxml",
+        "FMPXMLRESULT",
+        "hostspec",
+        "INTERNALSERVERERROR",
+        "LENGTHREQUIRED",
+        "METHODNOTALLOWED",
+        "MOVEDPERMANENTLY",
+        "multistatus",
+        "NOCONTENT",
+        "NOTACCEPTABLE",
+        "NOTFOUND",
+        "NOTMODIFIED",
+        "PRECONDITIONFAILED",
+        "restfm",
+        "restfmdump",
+        "SEEOTHER",
+        "TEMPORARYREDIRECT",
+        "testdb",
+        "UNSUPPORTEDMEDIATYPE"
+    ],
+}

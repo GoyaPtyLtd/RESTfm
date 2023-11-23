@@ -4,7 +4,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -y && \
     apt-get install -y libcurl3-dev libxslt1-dev && \
-    docker-php-ext-install curl xsl && \
+    pecl install xdebug \
+    docker-php-ext-install curl xsl xdebug && \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/* && \
     mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"

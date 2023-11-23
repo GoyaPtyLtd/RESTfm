@@ -12,3 +12,5 @@ web.config
 .DS_Store
 .phpunit.result.cache
 .vscode
+!.vscode/settings.json
+!.vscode/launch.json

@@ -14,10 +14,14 @@ services:
     container_name: restfm
     hostname: restfm
     restart: unless-stopped
+    extra_hosts:
+      - host.docker.internal:host-gateway
     #environment:
     volumes:
+      - ./files/php/conf.d/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+      - ./files/php/conf.d/error_reporting.ini:/usr/local/etc/php/conf.d/error_reporting.ini
       - ../..:/var/www/html/RESTfm
-      - ./files/conf.d:/var/www/html/RESTfm/conf.d
+      - ./files/RESTfm/conf.d:/var/www/html/RESTfm/conf.d
     ports:
       - 8012:80
 
