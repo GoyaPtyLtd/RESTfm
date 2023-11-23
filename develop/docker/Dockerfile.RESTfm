@@ -1,12 +1,26 @@
-FROM php:8.1-apache
+ARG PHP_VERSION=${PHP_VERSION:-8.1}
+
+FROM php:${PHP_VERSION}-apache
 
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update -y && \
-    apt-get install -y libcurl3-dev libxslt1-dev && \
-    pecl install xdebug \
-    docker-php-ext-install curl xsl xdebug && \
+    apt-get install -y libxslt1-dev && \
+    docker-php-ext-install xsl && \
+    pecl install xdebug && \
     apt-get clean -y && \
-    rm -rf /var/lib/apt/lists/* && \
-    mv "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini"
+    rm -rf /var/lib/apt/lists/*
 
+ARG USER_ID=${USER_ID:-500}
+ARG GROUP_ID=${GROUP_ID:-500}
+
+RUN cp "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini" && \
+    usermod --non-unique --uid ${USER_ID} www-data && \
+    groupmod --non-unique --gid ${GROUP_ID} www-data && \
+    chown www-data:www-data /run/apache2 /run/lock/apache2
+
+ARG CERT_CN=${CERT_CN:-localhost}
+
+RUN a2enmod rewrite ssl && \
+    a2ensite default-ssl && \
+    openssl req -subj "/CN=${CERT_CN}/O=RESTfm Development/C=AU" -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /etc/ssl/private/ssl-cert-snakeoil.key -out /etc/ssl/certs/ssl-cert-snakeoil.pem

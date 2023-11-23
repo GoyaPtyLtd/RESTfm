@@ -8,9 +8,11 @@ services:
       context: .
       dockerfile: Dockerfile.RESTfm
       args:
-        BUID: ${BUID:-4242}
-        BGID: ${BGID:-4242}
-    image: restfm
+        USER_ID: ${USER_ID:-500}
+        GROUP_ID: ${GROUP_ID:-500}
+        PHP_VERSION: ${PHP_VERSION:-8.1}
+        CERT_CN: ${CERT_CN:-localhost}
+    image: "restfm-php${PHP_VERSION}"
     container_name: restfm
     hostname: restfm
     restart: unless-stopped
@@ -23,15 +25,16 @@ services:
       - ../..:/var/www/html/RESTfm
       - ./files/RESTfm/conf.d:/var/www/html/RESTfm/conf.d
     ports:
-      - 8012:80
+      - 8870:80
+      - 8470:443
 
   filemaker:
     build:
       context: .
       dockerfile: Dockerfile.FileMaker
       args:
-        BUID: ${BUID:-4242}
-        BGID: ${BGID:-4242}
+        USER_ID: ${USER_ID:-500}
+        GROUP_ID: ${GROUP_ID:-500}
     image: filemaker
     container_name: filemaker
     hostname: filemaker
@@ -41,7 +44,7 @@ services:
       - /export/gavin/docker/bind-mounts/snakepit-chia/home-chia-pooled:/home/chia
       - /export/gavin/docker/bind-mounts/snakepit-chia/mnt:/mnt:ro
     ports:
-      - 8013:80
-      - 8014:443
+      - 8820:80
+      - 8420:443
       - 2399:2399
       - 5003:5003

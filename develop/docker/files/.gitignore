@@ -1,4 +1,7 @@
-RESTfm/conf.d
+RESTfm/conf.d/*
 !RESTfm/conf.d/README.txt
-fms-installer
-!fms-installer/README.txt
+!RESTfm/conf.d/docker.ini
+fms/installer/*
+!fms/installer/README.txt
+fms/data/*
+!fms/data/README.txt
