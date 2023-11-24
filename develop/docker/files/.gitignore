@@ -3,5 +3,6 @@ RESTfm/conf.d/*
 !RESTfm/conf.d/docker.ini
 fms/installer/*
 !fms/installer/README.txt
+!fms/installer/Assisted\ Install.txt.template
 fms/data/*
 !fms/data/README.txt

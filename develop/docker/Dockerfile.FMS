@@ -1,6 +1,9 @@
 # Adapted from:
 # https://support.claris.com/s/article/Running-FileMaker-Server-in-a-Docker-container-for-Ubuntu-20-04
-FROM amd64/ubuntu:22.04
+
+ARG UBUNTU_VERSION=${UBUNTU_VERSION:-22.04}
+
+FROM ubuntu:${UBUNTU_VERSION}
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -68,16 +71,58 @@ ARG DEBIAN_FRONTEND=noninteractive
 #        unzip                           \
 #        zip                             \
 #        zlib1g
- 
+
 # install user management
-RUN apt install                      -y \
-        init
- 
+#RUN apt install                      -y \
+#        init
+
 # clean up installations
-RUN apt --fix-broken install         -y
-RUN apt autoremove                   -y
-RUN apt clean                        -y
- 
+#RUN apt --fix-broken install         -y
+#RUN apt autoremove                   -y
+#RUN apt clean                        -y
+
+ARG FMS_VERSION=${FMS_VERSION:-20.03}
+
+COPY ./files/fms/installer/fms-package-deps.txt /tmp/fms/
+
+# Install base packages and fms dependencies
+RUN apt-get update -y && \
+    apt-get install -y init lsb-release && \
+    xargs apt-get install -y < /tmp/fms/fms-package-deps.txt && \
+    apt-get clean -y && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update -y && \
+    apt-get install -y tmux less vim && \
+    apt-get clean -y && \
+    rm -rf /var/lib/apt/lists/*
+
+# FMS installer needs systemctl, use this replacement:
+# https://github.com/gdraheim/docker-systemctl-replacement
+#ADD https://raw.githubusercontent.com/gdraheim/docker-systemctl-replacement/master/files/docker/systemctl3.py /usr/bin/systemctl
+#RUN chmod a+x /usr/bin/systemctl
+
+ARG CERT_CN=${CERT_CN:-localhost}
+
+RUN openssl req -subj "/CN=${CERT_CN}/O=RESTfm Development/C=AU" -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /etc/ssl/private/ssl-cert-snakeoil.key -out /etc/ssl/certs/ssl-cert-snakeoil.pem && \
+    openssl rsa -aes256 -in /etc/ssl/private/ssl-cert-snakeoil.key -out /etc/ssl/ssl-cert-snakeoil-enc.key -passout pass:password && \
+    chmod a+r /etc/ssl/ssl-cert-snakeoil-enc.key
+
+ARG USER_ID=${USER_ID:-500}
+ARG GROUP_ID=${GROUP_ID:-500}
+
+RUN groupadd --non-unique --gid ${GROUP_ID} fmsadmin && \
+    useradd --non-unique --system --shell /sbin/nologin --uid ${USER_ID} -g fmsadmin fmserver
+
+COPY ["./files/fms/installer/Assisted Install.txt", "/fms/"]
+COPY ./files/fms/installer/LicenseCert.fmcert /fms/
+COPY ./files/fms/installer/filemaker-server-${FMS_VERSION}.*.deb /fms/
+
+#RUN TERM=vt100 FM_ASSISTED_INSTALL=/fms apt install -y \
+#        /fms/filemaker-server-${FMS_VERSION}.*.deb
+#    rm -rf /fms
+
+
 # document the ports that should be
 # published when filemaker server
 # is installed
@@ -85,9 +130,10 @@ EXPOSE 80
 EXPOSE 443
 EXPOSE 2399
 EXPOSE 5003
- 
+
 # when containers run, start this
 # command as root to initialize
 # user management
 USER root
+#CMD ["/usr/bin/systemctl"]
 CMD ["/sbin/init"]
