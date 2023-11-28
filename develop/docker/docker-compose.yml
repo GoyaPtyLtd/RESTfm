@@ -41,12 +41,12 @@ services:
     image: fms-${FMS_VERSION}
     container_name: fms
     hostname: fms
-    privileged: true
+    #privileged: true
     restart: unless-stopped
     #environment:
     volumes:
       - ./files/fms/data:/opt/FileMaker/FileMaker\ Server/Data
-      - /sys/fs/cgroup:/sys/fs/cgroup
+    #  - /sys/fs/cgroup:/sys/fs/cgroup
     tmpfs:
       - /run
       - /run/lock

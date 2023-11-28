@@ -1,139 +1,79 @@
-# Adapted from:
-# https://support.claris.com/s/article/Running-FileMaker-Server-in-a-Docker-container-for-Ubuntu-20-04
-
 ARG UBUNTU_VERSION=${UBUNTU_VERSION:-22.04}
 
 FROM ubuntu:${UBUNTU_VERSION}
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-# install filemaker server dependencies
-#RUN DEBIAN_FRONTEND=noninteractive      \
-#    apt install                      -y \
-#        acl                             \
-#        apache2-bin                     \
-#        apache2-utils                   \
-#        avahi-daemon                    \
-#        curl                            \
-#        firewalld                       \
-#        fonts-baekmuk                   \
-#        fonts-liberation2               \
-#        fonts-noto                      \
-#        fonts-takao                     \
-#        fonts-wqy-zenhei                \
-#        libaio1                         \
-#        libantlr3c-3.4-0                \
-#        libavahi-client3                \
-#        libboost-chrono1.71.0           \
-#        libboost-system1.71.0           \
-#        libboost-thread1.71.0           \
-#        libbz2-1.0                      \
-#        libc++1-12                      \
-#        libcurl3-gnutls                 \
-#        libcurl4-gnutls-dev             \
-#        libcurl4                        \
-#        libdjvulibre21                  \
-#        libetpan20                      \
-#        libevent-2.1-7                  \
-#        libexpat1                       \
-#        libfontconfig1                  \
-#        libfreetype6                    \
-#        libgomp1                        \
-#        libheif1                        \
-#        libicu66                        \
-#        libilmbase24                    \
-#        libjpeg-turbo8                  \
-#        liblqr-1-0                      \
-#        liblzma5                        \
-#        libodbc1                        \
-#        libomniorb4-2                   \
-#        libomp5-12                      \
-#        libopenexr24                    \
-#        libpam0g                        \
-#        libpng16-16                     \
-#        libsasl2-2                      \
-#        libtiff5                        \
-#        libuuid1                        \
-#        libvpx6                         \
-#        libwebpdemux2                   \
-#        libwebpmux3                     \
-#        libxml2                         \
-#        libxpm4                         \
-#        libxslt1.1                      \
-#        lsb-release                     \
-#        logrotate                       \
-#        nginx                           \
-#        odbcinst1debian2                \
-#        openjdk-11-jre                  \
-#        openssl                         \
-#        policycoreutils                 \
-#        sysstat                         \
-#        unzip                           \
-#        zip                             \
-#        zlib1g
-
-# install user management
-#RUN apt install                      -y \
-#        init
-
-# clean up installations
-#RUN apt --fix-broken install         -y
-#RUN apt autoremove                   -y
-#RUN apt clean                        -y
-
 ARG FMS_VERSION=${FMS_VERSION:-20.03}
 
-COPY ./files/fms/installer/fms-package-deps.txt /tmp/fms/
+COPY ./files/fms/installer/fms-package-deps.txt /fms/
 
 # Install base packages and fms dependencies
+# Remove init when stripping systemd
 RUN apt-get update -y && \
-    apt-get install -y init lsb-release && \
-    xargs apt-get install -y < /tmp/fms/fms-package-deps.txt && \
+    apt-get install -y lsb-release python3 && \
+    xargs apt-get install -y < /fms/fms-package-deps.txt && \
+    apt-get clean -y && \
+    rm -rf /var/lib/apt/lists/* /fms/fms-package-deps.txt
+
+RUN apt-get update -y && \
+    apt-get install -y tmux less vim iputils-ping telnet net-tools netcat-openbsd bind9-dnsutils && \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update -y && \
-    apt-get install -y tmux less vim && \
-    apt-get clean -y && \
-    rm -rf /var/lib/apt/lists/*
-
-# FMS installer needs systemctl, use this replacement:
+# filemaker-server needs systemctl, we use this replacement:
 # https://github.com/gdraheim/docker-systemctl-replacement
-#ADD https://raw.githubusercontent.com/gdraheim/docker-systemctl-replacement/master/files/docker/systemctl3.py /usr/bin/systemctl
-#RUN chmod a+x /usr/bin/systemctl
+ADD https://raw.githubusercontent.com/gdraheim/docker-systemctl-replacement/master/files/docker/systemctl3.py /usr/bin/systemctl
+RUN chmod a+x /usr/bin/systemctl
 
+# Create self-signed certificate
 ARG CERT_CN=${CERT_CN:-localhost}
 
 RUN openssl req -subj "/CN=${CERT_CN}/O=RESTfm Development/C=AU" -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /etc/ssl/private/ssl-cert-snakeoil.key -out /etc/ssl/certs/ssl-cert-snakeoil.pem && \
     openssl rsa -aes256 -in /etc/ssl/private/ssl-cert-snakeoil.key -out /etc/ssl/ssl-cert-snakeoil-enc.key -passout pass:password && \
     chmod a+r /etc/ssl/ssl-cert-snakeoil-enc.key
 
+# Set up fmsadmin group and fmserver user in advance so we can run with the
+# uid/gid we want
 ARG USER_ID=${USER_ID:-500}
 ARG GROUP_ID=${GROUP_ID:-500}
 
 RUN groupadd --non-unique --gid ${GROUP_ID} fmsadmin && \
     useradd --non-unique --system --shell /sbin/nologin --uid ${USER_ID} -g fmsadmin fmserver
 
+# Copy filemaker-server installer, licence, and config
 COPY ["./files/fms/installer/Assisted Install.txt", "/fms/"]
 COPY ./files/fms/installer/LicenseCert.fmcert /fms/
 COPY ./files/fms/installer/filemaker-server-${FMS_VERSION}.*.deb /fms/
 
-#RUN TERM=vt100 FM_ASSISTED_INSTALL=/fms apt install -y \
-#        /fms/filemaker-server-${FMS_VERSION}.*.deb
-#    rm -rf /fms
+# Install FMS, this will actually start the service too, so we do any
+# other FMS related jobs here too.
+RUN find /etc/systemd -name "*.service" -exec rm -f "{}" \; && \
+    find /etc/systemd -name "*.socket" -exec rm -f "{}" \; && \
+    rm -f /usr/lib/systemd/system/nginx.service /var/lib/systemd/deb-systemd-helper-enabled/multi-user.target.wants/nginx.service && \
+    rm -f /etc/init.d/* && \
+    TERM=vt100 FM_ASSISTED_INSTALL=/fms apt-get install -y \
+        /fms/filemaker-server-${FMS_VERSION}.*.deb && \
+    echo "Installing self-signed certificate ..." && \
+    fmsadmin certificate import -y -u Admin -p password \
+        /etc/ssl/certs/ssl-cert-snakeoil.pem \
+        --keyfile /etc/ssl/ssl-cert-snakeoil-enc.key  \
+        --keyfilepass password && \
+    echo "Stopping fmshelper ..." && \
+    echo "... done" && \
+    ps axf && \
+    echo "Removing installer files ..." && \
+    rm -rf /fms && \
+    echo "Done installing FMS"
 
-
-# document the ports that should be
-# published when filemaker server
-# is installed
+# Ports
 EXPOSE 80
 EXPOSE 443
 EXPOSE 2399
 EXPOSE 5003
 
-# when containers run, start this
-# command as root to initialize
-# user management
+# Only systemctl runs as root, FMS will run as the configured user
 USER root
-#CMD ["/usr/bin/systemctl"]
-CMD ["/sbin/init"]
+
+# This is the systemctl replacement script for containers
+CMD ["/usr/bin/systemctl"]

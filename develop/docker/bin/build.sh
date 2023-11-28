@@ -43,7 +43,7 @@ if [[ $FMS_INSTALLER_COUNT -eq 0 ]]; then
     exit 1
 fi
 if [[ $FMS_INSTALLER_COUNT -gt 1 ]]; then
-    echo "!! Error $FMS_INSTALLER_COUNT matching .deb files for v${FMS_VERSION}, there can be only one."
+    echo "!! Error $FMS_INSTALLER_COUNT matching .deb files for ${FMS_VERSION}, there can be only one."
     exit 1
 fi
 echo
