@@ -4,22 +4,25 @@ FROM ubuntu:${UBUNTU_VERSION}
 
 ARG DEBIAN_FRONTEND=noninteractive
 
+ARG TIMEZONE=${TIMEZONE:-Australia/Melbourne}
 ARG FMS_VERSION=${FMS_VERSION:-20.03}
 
 COPY ./files/fms/installer/fms-package-deps.txt /fms/
 
 # Install base packages and fms dependencies
-# Remove init when stripping systemd
 RUN apt-get update -y && \
-    apt-get install -y lsb-release python3 && \
+    apt-get install -y lsb-release python3 inotify-tools && \
     xargs apt-get install -y < /fms/fms-package-deps.txt && \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/* /fms/fms-package-deps.txt
 
 RUN apt-get update -y && \
-    apt-get install -y tmux less vim iputils-ping telnet net-tools netcat-openbsd bind9-dnsutils && \
+    apt-get install -y tzdata && \
     apt-get clean -y && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    rm -f /etc/localtime && \
+    ln -s "/usr/share/zoneinfo/${TIMEZONE}" /etc/localtime && \
+    dpkg-reconfigure -f noninteractive tzdata
 
 # filemaker-server needs systemctl, we use this replacement:
 # https://github.com/gdraheim/docker-systemctl-replacement
@@ -46,34 +49,24 @@ COPY ["./files/fms/installer/Assisted Install.txt", "/fms/"]
 COPY ./files/fms/installer/LicenseCert.fmcert /fms/
 COPY ./files/fms/installer/filemaker-server-${FMS_VERSION}.*.deb /fms/
 
-# Install FMS, this will actually start the service too, so we do any
-# other FMS related jobs here too.
-RUN find /etc/systemd -name "*.service" -exec rm -f "{}" \; && \
-    find /etc/systemd -name "*.socket" -exec rm -f "{}" \; && \
-    rm -f /usr/lib/systemd/system/nginx.service /var/lib/systemd/deb-systemd-helper-enabled/multi-user.target.wants/nginx.service && \
-    rm -f /etc/init.d/* && \
-    TERM=vt100 FM_ASSISTED_INSTALL=/fms apt-get install -y \
+# Install FMS.
+#   Note: It is possible to install the self-signed certificate here, but
+#         the encryption key that FMS uses (presumably a hash of something) is
+#         not repeatable when running the container later. We install the
+#         certificate in the entrypoint to resolve this issue.
+RUN TERM=vt100 FM_ASSISTED_INSTALL=/fms apt-get install -y \
         /fms/filemaker-server-${FMS_VERSION}.*.deb && \
-    echo "Installing self-signed certificate ..." && \
-    fmsadmin certificate import -y -u Admin -p password \
-        /etc/ssl/certs/ssl-cert-snakeoil.pem \
-        --keyfile /etc/ssl/ssl-cert-snakeoil-enc.key  \
-        --keyfilepass password && \
-    echo "Stopping fmshelper ..." && \
-    echo "... done" && \
-    ps axf && \
     echo "Removing installer files ..." && \
     rm -rf /fms && \
     echo "Done installing FMS"
 
-# Ports
 EXPOSE 80
 EXPOSE 443
 EXPOSE 2399
 EXPOSE 5003
 
-# Only systemctl runs as root, FMS will run as the configured user
 USER root
 
-# This is the systemctl replacement script for containers
-CMD ["/usr/bin/systemctl"]
+COPY ./entrypoint.sh /entrypoint.sh
+
+CMD ["bash", "/entrypoint.sh"]

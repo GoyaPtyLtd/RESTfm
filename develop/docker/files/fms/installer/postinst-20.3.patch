@@ -1,0 +1,55 @@
+diff -ru tmp.orig/DEBIAN/postinst tmp/DEBIAN/postinst
+--- tmp.orig/DEBIAN/postinst	2023-10-14 04:09:16.000000000 +1100
++++ tmp/DEBIAN/postinst	2023-11-28 16:12:12.206222351 +1100
+@@ -1650,11 +1650,14 @@
+ 	#
+ 	# Reload system kernel configuration
+ 	#
+-	sysctl -p --system > /dev/null 2>&1
++	#sysctl -p --system > /dev/null 2>&1
+ 
+-	/bin/systemctl daemon-reexec
++	# Why did the devs ever need this ?
++	# Surely they meant daemon-reload !
++	#/bin/systemctl daemon-reexec
++	/bin/systemctl daemon-reload
+ 
+-	/bin/sleep 5
++	#/bin/sleep 5
+ 
+ 	#
+ 	# Enable FMS systemd
+@@ -1668,6 +1671,14 @@
+ 	message "Start $DEPLOYMENT_NAME service."
+ 	/bin/systemctl start fmshelper.service > /dev/null 2>&1
+ 
++	# Ensure web server is running with fake systemd in container.
++	message "Ensure web server is running in container."
++	if [[ $NGINX2APACHE = true ]]; then
++		systemctl start com.filemaker.httpd.start.service
++	else
++		systemctl start com.filemaker.nginx.start.service
++	fi
++
+ 	#
+ 	# Wait for helper process to start
+ 	# 
+@@ -1681,6 +1692,7 @@
+ 		result=$ERROR_SERVICE
+ 	fi
+ 
++
+ 	:
+ 	return $result
+ }
+@@ -1923,8 +1935,8 @@
+ 	setupServer
+ 	setupWebConnectors
+ 
+-	disableUFW
+-	openFirewall
++	#disableUFW
++	#openFirewall
+ 	addServices
+ 	result=$?
+ 	if [[ $result -ne $ERROR_NONE ]]; then

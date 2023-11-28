@@ -4,5 +4,6 @@ RESTfm/conf.d/*
 fms/installer/*
 !fms/installer/README.txt
 !fms/installer/Assisted\ Install.txt.template
+!fms/installer/postinst-*.patch
 fms/data/*
 !fms/data/README.txt
