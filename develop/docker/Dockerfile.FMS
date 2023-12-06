@@ -26,8 +26,10 @@ RUN apt-get update -y && \
 
 # filemaker-server needs systemctl, we use this replacement:
 # https://github.com/gdraheim/docker-systemctl-replacement
-ADD https://raw.githubusercontent.com/gdraheim/docker-systemctl-replacement/master/files/docker/systemctl3.py /usr/bin/systemctl
-RUN chmod a+x /usr/bin/systemctl
+#ADD https://raw.githubusercontent.com/gdraheim/docker-systemctl-replacement/master/files/docker/systemctl3.py /usr/bin/systemctl
+#RUN chmod a+x /usr/bin/systemctl
+ADD ./init_tool.sh /init_tool.sh
+RUN chmod a+x /init_tool.sh && /init_tool.sh --install
 
 # Create self-signed certificate
 ARG CERT_CN=${CERT_CN:-localhost}
