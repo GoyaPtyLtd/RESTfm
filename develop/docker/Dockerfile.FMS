@@ -82,11 +82,11 @@ COPY ./files/fms/installer/filemaker-server-${FMS_VERSION}.*.deb /fms/
 #         certificate in the entrypoint to resolve this issue.
 #RUN TERM=vt100 FM_ASSISTED_INSTALL=/fms apt-get install -y \
 #        /fms/filemaker-server-${FMS_VERSION}.*.deb && \
-RUN /init_tool.sh --install-fms /fms/filemaker-server-${FMS_VERSION}.*.deb && \
-    echo "Removing installer files ..." && \
-    rm -rf /fms && \
-    echo "Done installing FMS"
+#RUN /init_tool.sh --install-fms /fms/filemaker-server-${FMS_VERSION}.*.deb && \
+#    echo "Done installing FMS"
 
+    #echo "Removing installer files ..." && \
+    #rm -rf /fms && \
 
 EXPOSE 80
 EXPOSE 443

@@ -32,7 +32,8 @@ declare -A SYSTEMD_SERVICE_START=()
 declare -A SYSTEMD_SERVICE_STOP=()
 declare -A SYSTEMD_SERVICE_RELOAD=()
 declare -A SYSTEMD_PATH_WATCH=()
-declare WATCH_DAEMON_PID=0
+declare WATCH_PROCESS_PID=0
+declare INOTIFYWAIT_PID=0
 
 # Cleanup handler when running as init
 init_cleanup() {
@@ -45,8 +46,8 @@ init_cleanup() {
     exit 0
 }
 
-# Run as init
-do_init() {
+# Basic init setup - trap signals, run the watch process.
+setup_init() {
     echo "I am: init" "$@"
 
     echo 'Trapping signals'
@@ -60,14 +61,21 @@ do_init() {
         load_systemd_path "$(basename "$pathfile")"
     done
 
-    echo 'Starting systemd path watch daemon'
-    restart_watch_daemon
+    echo 'Starting systemd path watch process'
+    restart_watch_process
+}
+
+# Run as init - we just start fmshelper and wait forever
+do_init() {
+    setup_init "$@"
 
     echo 'Starting fmshelper'
     do_systemctl_start fmshelper
 
     echo 'Sleeping forever'
-    sleep infinity
+    # Interruptible sleep
+    sleep infinity &
+    wait $!
 }
 
 # Just return true
@@ -115,9 +123,24 @@ load_systemd_service() {
     SYSTEMD_SERVICE_RELOAD[$unit]=${temp#ExecReload=}
 }
 
-# Cleanup handler when running as watch daemoin
-watch_daemon_cleanup() {
-    echo "Watch daemon cleanup on signal: $1"
+# Reload handler for watch process
+#
+# Globals:
+#   INOTIFYWAIT_PID
+watch_process_reload() {
+    echo "watch_process reload on signal: $1"
+    # Unset trap
+    trap - HUP
+
+    # Kill the inotifywait process, will be reaped in watch_process loop
+    if [[ $INOTIFYWAIT_PID != 0 ]]; then
+        kill "$INOTIFYWAIT_PID"
+    fi
+}
+
+# Cleanup handler when running as watch process
+watch_process_cleanup() {
+    echo "watch_process cleanup on signal: $1"
     # Unset trapped signals
     trap - INT TERM EXIT
     echo 'Exiting'
@@ -125,51 +148,69 @@ watch_daemon_cleanup() {
 }
 
 # Watch paths in SYSTEMD_PATH_WATCH, and call appropriate systemctl service.
-# This function is backgrounded and managed by restart_watch_daemon()
+# This function is backgrounded and managed by restart_watch_process()
 #
 # Globals:
 #   SYSTEMD_PATH_WATCH[]
-watch_daemon() {
-    BASH_ARGV0='watch_daemon'
-    echo 'Watch daemon starting'
+watch_process() {
+    BASH_ARGV0='watch_process'
+    echo 'Watch process starting'
 
     echo 'Trapping signals'
     for SIG in INT TERM EXIT; do
-        trap "watch_daemon_cleanup $SIG" "$SIG"
+        trap "watch_process_cleanup $SIG" "$SIG"
     done
 
-    # Build list of watched parent paths for inotifywait
-    local watch_path, parent_path
-    declare -A parent_paths=()
-    for watch_path in "${!SYSTEMD_PATH_WATCH[@]}"; do
-        parent_path="$(dirname "$watch_path")"
-        parent_paths["$parent_path"]=1
-    done
+    while :; do
+        INOTIFYWAIT_PID=0
 
-    echo "Running inotifywait on: " "${!parent_paths[@]}"
-    inotifywait -m -e modify --format '%w|%e|%f' "${!parent_paths[@]}" |
-        while IFS='|' read -r directory event file; do
-            echo "Notified on: $directory $event $file"
-            if [[ -v "${SYSTEMD_PATH_WATCH["$directory/$file"]}" ]]; then
-                do_systemctl_start "${SYSTEMD_PATH_WATCH["$directory/$file"]}" 
-            else
-                echo "Ignoring notification for: $directory/$file"
-            fi
+        trap "watch_process_reload HUP" "HUP"
+
+        # Build list of watched parent paths for inotifywait
+        local watch_path, parent_path
+        declare -A parent_paths=()
+        for watch_path in "${!SYSTEMD_PATH_WATCH[@]}"; do
+            parent_path="$(dirname "$watch_path")"
+            parent_paths["$parent_path"]=1
         done
+
+        if [[ ${#parent_paths[@]} -gt 0 ]]; then
+            echo "Running inotifywait on: " "${!parent_paths[@]}"
+            (
+                inotifywait -m -e modify --format '%w|%e|%f' "${!parent_paths[@]}" |
+                    while IFS='|' read -r directory event file; do
+                        echo "Notified on: $directory $event $file"
+                        if [[ -v "${SYSTEMD_PATH_WATCH["$directory/$file"]}" ]]; then
+                            do_systemctl_start "${SYSTEMD_PATH_WATCH["$directory/$file"]}" 
+                        else
+                            echo "Ignoring notification for: $directory/$file"
+                        fi
+                    done
+            ) &
+            INOTIFYWAIT_PID=$!
+        else
+            echo "No paths to watch, sleeping"
+            sleep infinity &
+            INOTIFYWAIT_PID=$!
+        fi
+
+        wait "${INOTIFYWAIT_PID}"
+
+    done
 }
 
-# Restart/start watch daemon
+# Restart/start watch process
 #
 # Globals:
-#   WATCH_DAEMON_PID
-restart_watch_daemon() {
-    if [[ $WATCH_DAEMON_PID != 0 ]]; then
-        kill "${WATCH_DAEMON_PID}"
-        wait "${WATCH_DAEMON_PID}"
+#   WATCH_PROCESS_PID
+restart_watch_process() {
+    if [[ $WATCH_PROCESS_PID != 0 ]]; then
+        kill "${WATCH_PROCESS_PID}"
+        wait "${WATCH_PROCESS_PID}"
     fi
 
-    watch_daemon &
-    WATCH_DAEMON_PID=$!
+    watch_process &
+    WATCH_PROCESS_PID=$!
 }
 
 # Load systemd path from systemd path file into SYSTEMD_PATH_WATCH[]
@@ -247,7 +288,7 @@ do_systemctl_start_path() {
 
     load_systemd_path "$unit"
 
-    restart_watch_daemon
+    restart_watch_process
 }
 
 do_systemctl_stop_path() {
@@ -255,7 +296,7 @@ do_systemctl_stop_path() {
 
     unload_systemd_path "$unit"
 
-    restart_watch_daemon
+    restart_watch_process
 }
 
 do_systemctl() {
@@ -339,8 +380,14 @@ install_fms() {
     local installer=$1
     shift
 
+    # Set ourselves up as init
+    BASH_ARGV0="init"
+    setup_init "$@"
+
+    echo "Installing filemaker-server package: $installer"
     local parent_dir="$(dirname "${installer}")"
     TERM=vt100 FM_ASSISTED_INSTALL="${parent_dir}" apt-get install -y "${installer}"
+    echo "Finished installing filemaker-server package"
 }
 
 do_default() {
