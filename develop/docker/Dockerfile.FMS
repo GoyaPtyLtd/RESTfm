@@ -1,20 +1,37 @@
+### Build filemaker-server .deb package dependencies file ###
+ARG UBUNTU_VERSION=${UBUNTU_VERSION:-22.04}
+
+FROM ubuntu:${UBUNTU_VERSION} as dependencies
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG FMS_VERSION=${FMS_VERSION:-20.03}
+
+COPY ./files/fms/installer/filemaker-server-${FMS_VERSION}.*.deb /fms/
+
+RUN dpkg -I "/fms/filemaker-server-${FMS_VERSION}."*".deb" | \
+    grep Depends: | sed -e 's/ Depends: //' -e 's/, /\n/g' > \
+    "/fms/fms-package-deps.txt"
+
+
+### Build FMS image ###
 ARG UBUNTU_VERSION=${UBUNTU_VERSION:-22.04}
 
 FROM ubuntu:${UBUNTU_VERSION}
 
 ARG DEBIAN_FRONTEND=noninteractive
-
-ARG TIMEZONE=${TIMEZONE:-Australia/Melbourne}
 ARG FMS_VERSION=${FMS_VERSION:-20.03}
 
-COPY ./files/fms/installer/fms-package-deps.txt /fms/
+COPY --from=dependencies /fms/fms-package-deps.txt /fms/
 
 # Install base packages and fms dependencies
 RUN apt-get update -y && \
-    apt-get install -y lsb-release python3 inotify-tools && \
+    apt-get install -y lsb-release inotify-tools && \
     xargs apt-get install -y < /fms/fms-package-deps.txt && \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/* /fms/fms-package-deps.txt
+
+# Configure timezone
+ARG TIMEZONE=${TIMEZONE:-Australia/Melbourne}
 
 RUN apt-get update -y && \
     apt-get install -y tzdata && \
@@ -29,13 +46,19 @@ RUN apt-get update -y && \
 #ADD https://raw.githubusercontent.com/gdraheim/docker-systemctl-replacement/master/files/docker/systemctl3.py /usr/bin/systemctl
 #RUN chmod a+x /usr/bin/systemctl
 ADD ./init_tool.sh /init_tool.sh
-RUN chmod a+x /init_tool.sh && /init_tool.sh --install
+RUN chmod a+x /init_tool.sh && touch /.dockerenv && /init_tool.sh --install-self
 
 # Create self-signed certificate
 ARG CERT_CN=${CERT_CN:-localhost}
+ARG CERT_O=${CERT_O:-"RESTfm Development"}
+ARG CERT_C=${CERT_C:-AU}
 
-RUN openssl req -subj "/CN=${CERT_CN}/O=RESTfm Development/C=AU" -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout /etc/ssl/private/ssl-cert-snakeoil.key -out /etc/ssl/certs/ssl-cert-snakeoil.pem && \
-    openssl rsa -aes256 -in /etc/ssl/private/ssl-cert-snakeoil.key -out /etc/ssl/ssl-cert-snakeoil-enc.key -passout pass:password && \
+RUN openssl req -subj "/CN=${CERT_CN}/O=${CERT_O}/C=${CERT_C}" -new \
+        -newkey rsa:2048 -days 365 -nodes -x509 \
+        -keyout /etc/ssl/private/ssl-cert-snakeoil.key \
+        -out /etc/ssl/certs/ssl-cert-snakeoil.pem && \
+    openssl rsa -aes256 -in /etc/ssl/private/ssl-cert-snakeoil.key \
+        -out /etc/ssl/ssl-cert-snakeoil-enc.key -passout pass:password && \
     chmod a+r /etc/ssl/ssl-cert-snakeoil-enc.key
 
 # Set up fmsadmin group and fmserver user in advance so we can run with the
@@ -44,7 +67,8 @@ ARG USER_ID=${USER_ID:-500}
 ARG GROUP_ID=${GROUP_ID:-500}
 
 RUN groupadd --non-unique --gid ${GROUP_ID} fmsadmin && \
-    useradd --non-unique --system --shell /sbin/nologin --uid ${USER_ID} -g fmsadmin fmserver
+    useradd --non-unique --system --shell /sbin/nologin --uid ${USER_ID} \
+        -g fmsadmin fmserver
 
 # Copy filemaker-server installer, licence, and config
 COPY ["./files/fms/installer/Assisted Install.txt", "/fms/"]
@@ -56,11 +80,13 @@ COPY ./files/fms/installer/filemaker-server-${FMS_VERSION}.*.deb /fms/
 #         the encryption key that FMS uses (presumably a hash of something) is
 #         not repeatable when running the container later. We install the
 #         certificate in the entrypoint to resolve this issue.
-RUN TERM=vt100 FM_ASSISTED_INSTALL=/fms apt-get install -y \
-        /fms/filemaker-server-${FMS_VERSION}.*.deb && \
+#RUN TERM=vt100 FM_ASSISTED_INSTALL=/fms apt-get install -y \
+#        /fms/filemaker-server-${FMS_VERSION}.*.deb && \
+RUN /init_tool.sh --install-fms /fms/filemaker-server-${FMS_VERSION}.*.deb && \
     echo "Removing installer files ..." && \
     rm -rf /fms && \
     echo "Done installing FMS"
+
 
 EXPOSE 80
 EXPOSE 443

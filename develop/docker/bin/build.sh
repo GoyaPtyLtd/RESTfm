@@ -59,4 +59,4 @@ echo
 
 # Build it!
 echo "** Building fms docker image"
-docker-compose build --pull fms
+BUILDKIT_PROGRESS=plain docker-compose build --pull fms

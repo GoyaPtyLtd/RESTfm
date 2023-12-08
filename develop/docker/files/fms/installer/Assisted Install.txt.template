@@ -4,8 +4,6 @@
 
 License Accepted=1
 
-Organization=My Org Here
-
 Deployment Options=0
 
 Admin Console User=MyAdminHere
@@ -13,8 +11,6 @@ Admin Console User=MyAdminHere
 Admin Console Password=my_password_here
 
 Admin Console PIN=1234
-
-Launch Deployment Assistant=0
 
 License Certificate Path=/fms/LicenseCert.fmcert
 
