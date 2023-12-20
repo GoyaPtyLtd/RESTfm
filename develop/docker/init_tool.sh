@@ -101,11 +101,11 @@ do_sysctl() {
 #   SYSTEMD_SERVICE_STOP[unit]
 #   SYSTEMD_SERVICE_RELOAD[unit]
 load_systemd_service() {
-    local unit=$1
+    local unit="${1%.service}"
     local unitfile=''
 
     # Only looking in /etc/systemd/system
-    if [[ -f "/etc/systemd/system/${unit}.service" ]]; then
+    if [[ -e "/etc/systemd/system/${unit}.service" ]]; then
         unitfile="/etc/systemd/system/${unit}.service"
     fi
 
@@ -113,6 +113,8 @@ load_systemd_service() {
         log "No service file found for: ${unit}"
         return
     fi
+
+    log "Load ${unit}.service"
 
     local temp
 
@@ -132,12 +134,14 @@ load_systemd_service() {
 #   INOTIFYWAIT_PID
 watch_process_reload() {
     log "Reloading on signal: $1"
-    # Unset trap
-    trap - HUP
+
+    # Ignore re-signaling
+    trap '' HUP
 
     # Kill the inotifywait process, will be reaped in watch_process loop
     if [[ $INOTIFYWAIT_PID != 0 ]]; then
-        kill "$INOTIFYWAIT_PID"
+        log "Kill inotifywait PID: ${INOTIFYWAIT_PID}"
+        kill "${INOTIFYWAIT_PID}"
     fi
 }
 
@@ -192,7 +196,7 @@ watch_process() {
         done
 
         if [[ ${#parent_paths[@]} -gt 0 ]]; then
-            log "Running inotifywait on: " "${!parent_paths[@]}"
+            log "Watching paths:" "${!parent_paths[@]}"
             (
                 inotifywait -m -e modify --format '%w|%e|%f' "${!parent_paths[@]}" |
                     while IFS='|' read -r directory event file; do
@@ -211,8 +215,8 @@ watch_process() {
             INOTIFYWAIT_PID=$!
         fi
 
+        log "Waiting on inotifywait PID: ${INOTIFYWAIT_PID}"
         wait "${INOTIFYWAIT_PID}"
-
     done
 }
 
@@ -242,6 +246,9 @@ signal_reload_watch_process() {
     local pid
     read -r pid < "${WATCH_PROCESS_PIDFILE}"
     kill -HUP "${pid}"
+
+    # Slight delay, to slow down rapid re-HUPping
+    sleep 0.2
 }
 
 # Load systemd path from systemd path file into SYSTEMD_PATH_WATCH[]
@@ -249,11 +256,11 @@ signal_reload_watch_process() {
 # Globals:
 #   SYSTEMD_PATH_WATCH[]
 load_systemd_path() {
-    local unit=$1
+    local unit="${1%.path}"
     local pathfile=''
 
     # Only looking in /etc/systemd/system
-    if [[ -f "/etc/systemd/system/${unit}.path" ]]; then
+    if [[ -e "/etc/systemd/system/${unit}.path" ]]; then
         pathfile="/etc/systemd/system/${unit}.path"
     fi
 
@@ -262,12 +269,13 @@ load_systemd_path() {
         return
     fi
 
+    log "Load ${unit}.path"
+
     # Load the associated .service file for this .path file
     load_systemd_service "$unit"
 
     local temp
-
-    temp=$(grep ^PathModified= "$unitfile")
+    temp=$(grep ^PathModified= "$pathfile")
     temp=${temp#PathModified=}
     SYSTEMD_PATH_WATCH[$temp]=$unit
 }
@@ -311,6 +319,8 @@ unload_systemd_path() {
 do_systemctl_start() {
     local unit=$1
 
+    log "Performing systemctl start: $unit"
+
     load_systemd_service "$unit"
     if [[ -v "${SYSTEMD_SERVICE_START[$unit]}" ]]; then
         eval "${SYSTEMD_SERVICE_START[$unit]}"
@@ -320,6 +330,8 @@ do_systemctl_start() {
 do_systemctl_stop() {
     local unit=$1
 
+    log "Performing systemctl stop: $unit"
+
     load_systemd_service "$unit"
     if [[ -v "${SYSTEMD_SERVICE_STOP[$unit]}" ]]; then
         eval "${SYSTEMD_SERVICE_STOP[$unit]}"
@@ -328,6 +340,8 @@ do_systemctl_stop() {
 
 do_systemctl_reload() {
     local unit=$1
+
+    log "Performing systemctl reload: $unit"
 
     load_systemd_service "$unit"
     if [[ -v "${SYSTEMD_SERVICE_RELOAD[$unit]}" ]]; then
@@ -415,7 +429,7 @@ install_self() {
     log "Install self"
 
     # Safety check
-    if [[ ! -f "/.dockerenv" ]]; then
+    if [[ ! -e "/.dockerenv" ]]; then
         log "ERROR: Cannot detect we are inside a docker container" >&2
         exit 1
     fi
@@ -462,9 +476,9 @@ setup_log() {
     exec 5> >(tee -ia "/init_tool.log")
 }
 
-# Log provided message on param $1 to file descriptor 5
+# Log provided message(s) in parameters to file descriptor 5
 log() {
-    echo "${I_AM}[$BASHPID]" "$1" >&5
+    echo "${I_AM}[$BASHPID]" "$@" >&5
 }
 
 # This comment intentionally blank
