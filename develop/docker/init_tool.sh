@@ -33,17 +33,22 @@ declare -A SYSTEMD_SERVICE_STOP=()
 declare -A SYSTEMD_SERVICE_RELOAD=()
 declare -A SYSTEMD_PATH_WATCH=()
 declare I_AM='init_tool'
+declare INIT_SLEEP_PID=0
 declare WATCH_PROCESS_PID=0
 declare WATCH_PROCESS_PIDFILE=/run/watch_process.pid
 declare INOTIFYWAIT_PID=0
 
 # Cleanup handler when running as init
 init_cleanup() {
-    log "Init cleanup on signal: $1"
+    log "Cleanup on signal: $1"
     # Unset trapped signals
     trap - INT TERM EXIT
     log 'Stopping fmshelper service'
     do_systemctl_stop fmshelper
+    if [[ $INIT_SLEEP_PID != 0 ]]; then
+        kill "$INIT_SLEEP_PID"
+        wait "$INIT_SLEEP_PID"
+    fi
     log 'Exiting'
     exit 0
 }
@@ -57,7 +62,7 @@ setup_init() {
         trap "init_cleanup $SIG" "$SIG"
     done
 
-    log 'Starting systemd path watch process'
+    log 'Starting path watch process'
     restart_watch_process
 }
 
@@ -68,10 +73,12 @@ do_init() {
     log 'Starting fmshelper'
     do_systemctl_start fmshelper
 
-    log 'Sleeping forever'
+    log 'Sleeping'
     # Interruptible sleep
     sleep infinity &
-    wait $!
+    INIT_SLEEP_PID=$!
+
+    wait "${INIT_SLEEP_PID}"
 }
 
 # Just return true
@@ -85,20 +92,6 @@ do_firewall_cmd() {
 do_sysctl() {
     log "I am: sysctl " "$@"
     exit 0
-}
-
-# Clear the SYSTEMD_* globals
-#
-# Globals:
-#   SYSTEMD_SERVICE_START[]
-#   SYSTEMD_SERVICE_STOP[]
-#   SYSTEMD_SERVICE_RELOAD[]
-#   SYSTEMD_PATH_WATCH[]
-clear_systemd_globals() {
-    SYSTEMD_SERVICE_START=()
-    SYSTEMD_SERVICE_STOP=()
-    SYSTEMD_SERVICE_RELOAD=()
-    SYSTEMD_PATH_WATCH=()
 }
 
 # Load systemd service file
@@ -138,7 +131,7 @@ load_systemd_service() {
 # Globals:
 #   INOTIFYWAIT_PID
 watch_process_reload() {
-    log "watch_process reload on signal: $1"
+    log "Reloading on signal: $1"
     # Unset trap
     trap - HUP
 
@@ -150,9 +143,15 @@ watch_process_reload() {
 
 # Cleanup handler when running as watch process
 watch_process_cleanup() {
-    log "watch_process cleanup on signal: $1"
+    log "Cleanup on signal: $1"
+
     # Unset trapped signals
     trap - INT TERM EXIT
+
+    if [[ $INOTIFYWAIT_PID != 0 ]]; then
+        kill "$INOTIFYWAIT_PID"
+        wait "$INOTIFYWAIT_PID"
+    fi
 
     rm -f "${WATCH_PROCESS_PIDFILE}"
 
@@ -166,6 +165,7 @@ watch_process_cleanup() {
 # Globals:
 #   SYSTEMD_PATH_WATCH[]
 watch_process() {
+    I_AM="watch_process"
     log 'Watch process starting'
 
     log 'Trapping signals'
@@ -173,12 +173,9 @@ watch_process() {
         trap "watch_process_cleanup $SIG" "$SIG"
     done
 
-    log "$$" > "${WATCH_PROCESS_PIDFILE}"
+    echo "$BASHPID" > "${WATCH_PROCESS_PIDFILE}"
 
     while :; do
-        log 'Clear systemd globals'
-        clear_systemd_globals
-
         log 'Load systemd path files'
         load_systemd_path_files
 
@@ -187,7 +184,7 @@ watch_process() {
         trap "watch_process_reload HUP" "HUP"
 
         # Build list of watched parent paths for inotifywait
-        local watch_path, parent_path
+        local watch_path parent_path
         declare -A parent_paths=()
         for watch_path in "${!SYSTEMD_PATH_WATCH[@]}"; do
             parent_path="$(dirname "$watch_path")"
@@ -276,10 +273,19 @@ load_systemd_path() {
 }
 
 # Load all *.path files found in /etc/systemd/system/
+# SYSTEMD_* globals are cleared first
 #
 # Globals:
+#   SYSTEMD_SERVICE_START[]
+#   SYSTEMD_SERVICE_STOP[]
+#   SYSTEMD_SERVICE_RELOAD[]
 #   SYSTEMD_PATH_WATCH[]
 load_systemd_path_files() {
+    SYSTEMD_SERVICE_START=()
+    SYSTEMD_SERVICE_STOP=()
+    SYSTEMD_SERVICE_RELOAD=()
+    SYSTEMD_PATH_WATCH=()
+
     local pathfile
     for pathfile in "/etc/systemd/system/"*.path; do
         load_systemd_path "$(basename "$pathfile")"
@@ -385,6 +391,14 @@ do_systemctl() {
                 do_systemctl_stop "$unit"
             fi
             ;;
+        reload)
+            if [[ "$unit" =~ \.path$ ]]; then
+                log "Doing nothing for systemctl $command, returning true"
+            else
+                unit="${unit%.service}"
+                do_systemctl_reload "$unit"
+            fi
+            ;;
         status)
             log "Doing nothing for systemctl $command, returning true"
             ;;
@@ -444,17 +458,18 @@ do_default() {
 }
 
 # Set up to log file descriptor 5 to file and stdout
-init_log() {
+setup_log() {
     exec 5> >(tee -ia "/init_tool.log")
 }
 
 # Log provided message on param $1 to file descriptor 5
 log() {
-    echo "${I_AM}[$$]:" "$1" >&5
+    echo "${I_AM}[$BASHPID]" "$1" >&5
 }
 
+# This comment intentionally blank
 main() {
-    init_log
+    setup_log
 
     I_AM=$(basename "$0")
     case "$I_AM" in
