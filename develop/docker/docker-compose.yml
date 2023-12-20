@@ -46,6 +46,7 @@ services:
     #environment:
     volumes:
       - ./files/fms/data:/opt/FileMaker/FileMaker\ Server/Data
+      - ./init_tool.sh:/init_tool.sh
     tmpfs:
       - /run
       - /run/lock

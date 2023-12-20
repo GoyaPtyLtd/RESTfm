@@ -48,15 +48,6 @@ if [[ $FMS_INSTALLER_COUNT -gt 1 ]]; then
 fi
 echo
 
-# Identify package dependencies in filemaker-server .deb
-echo "** Identify filemaker-server .deb package dependencies"
-FMS_PACKAGE_DEPS=./files/fms/installer/fms-package-deps.txt
-dpkg -I "./files/fms/installer/filemaker-server-${FMS_VERSION}."*".deb" | \
-    grep Depends: | sed -e 's/ Depends: //' -e 's/, / /g' > \
-    "${FMS_PACKAGE_DEPS}"
-cat < "${FMS_PACKAGE_DEPS}"
-echo
-
 # Build it!
 echo "** Building fms docker image"
 BUILDKIT_PROGRESS=plain docker-compose build --pull fms

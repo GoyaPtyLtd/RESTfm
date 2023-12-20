@@ -32,36 +32,32 @@ declare -A SYSTEMD_SERVICE_START=()
 declare -A SYSTEMD_SERVICE_STOP=()
 declare -A SYSTEMD_SERVICE_RELOAD=()
 declare -A SYSTEMD_PATH_WATCH=()
+declare I_AM='init_tool'
 declare WATCH_PROCESS_PID=0
+declare WATCH_PROCESS_PIDFILE=/run/watch_process.pid
 declare INOTIFYWAIT_PID=0
 
 # Cleanup handler when running as init
 init_cleanup() {
-    echo "Init cleanup on signal: $1"
+    log "Init cleanup on signal: $1"
     # Unset trapped signals
     trap - INT TERM EXIT
-    echo 'Stopping fmshelper service'
+    log 'Stopping fmshelper service'
     do_systemctl_stop fmshelper
-    echo 'Exiting'
+    log 'Exiting'
     exit 0
 }
 
 # Basic init setup - trap signals, run the watch process.
 setup_init() {
-    echo "I am: init" "$@"
+    log "I am: init" "$@"
 
-    echo 'Trapping signals'
+    log 'Trapping signals'
     for SIG in INT TERM EXIT; do
         trap "init_cleanup $SIG" "$SIG"
     done
 
-    echo 'Loading systemd path files'
-    local pathfile
-    for pathfile in "/etc/systemd/system/"*.path; do
-        load_systemd_path "$(basename "$pathfile")"
-    done
-
-    echo 'Starting systemd path watch process'
+    log 'Starting systemd path watch process'
     restart_watch_process
 }
 
@@ -69,10 +65,10 @@ setup_init() {
 do_init() {
     setup_init "$@"
 
-    echo 'Starting fmshelper'
+    log 'Starting fmshelper'
     do_systemctl_start fmshelper
 
-    echo 'Sleeping forever'
+    log 'Sleeping forever'
     # Interruptible sleep
     sleep infinity &
     wait $!
@@ -87,8 +83,22 @@ do_firewall_cmd() {
 # Just return true
 # FMS installer: sysctl -p --system > /dev/null 2>&1
 do_sysctl() {
-    echo "I am: sysctl " "$@"
+    log "I am: sysctl " "$@"
     exit 0
+}
+
+# Clear the SYSTEMD_* globals
+#
+# Globals:
+#   SYSTEMD_SERVICE_START[]
+#   SYSTEMD_SERVICE_STOP[]
+#   SYSTEMD_SERVICE_RELOAD[]
+#   SYSTEMD_PATH_WATCH[]
+clear_systemd_globals() {
+    SYSTEMD_SERVICE_START=()
+    SYSTEMD_SERVICE_STOP=()
+    SYSTEMD_SERVICE_RELOAD=()
+    SYSTEMD_PATH_WATCH=()
 }
 
 # Load systemd service file
@@ -107,7 +117,7 @@ load_systemd_service() {
     fi
 
     if [[ -z "$unitfile" ]]; then
-        echo "No service file found for: ${unit}"
+        log "No service file found for: ${unit}"
         return
     fi
 
@@ -128,7 +138,7 @@ load_systemd_service() {
 # Globals:
 #   INOTIFYWAIT_PID
 watch_process_reload() {
-    echo "watch_process reload on signal: $1"
+    log "watch_process reload on signal: $1"
     # Unset trap
     trap - HUP
 
@@ -140,10 +150,13 @@ watch_process_reload() {
 
 # Cleanup handler when running as watch process
 watch_process_cleanup() {
-    echo "watch_process cleanup on signal: $1"
+    log "watch_process cleanup on signal: $1"
     # Unset trapped signals
     trap - INT TERM EXIT
-    echo 'Exiting'
+
+    rm -f "${WATCH_PROCESS_PIDFILE}"
+
+    log 'Exiting'
     exit 0
 }
 
@@ -153,15 +166,22 @@ watch_process_cleanup() {
 # Globals:
 #   SYSTEMD_PATH_WATCH[]
 watch_process() {
-    BASH_ARGV0='watch_process'
-    echo 'Watch process starting'
+    log 'Watch process starting'
 
-    echo 'Trapping signals'
+    log 'Trapping signals'
     for SIG in INT TERM EXIT; do
         trap "watch_process_cleanup $SIG" "$SIG"
     done
 
+    log "$$" > "${WATCH_PROCESS_PIDFILE}"
+
     while :; do
+        log 'Clear systemd globals'
+        clear_systemd_globals
+
+        log 'Load systemd path files'
+        load_systemd_path_files
+
         INOTIFYWAIT_PID=0
 
         trap "watch_process_reload HUP" "HUP"
@@ -175,21 +195,21 @@ watch_process() {
         done
 
         if [[ ${#parent_paths[@]} -gt 0 ]]; then
-            echo "Running inotifywait on: " "${!parent_paths[@]}"
+            log "Running inotifywait on: " "${!parent_paths[@]}"
             (
                 inotifywait -m -e modify --format '%w|%e|%f' "${!parent_paths[@]}" |
                     while IFS='|' read -r directory event file; do
-                        echo "Notified on: $directory $event $file"
+                        log "Notified on: $directory $event $file"
                         if [[ -v "${SYSTEMD_PATH_WATCH["$directory/$file"]}" ]]; then
                             do_systemctl_start "${SYSTEMD_PATH_WATCH["$directory/$file"]}" 
                         else
-                            echo "Ignoring notification for: $directory/$file"
+                            log "Ignoring notification for: $directory/$file"
                         fi
                     done
             ) &
             INOTIFYWAIT_PID=$!
         else
-            echo "No paths to watch, sleeping"
+            log "No paths to watch, sleeping"
             sleep infinity &
             INOTIFYWAIT_PID=$!
         fi
@@ -213,6 +233,20 @@ restart_watch_process() {
     WATCH_PROCESS_PID=$!
 }
 
+# Send signal to watch process to reload
+#
+signal_reload_watch_process() {
+    if ! [[ -r "${WATCH_PROCESS_PIDFILE}" ]]; then
+        log "Error: Cannot read watch process PID file: ${WATCH_PROCESS_PIDFILE}"
+        restart_watch_process
+        return
+    fi
+
+    local pid
+    read -r pid < "${WATCH_PROCESS_PIDFILE}"
+    kill -HUP "${pid}"
+}
+
 # Load systemd path from systemd path file into SYSTEMD_PATH_WATCH[]
 #
 # Globals:
@@ -227,10 +261,11 @@ load_systemd_path() {
     fi
 
     if [[ -z "$pathfile" ]]; then
-        echo "No path file found for: ${unit}"
+        log "No path file found for: ${unit}"
         return
     fi
 
+    # Load the associated .service file for this .path file
     load_systemd_service "$unit"
 
     local temp
@@ -238,6 +273,17 @@ load_systemd_path() {
     temp=$(grep ^PathModified= "$unitfile")
     temp=${temp#PathModified=}
     SYSTEMD_PATH_WATCH[$temp]=$unit
+}
+
+# Load all *.path files found in /etc/systemd/system/
+#
+# Globals:
+#   SYSTEMD_PATH_WATCH[]
+load_systemd_path_files() {
+    local pathfile
+    for pathfile in "/etc/systemd/system/"*.path; do
+        load_systemd_path "$(basename "$pathfile")"
+    done
 }
 
 # Unload systemd path from SYSTEMD_PATH_WATCH[] by unit
@@ -283,24 +329,14 @@ do_systemctl_reload() {
     fi
 }
 
-do_systemctl_start_path() {
+do_systemctl_enable_path() {
     local unit=$1
 
-    load_systemd_path "$unit"
-
-    restart_watch_process
-}
-
-do_systemctl_stop_path() {
-    local unit=$1
-
-    unload_systemd_path "$unit"
-
-    restart_watch_process
+    signal_reload_watch_process
 }
 
 do_systemctl() {
-    echo "I am: systemctl" "$@"
+    log "I am: systemctl" "$@"
 
     local command command_switches unit
     command=$1
@@ -314,24 +350,28 @@ do_systemctl() {
 
     case "$command" in
         daemon-reexec|daemon-reload)
-            echo "Doing nothing for systemctl $command, returning true"
+            log "Doing nothing for systemctl $command, returning true"
             ;;
         is-active)
-            echo "Doing nothing for systemctl $command, returning true"
+            log "Doing nothing for systemctl $command, returning true"
             ;;
         is-enabled)
-            echo "Doing nothing for systemctl $command, returning true"
+            log "Doing nothing for systemctl $command, returning true"
             ;;
         enable)
-            echo "Doing nothing for systemctl $command, returning true"
+            if [[ "$unit" =~ \.path$ ]]; then
+                unit="${unit%.path}"
+                do_systemctl_enable_path "$unit"
+            else
+                log "Doing nothing for systemctl $command, returning true"
+            fi
             ;;
         disable)
-            echo "Doing nothing for systemctl $command, returning true"
+            log "Doing nothing for systemctl $command, returning true"
             ;;
         start)
             if [[ "$unit" =~ \.path$ ]]; then
-                unit="${unit%.path}"
-                do_systemctl_start_path "$unit"
+                log "Doing nothing for systemctl $command, returning true"
             else
                 unit="${unit%.service}"
                 do_systemctl_start "$unit"
@@ -339,18 +379,17 @@ do_systemctl() {
             ;;
         stop)
             if [[ "$unit" =~ \.path$ ]]; then
-                unit="${unit%.path}"
-                do_systemctl_stop_path "$unit"
+                log "Doing nothing for systemctl $command, returning true"
             else
                 unit="${unit%.service}"
                 do_systemctl_stop "$unit"
             fi
             ;;
         status)
-            echo "Doing nothing for systemctl $command, returning true"
+            log "Doing nothing for systemctl $command, returning true"
             ;;
         *)
-            echo "Don't know systemctl command: $command, returning true anyway"
+            log "Don't know systemctl command: $command, returning true anyway"
             ;;
     esac
 
@@ -359,17 +398,17 @@ do_systemctl() {
 
 # Install self as replacement for system tools in container
 install_self() {
-    echo "Install self"
+    log "Install self"
 
     # Safety check
     if [[ ! -f "/.dockerenv" ]]; then
-        echo "ERROR: Cannot detect we are inside a docker container" >&2
+        log "ERROR: Cannot detect we are inside a docker container" >&2
         exit 1
     fi
 
     local file
     for file in "${REPLACES[@]}"; do
-        echo "Replace $file"
+        log "Replace $file"
         mv "$file" "$file.orig"
         ln -s "/init_tool.sh" "$file"
     done
@@ -381,13 +420,13 @@ install_fms() {
     shift
 
     # Set ourselves up as init
-    BASH_ARGV0="init"
     setup_init "$@"
 
-    echo "Installing filemaker-server package: $installer"
-    local parent_dir="$(dirname "${installer}")"
+    log "Installing filemaker-server package: $installer"
+    local parent_dir
+    parent_dir="$(dirname "${installer}")"
     TERM=vt100 FM_ASSISTED_INSTALL="${parent_dir}" apt-get install -y "${installer}"
-    echo "Finished installing filemaker-server package"
+    log "Finished installing filemaker-server package"
 }
 
 do_default() {
@@ -404,35 +443,43 @@ do_default() {
     esac
 }
 
-# main
+# Set up to log file descriptor 5 to file and stdout
+init_log() {
+    exec 5> >(tee -ia "/init_tool.log")
+}
 
-# Log all output to file.
-exec >  >(trap "" INT TERM; sed 's/^/ ++ /' | tee -ia "/init_tool.log")
-exec 2> >(trap "" INT TERM; sed 's/^/ !! /' | tee -ia "/init_tool.log" >&2)
+# Log provided message on param $1 to file descriptor 5
+log() {
+    echo "${I_AM}[$$]:" "$1" >&5
+}
 
-#echo "DEBUG: $0" "$@"
+main() {
+    init_log
 
-# Find how we were called
-I_AM=$(basename "$0")
+    I_AM=$(basename "$0")
+    case "$I_AM" in
+        firewall-cmd)
+            do_firewall_cmd "$@"
+            ;;
 
-case "$I_AM" in
-    firewall-cmd)
-        do_firewall_cmd "$@"
-        ;;
+        init)
+            do_init "$@"
+            ;;
 
-    init)
-        do_init "$@"
-        ;;
+        sysctl)
+            do_sysctl "$@"
+            ;;
 
-    sysctl)
-        do_sysctl "$@"
-        ;;
+        systemctl)
+            do_systemctl "$@"
+            ;;
 
-    systemctl)
-        do_systemctl "$@"
-        ;;
+        *)
+            do_default "$@"
+            ;;
+    esac
 
-    *)
-        do_default "$@"
-        ;;
-esac
+    exit 0
+}
+
+main "$@"

@@ -13,7 +13,7 @@ RUN dpkg -I "/fms/filemaker-server-${FMS_VERSION}."*".deb" | \
     "/fms/fms-package-deps.txt"
 
 
-### Build FMS image ###
+### Build FMS docker image ###
 ARG UBUNTU_VERSION=${UBUNTU_VERSION:-22.04}
 
 FROM ubuntu:${UBUNTU_VERSION}
