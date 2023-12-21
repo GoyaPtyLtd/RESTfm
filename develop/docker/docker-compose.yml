@@ -39,6 +39,7 @@ services:
         TIMEZONE: ${TIMEZONE:-Australia/Melbourne}
         FMS_VERSION: ${FMS_VERSION:-20.03}
         CERT_CN: ${CERT_CN:-localhost}
+        DEBUG_BUILD: ${DEBUG_BUILD:-false}
     image: fms-${FMS_VERSION}
     container_name: fms
     hostname: fms
@@ -46,7 +47,6 @@ services:
     #environment:
     volumes:
       - ./files/fms/data:/opt/FileMaker/FileMaker\ Server/Data
-      - ./init_tool.sh:/init_tool.sh
     tmpfs:
       - /run
       - /run/lock

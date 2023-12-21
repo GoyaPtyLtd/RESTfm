@@ -41,13 +41,6 @@ RUN apt-get update -y && \
     ln -s "/usr/share/zoneinfo/${TIMEZONE}" /etc/localtime && \
     dpkg-reconfigure -f noninteractive tzdata
 
-# filemaker-server needs systemctl, we use this replacement:
-# https://github.com/gdraheim/docker-systemctl-replacement
-#ADD https://raw.githubusercontent.com/gdraheim/docker-systemctl-replacement/master/files/docker/systemctl3.py /usr/bin/systemctl
-#RUN chmod a+x /usr/bin/systemctl
-ADD ./init_tool.sh /init_tool.sh
-RUN chmod a+x /init_tool.sh && touch /.dockerenv && /init_tool.sh --install-self
-
 # Create self-signed certificate
 ARG CERT_CN=${CERT_CN:-localhost}
 ARG CERT_O=${CERT_O:-"RESTfm Development"}
@@ -70,6 +63,22 @@ RUN groupadd --non-unique --gid ${GROUP_ID} fmsadmin && \
     useradd --non-unique --system --shell /sbin/nologin --uid ${USER_ID} \
         -g fmsadmin fmserver
 
+# Any special config for debug build
+ARG DEBUG_BUILD=${DEBUG_BUILD:-false}
+RUN if [ "$DEBUG_BUILD" = "true" ]; then \
+        apt-get update -y && \
+        apt-get install -y less vim telnet && \
+        apt-get clean -y && \
+        rm -rf /var/lib/apt/lists/*; \
+    fi
+
+# filemaker-server needs systemctl, we use this replacement:
+# https://github.com/gdraheim/docker-systemctl-replacement
+#ADD https://raw.githubusercontent.com/gdraheim/docker-systemctl-replacement/master/files/docker/systemctl3.py /usr/bin/systemctl
+#RUN chmod a+x /usr/bin/systemctl
+ADD ./init_tool.sh /init_tool.sh
+RUN chmod a+x /init_tool.sh && touch /.dockerenv && /init_tool.sh --install-self
+
 # Copy filemaker-server installer, licence, and config
 COPY ["./files/fms/installer/Assisted Install.txt", "/fms/"]
 COPY ./files/fms/installer/LicenseCert.fmcert /fms/
@@ -82,8 +91,11 @@ COPY ./files/fms/installer/filemaker-server-${FMS_VERSION}.*.deb /fms/
 #         certificate in the entrypoint to resolve this issue.
 #RUN TERM=vt100 FM_ASSISTED_INSTALL=/fms apt-get install -y \
 #        /fms/filemaker-server-${FMS_VERSION}.*.deb && \
-#RUN /init_tool.sh --install-fms /fms/filemaker-server-${FMS_VERSION}.*.deb && \
-#    echo "Done installing FMS"
+#ARG FORCE=2
+RUN /init_tool.sh --install-fms /fms/filemaker-server-${FMS_VERSION}.*.deb && \
+    mv /init_tool.log /init_tool.log.install && \
+    rm -f /run/nginx.pid && rm -f /run/watch_process.pid && \
+    echo "Done installing FMS"
 
     #echo "Removing installer files ..." && \
     #rm -rf /fms && \
@@ -97,4 +109,5 @@ USER root
 
 COPY ./entrypoint.sh /entrypoint.sh
 
-CMD ["bash", "/entrypoint.sh"]
+#CMD ["bash", "/entrypoint.sh"]
+CMD ["/usr/sbin/init"]

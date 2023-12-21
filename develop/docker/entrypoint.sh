@@ -81,8 +81,8 @@ webserver_controller() {
 }
 
 # Run the webserver controller in the background
-webserver_controller &
-sleep 1
+#webserver_controller &
+#sleep 1
 
 # First start of fmshelper with no certificate
 echo ' ++ Starting fmshelper - no SSL certificate'

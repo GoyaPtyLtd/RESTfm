@@ -25,6 +25,7 @@ REPLACES=(
   '/usr/bin/systemctl'
   '/usr/sbin/init'
   '/usr/sbin/sysctl'
+  '/usr/bin/cat'
 )
 
 # Global variables
@@ -34,29 +35,38 @@ declare -A SYSTEMD_SERVICE_RELOAD=()
 declare -A SYSTEMD_PATH_WATCH=()
 declare I_AM='init_tool'
 declare INIT_SLEEP_PID=0
-declare WATCH_PROCESS_PID=0
+declare WATCH_PROCESS_PPID=0
 declare WATCH_PROCESS_PIDFILE=/run/watch_process.pid
-declare INOTIFYWAIT_PID=0
+declare INOTIFYWAIT_PPID=0
 
 # Cleanup handler when running as init
 init_cleanup() {
     log "Cleanup on signal: $1"
-    # Unset trapped signals
-    trap - INT TERM EXIT
+
+    # block further signals
+    trap '' INT TERM EXIT
+
     log 'Stopping fmshelper service'
     do_systemctl_stop fmshelper
+
     if [[ $INIT_SLEEP_PID != 0 ]]; then
         kill "$INIT_SLEEP_PID"
         wait "$INIT_SLEEP_PID"
     fi
+
+    if [[ -r "${WATCH_PROCESS_PIDFILE}" ]]; then
+        log 'Stopping path watch_process'
+        local pid
+        read -r pid < "${WATCH_PROCESS_PIDFILE}"
+        kill "${pid}"
+    fi
+
     log 'Exiting'
     exit 0
 }
 
 # Basic init setup - trap signals, run the watch process.
 setup_init() {
-    log "I am: init" "$@"
-
     log 'Trapping signals'
     for SIG in INT TERM EXIT; do
         trap "init_cleanup $SIG" "$SIG"
@@ -81,6 +91,26 @@ do_init() {
     wait "${INIT_SLEEP_PID}"
 }
 
+# We need to violate /opt/FileMaker/etc/init.d/fmshelper which tries to
+# check if it is installing in docker ... and fails miserably.
+#
+# Notes:
+#   The init.d/fmshelper script will cat /proc/1/cgroup to check it contains
+#   the string "docker", if it does it will then cat
+#   /sys/fs/cgroup/memory/memory.limit_in_bytes which doesn't exist in
+#   cgroup v2 and will cause the script to crash.
+do_cat() {
+    # This one case
+    if [[ "$1" == "/proc/1/cgroup" ]]; then
+        log "caught this one case!"
+        echo "not this time"
+        exit 0
+    fi
+
+    # Re-exec and pass through args to the original cat
+    exec cat.orig "$@"
+}
+
 # Just return true
 # No output as it is parsed by deb postinst
 do_firewall_cmd() {
@@ -90,7 +120,7 @@ do_firewall_cmd() {
 # Just return true
 # FMS installer: sysctl -p --system > /dev/null 2>&1
 do_sysctl() {
-    log "I am: sysctl " "$@"
+    log "Called as: sysctl" "$@"
     exit 0
 }
 
@@ -119,19 +149,25 @@ load_systemd_service() {
     local temp
 
     temp=$(grep ^ExecStart= "$unitfile")
-    SYSTEMD_SERVICE_START[$unit]=${temp#ExecStart=}
+    temp=${temp#ExecStart=}                 # Remove "ExecStart=" prefix
+    temp=${temp#-}                          # Remove possible "-" prefix
+    SYSTEMD_SERVICE_START[$unit]=${temp}
 
     temp=$(grep ^ExecStop= "$unitfile")
-    SYSTEMD_SERVICE_STOP[$unit]=${temp#ExecStop=}
+    temp=${temp#ExecStop=}
+    temp=${temp#-}
+    SYSTEMD_SERVICE_STOP[$unit]=${temp}
 
     temp=$(grep ^ExecReload= "$unitfile")
+    temp=${temp#ExecReload=}
+    temp=${temp#-}
     SYSTEMD_SERVICE_RELOAD[$unit]=${temp#ExecReload=}
 }
 
 # Reload handler for watch process
 #
 # Globals:
-#   INOTIFYWAIT_PID
+#   INOTIFYWAIT_PPID
 watch_process_reload() {
     log "Reloading on signal: $1"
 
@@ -139,9 +175,9 @@ watch_process_reload() {
     trap '' HUP
 
     # Kill the inotifywait process, will be reaped in watch_process loop
-    if [[ $INOTIFYWAIT_PID != 0 ]]; then
-        log "Kill inotifywait PID: ${INOTIFYWAIT_PID}"
-        kill "${INOTIFYWAIT_PID}"
+    if [[ $INOTIFYWAIT_PPID != 0 ]]; then
+        log "Kill inotifywait PPID: ${INOTIFYWAIT_PPID}"
+        pkill -P "${INOTIFYWAIT_PPID}"
     fi
 }
 
@@ -149,12 +185,12 @@ watch_process_reload() {
 watch_process_cleanup() {
     log "Cleanup on signal: $1"
 
-    # Unset trapped signals
-    trap - INT TERM EXIT
+    # block further signals
+    trap '' INT TERM EXIT
 
-    if [[ $INOTIFYWAIT_PID != 0 ]]; then
-        kill "$INOTIFYWAIT_PID"
-        wait "$INOTIFYWAIT_PID"
+    if [[ $INOTIFYWAIT_PPID != 0 ]]; then
+        pkill -P "$INOTIFYWAIT_PPID"
+        wait "$INOTIFYWAIT_PPID"
     fi
 
     rm -f "${WATCH_PROCESS_PIDFILE}"
@@ -163,14 +199,72 @@ watch_process_cleanup() {
     exit 0
 }
 
+# A manual and more execv(3) intensive version of inotifywait(1).
+# 'stat' is called for each found watch file every second.
+#
+# Output formatted as:
+#   /opt/FileMaker/FileMaker Server/NginxServer/|MODIFY|start
+#
+# Parameters:
+#   $@ - List of paths to files to watch for change in mtime
+emulate_inotifywait() {
+    local watch_paths=()
+    local watch_dirnames=()
+    local watch_basenames=()
+    local watch_mtimes=()
+
+    I_AM="${FUNCNAME[0]}"
+
+    # Predetermine dirnames and basenames
+    local watch_path
+    for watch_path in "$@"; do
+        watch_paths+=("$watch_path")
+        watch_dirnames+=("$(dirname "$watch_path")/")
+        watch_basenames+=("$(basename "$watch_path")")
+    done
+
+    # Identify mtimes of existing files before we start monitoring
+    local i mtime
+    for (( i=0; i<${#watch_paths[@]}; i++ )); do
+        if [[ -e "${watch_paths[$i]}" ]]; then
+            mtime=$(stat --format=%Y "${watch_paths[$i]}")
+
+            watch_mtimes[$i]=$mtime
+        else
+            watch_mtimes[$i]=0
+        fi
+    done
+
+    # Endless monitoring loop
+    while :; do
+        for (( i=0; i<${#watch_paths[@]}; i++ )); do
+            if [[ -e "${watch_paths[$i]}" ]]; then
+                mtime=$(stat --format=%Y "${watch_paths[$i]}")
+
+                if [[ $mtime -gt ${watch_mtimes[$i]} ]]; then
+                    printf '%s|MODIFY|%s\n' "${watch_dirnames[$i]}" "${watch_basenames[$i]}"
+                    watch_mtimes[$i]=$mtime
+                fi
+            else
+                watch_mtimes[$i]=0
+            fi
+        done
+        sleep 1
+    done
+}
+
 # Watch paths in SYSTEMD_PATH_WATCH, and call appropriate systemctl service.
 # This function is backgrounded and managed by restart_watch_process()
 #
 # Globals:
 #   SYSTEMD_PATH_WATCH[]
 watch_process() {
-    I_AM="watch_process"
-    log 'Watch process starting'
+    I_AM="${FUNCNAME[0]}"
+    if [[ "${EMULATE_INOTIFYWAIT}" == "1" ]]; then
+        log 'Watch process starting (emulated inotifywait)'
+    else
+        log 'Watch process starting (inotifywait)'
+    fi
 
     log 'Trapping signals'
     for SIG in INT TERM EXIT; do
@@ -183,7 +277,7 @@ watch_process() {
         log 'Load systemd path files'
         load_systemd_path_files
 
-        INOTIFYWAIT_PID=0
+        INOTIFYWAIT_PPID=0
 
         trap "watch_process_reload HUP" "HUP"
 
@@ -196,42 +290,58 @@ watch_process() {
         done
 
         if [[ ${#parent_paths[@]} -gt 0 ]]; then
-            log "Watching paths:" "${!parent_paths[@]}"
             (
-                inotifywait -m -e modify --format '%w|%e|%f' "${!parent_paths[@]}" |
+                log "Watching paths:" "${!parent_paths[@]}"
+                {
+                    if [[ "${EMULATE_INOTIFYWAIT}" == "1" ]]; then
+                        emulate_inotifywait "${!SYSTEMD_PATH_WATCH[@]}"
+                    else
+                        # inotifywait output formatted as:
+                        #   /opt/FileMaker/FileMaker Server/NginxServer/|MODIFY|start
+                        #
+                        # Testing notes:
+                        #   - This will trigger two consecutive modify events:
+                        #       echo "test" > /some/path/start
+                        #   - This will trigger just one modify event (preferred):
+                        #       echo "test" >> /some/path/start
+                        inotifywait -m -e modify --format '%w|%e|%f' "${!parent_paths[@]}"
+                    fi
+                } |
                     while IFS='|' read -r directory event file; do
-                        log "Notified on: $directory $event $file"
-                        if [[ -v "${SYSTEMD_PATH_WATCH["$directory/$file"]}" ]]; then
-                            do_systemctl_start "${SYSTEMD_PATH_WATCH["$directory/$file"]}" 
+                        log "Notified on: ${directory}|${event}|${file}"
+                        if [[ -v SYSTEMD_PATH_WATCH[${directory}${file}] ]]; then
+                            do_systemctl_start "${SYSTEMD_PATH_WATCH[${directory}${file}]}"
                         else
-                            log "Ignoring notification for: $directory/$file"
+                            log "Ignoring notification for: ${directory}${file}"
                         fi
                     done
             ) &
-            INOTIFYWAIT_PID=$!
+            INOTIFYWAIT_PPID=$!
         else
-            log "No paths to watch, sleeping"
-            sleep infinity &
-            INOTIFYWAIT_PID=$!
+            (
+                log "No paths to watch, sleeping"
+                sleep infinity
+            ) &
+            INOTIFYWAIT_PPID=$!
         fi
 
-        log "Waiting on inotifywait PID: ${INOTIFYWAIT_PID}"
-        wait "${INOTIFYWAIT_PID}"
+        log "Waiting on inotifywait PPID: ${INOTIFYWAIT_PPID}"
+        wait "${INOTIFYWAIT_PPID}"
     done
 }
 
 # Restart/start watch process
 #
 # Globals:
-#   WATCH_PROCESS_PID
+#   WATCH_PROCESS_PPID
 restart_watch_process() {
-    if [[ $WATCH_PROCESS_PID != 0 ]]; then
-        kill "${WATCH_PROCESS_PID}"
-        wait "${WATCH_PROCESS_PID}"
+    if [[ $WATCH_PROCESS_PPID != 0 ]]; then
+        pkill -P "${WATCH_PROCESS_PPID}"
+        wait "${WATCH_PROCESS_PPID}"
     fi
 
     watch_process &
-    WATCH_PROCESS_PID=$!
+    WATCH_PROCESS_PPID=$!
 }
 
 # Send signal to watch process to reload
@@ -270,9 +380,6 @@ load_systemd_path() {
     fi
 
     log "Load ${unit}.path"
-
-    # Load the associated .service file for this .path file
-    load_systemd_service "$unit"
 
     local temp
     temp=$(grep ^PathModified= "$pathfile")
@@ -322,8 +429,31 @@ do_systemctl_start() {
     log "Performing systemctl start: $unit"
 
     load_systemd_service "$unit"
-    if [[ -v "${SYSTEMD_SERVICE_START[$unit]}" ]]; then
-        eval "${SYSTEMD_SERVICE_START[$unit]}"
+    if [[ -v SYSTEMD_SERVICE_START[$unit] ]]; then
+        log "Exec: ${SYSTEMD_SERVICE_START[$unit]}"
+        eval "${SYSTEMD_SERVICE_START[$unit]}" 1>&5 2>&5
+    fi
+
+    if [[ "${unit%.service}" == "fmshelper" ]]; then
+        if [[ "$INSTALL_FMS" == "1" ]]; then
+            # This is a hack to trigger the start of the web server
+            # Notes:
+            #   For some reason (currently unknown) when the .deb is
+            #   being installed while inside of the Dockerfile build
+            #   environment, the "start" file is never written to the
+            #   filesystem as normal. systemd would watch for this as
+            #   defined in a .path file (and this script does the
+            #   equivalent). We need another trigger, and inspection of
+            #   the .deb postinst file gives us this one.
+            #sleep 2
+            #local crap=$(ps axf)
+            #log "crap1: $crap"
+            #systemctl start com.filemaker.nginx.start.service
+            #sleep 2
+            #crap=$(ps axf)
+            #log "crap2: $crap"
+            :
+        fi
     fi
 }
 
@@ -333,8 +463,9 @@ do_systemctl_stop() {
     log "Performing systemctl stop: $unit"
 
     load_systemd_service "$unit"
-    if [[ -v "${SYSTEMD_SERVICE_STOP[$unit]}" ]]; then
-        eval "${SYSTEMD_SERVICE_STOP[$unit]}"
+    if [[ -v SYSTEMD_SERVICE_STOP[$unit] ]]; then
+        log "Exec: ${SYSTEMD_SERVICE_STOP[$unit]}"
+        eval "${SYSTEMD_SERVICE_STOP[$unit]}" 1>&5 2>&5
     fi
 }
 
@@ -344,8 +475,23 @@ do_systemctl_reload() {
     log "Performing systemctl reload: $unit"
 
     load_systemd_service "$unit"
-    if [[ -v "${SYSTEMD_SERVICE_RELOAD[$unit]}" ]]; then
-        eval "${SYSTEMD_SERVICE_RELOAD[$unit]}"
+    if [[ -v SYSTEMD_SERVICE_RELOAD[$unit] ]]; then
+        log "Exec: ${SYSTEMD_SERVICE_RELOAD[$unit]}"
+        eval "${SYSTEMD_SERVICE_RELOAD[$unit]}" 1>&5 2>&5
+    fi
+}
+
+do_systemctl_restart() {
+    local unit=$1
+
+    log "Performing systemctl restart: $unit"
+
+    load_systemd_service "$unit"
+    if [[ -v SYSTEMD_SERVICE_RELOAD[$unit] ]]; then
+        log "Exec: ${SYSTEMD_SERVICE_STOP[$unit]}"
+        eval "${SYSTEMD_SERVICE_STOP[$unit]}" 1>&5 2>&5
+        log "Exec: ${SYSTEMD_SERVICE_START[$unit]}"
+        eval "${SYSTEMD_SERVICE_START[$unit]}" 1>&5 2>&5
     fi
 }
 
@@ -356,7 +502,7 @@ do_systemctl_enable_path() {
 }
 
 do_systemctl() {
-    log "I am: systemctl" "$@"
+    log "Called as: systemctl" "$@"
 
     local command command_switches unit
     command=$1
@@ -369,7 +515,10 @@ do_systemctl() {
     unit=$1
 
     case "$command" in
-        daemon-reexec|daemon-reload)
+        daemon-reexec)
+            log "Doing nothing for systemctl $command, returning true"
+            ;;
+        daemon-reload)
             log "Doing nothing for systemctl $command, returning true"
             ;;
         is-active)
@@ -413,6 +562,14 @@ do_systemctl() {
                 do_systemctl_reload "$unit"
             fi
             ;;
+        restart)
+            if [[ "$unit" =~ \.path$ ]]; then
+                log "Doing nothing for systemctl $command, returning true"
+            else
+                unit="${unit%.service}"
+                do_systemctl_restart "$unit"
+            fi
+            ;;
         status)
             log "Doing nothing for systemctl $command, returning true"
             ;;
@@ -447,14 +604,23 @@ install_fms() {
     local installer=$1
     shift
 
+    # Tell other processes (children of us) that this is the FMS install
+    export INSTALL_FMS=1
+
     # Set ourselves up as init
     setup_init "$@"
 
     log "Installing filemaker-server package: $installer"
-    local parent_dir
+    local parent_dir result
     parent_dir="$(dirname "${installer}")"
     TERM=vt100 FM_ASSISTED_INSTALL="${parent_dir}" apt-get install -y "${installer}"
-    log "Finished installing filemaker-server package"
+    result=$?
+    log "Finished installing filemaker-server package: $result"
+
+    log "Restoring /usr/bin/cat"
+    mv -f /usr/bin/cat.orig /usr/bin/cat
+
+    exit $result
 }
 
 do_default() {
@@ -487,6 +653,9 @@ main() {
 
     I_AM=$(basename "$0")
     case "$I_AM" in
+        cat)
+            do_cat "$@"
+            ;;
         firewall-cmd)
             do_firewall_cmd "$@"
             ;;
