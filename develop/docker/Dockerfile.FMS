@@ -67,22 +67,22 @@ RUN groupadd --non-unique --gid ${GROUP_ID} fmsadmin && \
 ARG DEBUG_BUILD=${DEBUG_BUILD:-false}
 RUN if [ "$DEBUG_BUILD" = "true" ]; then \
         apt-get update -y && \
-        apt-get install -y less vim telnet && \
+        apt-get install -y less vim telnet tmux && \
         apt-get clean -y && \
         rm -rf /var/lib/apt/lists/*; \
     fi
 
-# filemaker-server needs systemctl, we use this replacement:
-# https://github.com/gdraheim/docker-systemctl-replacement
-#ADD https://raw.githubusercontent.com/gdraheim/docker-systemctl-replacement/master/files/docker/systemctl3.py /usr/bin/systemctl
-#RUN chmod a+x /usr/bin/systemctl
-ADD ./init_tool.sh /init_tool.sh
+# filemaker-server needs systemctl, we have a replacement:
+COPY ./init_tool.sh /init_tool.sh
 RUN chmod a+x /init_tool.sh && touch /.dockerenv && /init_tool.sh --install-self
 
 # Copy filemaker-server installer, licence, and config
 COPY ["./files/fms/installer/Assisted Install.txt", "/fms/"]
 COPY ./files/fms/installer/LicenseCert.fmcert /fms/
 COPY ./files/fms/installer/filemaker-server-${FMS_VERSION}.*.deb /fms/
+
+# Copy systemd override for com.filemaker.nginx.stop.service
+COPY ./files/fms/systemd/com.filemaker.nginx.stop.d-override.conf /etc/systemd/system/com.filemaker.nginx.stop.d/override.conf
 
 # Install FMS.
 #   Note: It is possible to install the self-signed certificate here, but
@@ -93,12 +93,10 @@ COPY ./files/fms/installer/filemaker-server-${FMS_VERSION}.*.deb /fms/
 #        /fms/filemaker-server-${FMS_VERSION}.*.deb && \
 #ARG FORCE=2
 RUN /init_tool.sh --install-fms /fms/filemaker-server-${FMS_VERSION}.*.deb && \
+    echo "Done installing FMS, cleaning up" && \
     mv /init_tool.log /init_tool.log.install && \
     rm -f /run/nginx.pid && rm -f /run/watch_process.pid && \
-    echo "Done installing FMS"
-
-    #echo "Removing installer files ..." && \
-    #rm -rf /fms && \
+    rm -rf /fms
 
 EXPOSE 80
 EXPOSE 443
@@ -107,7 +105,8 @@ EXPOSE 5003
 
 USER root
 
-COPY ./entrypoint.sh /entrypoint.sh
-
+#COPY ./entrypoint.sh /entrypoint.sh
 #CMD ["bash", "/entrypoint.sh"]
-CMD ["/usr/sbin/init"]
+
+ENTRYPOINT [ "/usr/sbin/init" ]
+CMD [ "fmshelper" ]

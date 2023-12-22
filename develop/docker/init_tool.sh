@@ -33,6 +33,7 @@ declare -A SYSTEMD_SERVICE_START=()
 declare -A SYSTEMD_SERVICE_STOP=()
 declare -A SYSTEMD_SERVICE_RELOAD=()
 declare -A SYSTEMD_PATH_WATCH=()
+declare -A INIT_SERVICES=()
 declare I_AM='init_tool'
 declare INIT_SLEEP_PID=0
 declare WATCH_PROCESS_PPID=0
@@ -40,26 +41,28 @@ declare WATCH_PROCESS_PIDFILE=/run/watch_process.pid
 declare INOTIFYWAIT_PPID=0
 
 # Cleanup handler when running as init
+#
+# Globals:
+#   INIT_SERVICES[] - list of services init was told to start
 init_cleanup() {
     log "Cleanup on signal: $1"
 
-    # block further signals
+    # Block further signals
     trap '' INT TERM EXIT
 
-    log 'Stopping fmshelper service'
-    do_systemctl_stop fmshelper
+    # Stop services in reverse of start order
+    local i
+    for (( i=${#INIT_SERVICES[@]} - 1; i >= 0; i-- )); do
+        do_systemctl_stop "${INIT_SERVICES[i]}"
+    done
 
+    # Clean up our backgrounded sleep process
     if [[ $INIT_SLEEP_PID != 0 ]]; then
         kill "$INIT_SLEEP_PID"
         wait "$INIT_SLEEP_PID"
     fi
 
-    if [[ -r "${WATCH_PROCESS_PIDFILE}" ]]; then
-        log 'Stopping path watch_process'
-        local pid
-        read -r pid < "${WATCH_PROCESS_PIDFILE}"
-        kill "${pid}"
-    fi
+    stop_watch_process
 
     log 'Exiting'
     exit 0
@@ -72,16 +75,22 @@ setup_init() {
         trap "init_cleanup $SIG" "$SIG"
     done
 
-    log 'Starting path watch process'
     restart_watch_process
 }
 
-# Run as init - we just start fmshelper and wait forever
+# Run as init - we start requested services and then wait forever
+#
+# Globals:
+#   INIT_SERVICES[] - list of services init was told to start
 do_init() {
-    setup_init "$@"
+    setup_init
 
-    log 'Starting fmshelper'
-    do_systemctl_start fmshelper
+    # Start services
+    local service
+    for service in "$@"; do
+        INIT_SERVICES+=( "${service}" )
+        do_systemctl_start "${service}"
+    done
 
     log 'Sleeping'
     # Interruptible sleep
@@ -124,6 +133,43 @@ do_sysctl() {
     exit 0
 }
 
+# Parse systemd unit file into SYSTEMD_* global variables
+#
+# Parameters:
+#   $1 - unit name (minus any .service suffix)
+#   $2 - path to unit file
+#
+# Globals:
+#   SYSTEMD_SERVICE_START[unit]
+#   SYSTEMD_SERVICE_STOP[unit]
+#   SYSTEMD_SERVICE_RELOAD[unit]
+parse_unit_file() {
+    local unit=$1
+    local unitfile=$2
+
+    if ! [[ -r "${unitfile}" ]]; then
+        log "Unreadable unit file: ${unitfile}"
+        return
+    fi
+
+    local temp
+
+    temp=$(grep ^ExecStart= "$unitfile")
+    temp=${temp#ExecStart=}                 # Remove "ExecStart=" prefix
+    temp=${temp#-}                          # Remove possible "-" prefix
+    SYSTEMD_SERVICE_START[$unit]=${temp}
+
+    temp=$(grep ^ExecStop= "$unitfile")
+    temp=${temp#ExecStop=}
+    temp=${temp#-}
+    SYSTEMD_SERVICE_STOP[$unit]=${temp}
+
+    temp=$(grep ^ExecReload= "$unitfile")
+    temp=${temp#ExecReload=}
+    temp=${temp#-}
+    SYSTEMD_SERVICE_RELOAD[$unit]=${temp}
+}
+
 # Load systemd service file
 #
 # Globals:
@@ -144,24 +190,21 @@ load_systemd_service() {
         return
     fi
 
-    log "Load ${unit}.service"
+    log "Load ${unitfile}"
 
-    local temp
+    parse_unit_file "${unit}" "${unitfile}"
 
-    temp=$(grep ^ExecStart= "$unitfile")
-    temp=${temp#ExecStart=}                 # Remove "ExecStart=" prefix
-    temp=${temp#-}                          # Remove possible "-" prefix
-    SYSTEMD_SERVICE_START[$unit]=${temp}
-
-    temp=$(grep ^ExecStop= "$unitfile")
-    temp=${temp#ExecStop=}
-    temp=${temp#-}
-    SYSTEMD_SERVICE_STOP[$unit]=${temp}
-
-    temp=$(grep ^ExecReload= "$unitfile")
-    temp=${temp#ExecReload=}
-    temp=${temp#-}
-    SYSTEMD_SERVICE_RELOAD[$unit]=${temp#ExecReload=}
+    # Apply any overrides
+    if ! [[ -d "/etc/systemd/system/${unit}.d" ]]; then
+        return
+    fi
+    local override_file
+    for override_file in "/etc/systemd/system/${unit}.d"/*.conf; do
+        if [[ -r "${override_file}" ]]; then
+            log "Load ${override_file}"
+            parse_unit_file "${unit}" "${override_file}"
+        fi
+    done
 }
 
 # Reload handler for watch process
@@ -344,8 +387,23 @@ restart_watch_process() {
     WATCH_PROCESS_PPID=$!
 }
 
+# Stop the path watch process
+#
+# Globals:
+#   WATCH_PROCESS_PIDFILE
+stop_watch_process() {
+    if [[ -r "${WATCH_PROCESS_PIDFILE}" ]]; then
+        log 'Stopping path watch_process'
+        local pid
+        read -r pid < "${WATCH_PROCESS_PIDFILE}"
+        kill "${pid}"
+    fi
+}
+
 # Send signal to watch process to reload
 #
+# Globals:
+#   WATCH_PROCESS_PIDFILE
 signal_reload_watch_process() {
     if ! [[ -r "${WATCH_PROCESS_PIDFILE}" ]]; then
         log "Error: Cannot read watch process PID file: ${WATCH_PROCESS_PIDFILE}"
@@ -433,28 +491,6 @@ do_systemctl_start() {
         log "Exec: ${SYSTEMD_SERVICE_START[$unit]}"
         eval "${SYSTEMD_SERVICE_START[$unit]}" 1>&5 2>&5
     fi
-
-    if [[ "${unit%.service}" == "fmshelper" ]]; then
-        if [[ "$INSTALL_FMS" == "1" ]]; then
-            # This is a hack to trigger the start of the web server
-            # Notes:
-            #   For some reason (currently unknown) when the .deb is
-            #   being installed while inside of the Dockerfile build
-            #   environment, the "start" file is never written to the
-            #   filesystem as normal. systemd would watch for this as
-            #   defined in a .path file (and this script does the
-            #   equivalent). We need another trigger, and inspection of
-            #   the .deb postinst file gives us this one.
-            #sleep 2
-            #local crap=$(ps axf)
-            #log "crap1: $crap"
-            #systemctl start com.filemaker.nginx.start.service
-            #sleep 2
-            #crap=$(ps axf)
-            #log "crap2: $crap"
-            :
-        fi
-    fi
 }
 
 do_systemctl_stop() {
@@ -467,6 +503,7 @@ do_systemctl_stop() {
         log "Exec: ${SYSTEMD_SERVICE_STOP[$unit]}"
         eval "${SYSTEMD_SERVICE_STOP[$unit]}" 1>&5 2>&5
     fi
+
 }
 
 do_systemctl_reload() {
@@ -503,6 +540,11 @@ do_systemctl_enable_path() {
 
 do_systemctl() {
     log "Called as: systemctl" "$@"
+
+    if ! [[ -r "${WATCH_PROCESS_PIDFILE}" ]]; then
+        log 'Path watch process not running, starting now'
+        restart_watch_process
+    fi
 
     local command command_switches unit
     command=$1
@@ -604,11 +646,8 @@ install_fms() {
     local installer=$1
     shift
 
-    # Tell other processes (children of us) that this is the FMS install
-    export INSTALL_FMS=1
-
-    # Set ourselves up as init
-    setup_init "$@"
+    log 'Starting path watch process'
+    restart_watch_process
 
     log "Installing filemaker-server package: $installer"
     local parent_dir result
@@ -620,6 +659,10 @@ install_fms() {
     log "Restoring /usr/bin/cat"
     mv -f /usr/bin/cat.orig /usr/bin/cat
 
+    # Shut down fmshelper and the watch process
+    do_systemctl_stop fmshelper
+    stop_watch_process
+
     exit $result
 }
 
@@ -629,7 +672,7 @@ do_default() {
 
     case "$param" in
         --install-self)
-            install_self
+            install_self "$@"
             ;;
         --install-fms)
             install_fms "$@"
