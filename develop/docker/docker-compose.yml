@@ -11,7 +11,6 @@ services:
         USER_ID: ${USER_ID:-500}
         GROUP_ID: ${GROUP_ID:-500}
         PHP_VERSION: ${PHP_VERSION:-8.1}
-        CERT_CN: ${CERT_CN:-localhost}
     image: "restfm-php${PHP_VERSION}"
     container_name: restfm
     hostname: restfm
@@ -38,7 +37,6 @@ services:
         UBUNTU_VERSION: ${UBUNTU_VERSION:-22.04}
         TIMEZONE: ${TIMEZONE:-Australia/Melbourne}
         FMS_VERSION: ${FMS_VERSION:-20.03}
-        CERT_CN: ${CERT_CN:-localhost}
         DEBUG_BUILD: ${DEBUG_BUILD:-false}
     image: fms-${FMS_VERSION}
     container_name: fms
@@ -46,6 +44,7 @@ services:
     restart: unless-stopped
     #environment:
     volumes:
+      - ./files/certs:/certs:ro
       - ./files/fms/data:/opt/FileMaker/FileMaker\ Server/Data
     tmpfs:
       - /run

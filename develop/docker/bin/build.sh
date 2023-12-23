@@ -16,6 +16,9 @@ REQUIRED_FILES=(
     ".env"
     "./files/fms/installer/Assisted Install.txt"
     "./files/fms/installer/LicenseCert.fmcert"
+    "./files/certs/certificate.key"
+    "./files/certs/certificate.pem"
+    "./files/certs/certificate.pass"
 )
 MISSING_COUNT=0
 for filename in "${REQUIRED_FILES[@]}"; do

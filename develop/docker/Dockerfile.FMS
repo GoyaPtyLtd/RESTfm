@@ -41,19 +41,6 @@ RUN apt-get update -y && \
     ln -s "/usr/share/zoneinfo/${TIMEZONE}" /etc/localtime && \
     dpkg-reconfigure -f noninteractive tzdata
 
-# Create self-signed certificate
-ARG CERT_CN=${CERT_CN:-localhost}
-ARG CERT_O=${CERT_O:-"RESTfm Development"}
-ARG CERT_C=${CERT_C:-AU}
-
-RUN openssl req -subj "/CN=${CERT_CN}/O=${CERT_O}/C=${CERT_C}" -new \
-        -newkey rsa:2048 -days 365 -nodes -x509 \
-        -keyout /etc/ssl/private/ssl-cert-snakeoil.key \
-        -out /etc/ssl/certs/ssl-cert-snakeoil.pem && \
-    openssl rsa -aes256 -in /etc/ssl/private/ssl-cert-snakeoil.key \
-        -out /etc/ssl/ssl-cert-snakeoil-enc.key -passout pass:password && \
-    chmod a+r /etc/ssl/ssl-cert-snakeoil-enc.key
-
 # Set up fmsadmin group and fmserver user in advance so we can run with the
 # uid/gid we want
 ARG USER_ID=${USER_ID:-500}
@@ -84,29 +71,27 @@ COPY ./files/fms/installer/filemaker-server-${FMS_VERSION}.*.deb /fms/
 # Copy systemd override for com.filemaker.nginx.stop.service
 COPY ./files/fms/systemd/com.filemaker.nginx.stop.d-override.conf /etc/systemd/system/com.filemaker.nginx.stop.d/override.conf
 
-# Install FMS.
-#   Note: It is possible to install the self-signed certificate here, but
-#         the encryption key that FMS uses (presumably a hash of something) is
-#         not repeatable when running the container later. We install the
-#         certificate in the entrypoint to resolve this issue.
-#RUN TERM=vt100 FM_ASSISTED_INSTALL=/fms apt-get install -y \
-#        /fms/filemaker-server-${FMS_VERSION}.*.deb && \
-#ARG FORCE=2
+# Copy SSL/TLS certificate installer
+COPY ./files/fms/systemd/install_certificate.sh /
+COPY ./files/fms/systemd/install_certificate.service /etc/systemd/system/
+
+# Install FMS
 RUN /init_tool.sh --install-fms /fms/filemaker-server-${FMS_VERSION}.*.deb && \
     echo "Done installing FMS, cleaning up" && \
     mv /init_tool.log /init_tool.log.install && \
     rm -f /run/nginx.pid && rm -f /run/watch_process.pid && \
-    rm -rf /fms
+    rm -f /fms/filemaker-server-${FMS_VERSION}.*.deb 
 
+# Expose FileMaker Server ports
 EXPOSE 80
 EXPOSE 443
 EXPOSE 2399
 EXPOSE 5003
 
+# init runs as root, but FileMaker Server will run as fmserver
 USER root
 
-#COPY ./entrypoint.sh /entrypoint.sh
-#CMD ["bash", "/entrypoint.sh"]
-
+# Run init as the first process
 ENTRYPOINT [ "/usr/sbin/init" ]
-CMD [ "fmshelper" ]
+# Pass these parameters to init for which systemd services to start
+CMD [ "fmshelper", "install_certificate" ]

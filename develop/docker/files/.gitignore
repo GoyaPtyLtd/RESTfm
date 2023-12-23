@@ -7,3 +7,5 @@ fms/installer/*
 !fms/installer/postinst-*.patch
 fms/data/*
 !fms/data/README.txt
+certs/*
+!certs/README.txt
