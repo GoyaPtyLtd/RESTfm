@@ -15,6 +15,10 @@ if [[ -e "${READY_FILE}" ]]; then
     exit 0
 fi
 
+# Race with fmshelper startup
+# FIXME: This needs to be a polling loop
+sleep 1
+
 # Pull the FMS Admin Console user and password from Assisted Install.txt
 FMS_AC_USER="$(grep "Admin Console User=" "/fms/Assisted Install.txt")"
 FMS_AC_USER="${FMS_AC_USER#*=}"

@@ -18,7 +18,7 @@ echo -n "        Verify: "
 read -r -s pass2
 echo
 if [[ -z "${pass1}" || "${pass1}" != "${pass2}" ]]; then
-    echo " !! Error: passphrase empty or missmatch"
+    echo " !! Error: passphrase empty or mismatch"
     exit 1
 fi
 echo -n "    Common Name [${CERT_CN}]: "

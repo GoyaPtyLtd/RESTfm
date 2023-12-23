@@ -373,31 +373,32 @@ watch_process() {
     done
 }
 
+# Stop the path watch process
+#
+# Globals:
+#   WATCH_PROCESS_PPID
+#   WATCH_PROCESS_PIDFILE
+stop_watch_process() {
+    if [[ "${WATCH_PROCESS_PPID}" != "0" ]]; then
+        log "Stopping path watch process (PPID: ${WATCH_PROCESS_PPID})"
+        pkill -P "${WATCH_PROCESS_PPID}"
+    elif [[ -r "${WATCH_PROCESS_PIDFILE}" ]]; then
+        local pid
+        read -r pid < "${WATCH_PROCESS_PIDFILE}"
+        log "Stopping path watch process (PID: $pid)"
+        kill "${pid}"
+    fi
+}
+
 # Restart/start watch process
 #
 # Globals:
 #   WATCH_PROCESS_PPID
 restart_watch_process() {
-    if [[ $WATCH_PROCESS_PPID != 0 ]]; then
-        pkill -P "${WATCH_PROCESS_PPID}"
-        wait "${WATCH_PROCESS_PPID}"
-    fi
+    stop_watch_process
 
     watch_process &
     WATCH_PROCESS_PPID=$!
-}
-
-# Stop the path watch process
-#
-# Globals:
-#   WATCH_PROCESS_PIDFILE
-stop_watch_process() {
-    if [[ -r "${WATCH_PROCESS_PIDFILE}" ]]; then
-        log 'Stopping path watch_process'
-        local pid
-        read -r pid < "${WATCH_PROCESS_PIDFILE}"
-        kill "${pid}"
-    fi
 }
 
 # Send signal to watch process to reload
@@ -652,7 +653,7 @@ install_fms() {
     log "Installing filemaker-server package: $installer"
     local parent_dir result
     parent_dir="$(dirname "${installer}")"
-    TERM=vt100 FM_ASSISTED_INSTALL="${parent_dir}" apt-get install -y "${installer}"
+    TERM=vt100 FM_ASSISTED_INSTALL="${parent_dir}" apt-get install -y "${installer}" 2>&1 1>&5
     result=$?
     log "Finished installing filemaker-server package: $result"
 
