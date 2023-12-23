@@ -5,7 +5,7 @@ fms/installer/*
 !fms/installer/README.txt
 !fms/installer/Assisted\ Install.txt.template
 !fms/installer/postinst-*.patch
-fms/data/*
-!fms/data/README.txt
+fms/databases/*
+!fms/databases/README.txt
 certs/*
 !certs/README.txt

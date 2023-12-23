@@ -45,7 +45,7 @@ services:
     #environment:
     volumes:
       - ./files/certs:/certs:ro
-      - ./files/fms/data:/opt/FileMaker/FileMaker\ Server/Data
+      - "./files/fms/databases:/opt/FileMaker/FileMaker\ Server/Data/Databases"
     tmpfs:
       - /run
       - /run/lock
