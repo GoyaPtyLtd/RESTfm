@@ -7,7 +7,7 @@
 #       like hostname) is not repeatable when running the container later.
 #       We install the certificate at container runtime to resolve this issue.
 
-READY_FILE='/opt/FileMaker/FileMaker Server/NginxServer/htdocs/httpsRoot/ready.html'
+READY_FILE='/opt/FileMaker/FileMaker Server/NginxServer/htdocs/httpsRoot/ready.txt'
 
 # Don't run again if we have already run
 if [[ -e "${READY_FILE}" ]]; then
