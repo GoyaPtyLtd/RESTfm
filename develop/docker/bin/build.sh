@@ -48,6 +48,21 @@ if [[ $FMS_INSTALLER_COUNT -gt 1 ]]; then
 fi
 echo
 
+# Find which docker compose to use ...
+echo "** Finding docker compose"
+DOCKER_COMPOSE=()
+if docker compose --help | grep -q "Run 'docker compose COMMAND --help'"; then
+    # docker has a built in compose, this is the preference
+    DOCKER_COMPOSE=( docker compose )
+elif which docker-compose; then
+    # docker doesn't have a built in compose, but we found docker-compose
+    DOCKER_COMPOSE=( docker-compose )
+else
+    echo "!! Error: no suitable docker compose found"
+    exit 1
+fi
+echo
+
 # Build it!
 echo "** Building fms docker image"
-BUILDKIT_PROGRESS=plain docker-compose build --pull fms
+BUILDKIT_PROGRESS=plain "${DOCKER_COMPOSE[@]}" build --pull fms
