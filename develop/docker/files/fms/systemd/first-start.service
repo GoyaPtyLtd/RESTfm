@@ -1,0 +1,6 @@
+[Unit]
+Description=First start service, only executes once on first container start.
+
+[Service]
+Type=simple
+ExecStart=-/first-start

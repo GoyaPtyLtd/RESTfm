@@ -1,25 +1,27 @@
 #!/bin/bash
 
-# Init tool for FileMaker Server in a Docker Container.
+# FileMaker Server Pseudo-System
 #
-# This script replaces several system tools that FileMaker Server and it's
-# installer are dependent upon.
-
+# This application impersonates several system applications that FileMaker
+# Server's installer and runtime are dependent upon. See $REPLACES global
+# variable defined below. This allows the full function of FileMaker Server
+# inside a non-privileged container.
+#
 # @copyright
-#  Copyright (c) 2011-2017 Goya Pty Ltd.
+#  Copyright (c) 2023 Goya Pty Ltd.
 #
 # @license
 #  Licensed under The MIT License. For full copyright and license information,
 #  please see the LICENSE file distributed with this package.
 #  Redistributions of files must retain the above copyright notice.
 #
-# @link
-#  http://restfm.com
-#
 # @author
-#  Gavin Stewart
+#  Gavin Stewart <gavin@goya.com.au>
 
-# System files that this script replaces
+# Don't allow unset variables
+set -u
+
+# System files that we replace
 REPLACES=(
   '/usr/bin/firewall-cmd'
   '/usr/bin/systemctl'
@@ -28,16 +30,19 @@ REPLACES=(
   '/usr/bin/cat'
 )
 
+# Log output to this file as well
+LOG_FILE=/fms-pseudo-sys.log
+
 # Global variables
 declare -A SYSTEMD_SERVICE_START=()
 declare -A SYSTEMD_SERVICE_STOP=()
 declare -A SYSTEMD_SERVICE_RELOAD=()
 declare -A SYSTEMD_PATH_WATCH=()
-declare -A INIT_SERVICES=()
-declare I_AM='init_tool'
+declare -a INIT_SERVICES=()
+declare I_AM='fms-pseudo-sys'
 declare INIT_SLEEP_PID=0
 declare WATCH_PROCESS_PPID=0
-declare WATCH_PROCESS_PIDFILE=/run/watch_process.pid
+declare WATCH_PROCESS_PIDFILE=/run/path-watch-process.pid
 declare INOTIFYWAIT_PPID=0
 
 # Cleanup handler when running as init
@@ -72,7 +77,7 @@ init_cleanup() {
 setup_init() {
     log 'Trapping signals'
     for SIG in INT TERM EXIT; do
-        trap "init_cleanup $SIG" "$SIG"
+        trap "init_cleanup ${SIG}" "${SIG}"
     done
 
     restart_watch_process
@@ -110,8 +115,8 @@ do_init() {
 #   cgroup v2 and will cause the script to crash.
 do_cat() {
     # This one case
-    if [[ "$1" == "/proc/1/cgroup" ]]; then
-        log "caught this one case!"
+    if [[ -v 1 && "$1" == "/proc/1/cgroup" ]]; then
+        log "Intercepted cat of /proc/1/cgroup"
         echo "not this time"
         exit 0
     fi
@@ -228,7 +233,7 @@ watch_process_reload() {
 watch_process_cleanup() {
     log "Cleanup on signal: $1"
 
-    # block further signals
+    # Block further signals
     trap '' INT TERM EXIT
 
     if [[ $INOTIFYWAIT_PPID != 0 ]]; then
@@ -302,16 +307,15 @@ emulate_inotifywait() {
 # Globals:
 #   SYSTEMD_PATH_WATCH[]
 watch_process() {
-    I_AM="${FUNCNAME[0]}"
-    if [[ "${EMULATE_INOTIFYWAIT}" == "1" ]]; then
+    I_AM="path-watch-process"
+    if [[ -v EMULATE_INOTIFYWAIT && "${EMULATE_INOTIFYWAIT}" == "1" ]]; then
         log 'Watch process starting (emulated inotifywait)'
     else
         log 'Watch process starting (inotifywait)'
     fi
 
-    log 'Trapping signals'
     for SIG in INT TERM EXIT; do
-        trap "watch_process_cleanup $SIG" "$SIG"
+        trap "watch_process_cleanup ${SIG}" "${SIG}"
     done
 
     echo "$BASHPID" > "${WATCH_PROCESS_PIDFILE}"
@@ -322,7 +326,7 @@ watch_process() {
 
         INOTIFYWAIT_PPID=0
 
-        trap "watch_process_reload HUP" "HUP"
+        trap "watch_process_reload HUP" HUP
 
         # Build list of watched parent paths for inotifywait
         local watch_path parent_path
@@ -336,7 +340,7 @@ watch_process() {
             (
                 log "Watching paths:" "${!parent_paths[@]}"
                 {
-                    if [[ "${EMULATE_INOTIFYWAIT}" == "1" ]]; then
+                    if [[ -v EMULATE_INOTIFYWAIT && "${EMULATE_INOTIFYWAIT}" == "1" ]]; then
                         emulate_inotifywait "${!SYSTEMD_PATH_WATCH[@]}"
                     else
                         # inotifywait output formatted as:
@@ -373,7 +377,7 @@ watch_process() {
     done
 }
 
-# Stop the path watch process
+# Stop path watch process
 #
 # Globals:
 #   WATCH_PROCESS_PPID
@@ -390,7 +394,7 @@ stop_watch_process() {
     fi
 }
 
-# Restart/start watch process
+# Restart/start path watch process
 #
 # Globals:
 #   WATCH_PROCESS_PPID
@@ -401,7 +405,7 @@ restart_watch_process() {
     WATCH_PROCESS_PPID=$!
 }
 
-# Send signal to watch process to reload
+# Send reload signal to path watch process
 #
 # Globals:
 #   WATCH_PROCESS_PIDFILE
@@ -548,14 +552,20 @@ do_systemctl() {
     fi
 
     local command command_switches unit
-    command=$1
+    command=""
+    if [[ -v 1 ]]; then
+        command=$1
+    fi
     shift
     command_switches=()
-    while [[ "$1" =~ ^-.* ]]; do
+    while [[ -v 1 && "$1" =~ ^-.* ]]; do
         command_switches+=("$1")
         shift
     done
-    unit=$1
+    unit=""
+    if [[ -v 1 ]]; then
+        unit=$1
+    fi
 
     case "$command" in
         daemon-reexec)
@@ -624,24 +634,6 @@ do_systemctl() {
     exit 0
 }
 
-# Install self as replacement for system tools in container
-install_self() {
-    log "Install self"
-
-    # Safety check
-    if [[ ! -e "/.dockerenv" ]]; then
-        log "ERROR: Cannot detect we are inside a docker container" >&2
-        exit 1
-    fi
-
-    local file
-    for file in "${REPLACES[@]}"; do
-        log "Replace $file"
-        mv "$file" "$file.orig"
-        ln -s "/init_tool.sh" "$file"
-    done
-}
-
 # Install the fms package
 install_fms() {
     local installer=$1
@@ -667,23 +659,55 @@ install_fms() {
     exit $result
 }
 
+
+# Install self as replacement for system tools in container
+install_self() {
+    log "Install self"
+
+    # Safety check
+    if [[ ! -e "/.dockerenv" ]]; then
+        log "ERROR: Cannot detect we are inside a docker container" >&2
+        exit 1
+    fi
+
+    local file
+    for file in "${REPLACES[@]}"; do
+        log "Replace $file"
+        mv "$file" "$file.orig"
+        ln -s "/fms-pseudo-sys" "$file"
+    done
+}
+
+default_usage() {
+    cat << EO_USAGE
+
+    ${I_AM} --install-fms|--install-self
+
+EO_USAGE
+}
+
+# Not impersonating any system tools
 do_default() {
     local param=$1
     shift
 
     case "$param" in
+        --install-fms)
+            install_fms "$@"
+            ;;
         --install-self)
             install_self "$@"
             ;;
-        --install-fms)
-            install_fms "$@"
+        *)
+            default_usage
+            exit 0
             ;;
     esac
 }
 
 # Set up to log file descriptor 5 to file and stdout
 setup_log() {
-    exec 5> >(tee -ia "/init_tool.log")
+    exec 5> >(tee -ia "${LOG_FILE}")
 }
 
 # Log provided message(s) in parameters to file descriptor 5

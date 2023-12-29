@@ -59,27 +59,25 @@ RUN if [ "$DEBUG_BUILD" = "true" ]; then \
         rm -rf /var/lib/apt/lists/*; \
     fi
 
-# filemaker-server needs systemctl, we have a replacement:
-COPY ./init_tool.sh /init_tool.sh
-RUN chmod a+x /init_tool.sh && touch /.dockerenv && /init_tool.sh --install-self
+# Copy FMS docker scripts to root of container
+COPY ./files/fms/docker/. /
+
+# Install FMS Pseudo-System Tool
+RUN touch /.dockerenv && /fms-pseudo-sys --install-self
+
+# Copy FMS docker systemd files
+COPY ./files/fms/systemd/. /etc/systemd/system/
 
 # Copy filemaker-server installer, licence, and config
 COPY ["./files/fms/installer/Assisted Install.txt", "/fms/"]
 COPY ./files/fms/installer/LicenseCert.fmcert /fms/
 COPY ./files/fms/installer/filemaker-server-${FMS_VERSION}.*.deb /fms/
 
-# Copy systemd override for com.filemaker.nginx.stop.service
-COPY ./files/fms/systemd/com.filemaker.nginx.stop.d-override.conf /etc/systemd/system/com.filemaker.nginx.stop.d/override.conf
-
-# Copy SSL/TLS certificate installer
-COPY ./files/fms/systemd/install_certificate.sh /
-COPY ./files/fms/systemd/install_certificate.service /etc/systemd/system/
-
 # Install FMS
-RUN /init_tool.sh --install-fms /fms/filemaker-server-${FMS_VERSION}.*.deb && \
+RUN /fms-pseudo-sys --install-fms /fms/filemaker-server-${FMS_VERSION}.*.deb && \
     echo "Done installing FMS, cleaning up" && \
-    mv /init_tool.log /init_tool.log.install && \
-    rm -f /run/nginx.pid && rm -f /run/watch_process.pid && \
+    mv /fms-pseudo-sys.log /fms-pseudo-sys.install.log && \
+    rm -f /run/nginx.pid && rm -f /run/path-watch-process.pid && \
     rm -f /fms/filemaker-server-${FMS_VERSION}.*.deb 
 
 # Expose FileMaker Server ports
@@ -91,7 +89,9 @@ EXPOSE 5003
 # init runs as root, but FileMaker Server will run as fmserver
 USER root
 
+HEALTHCHECK --interval=30s --timeout=30s --start-period=30s --retries=3 CMD [ "/healthcheck" ]
+
 # Run init as the first process
 ENTRYPOINT [ "/usr/sbin/init" ]
-# Pass these parameters to init for which systemd services to start
-CMD [ "fmshelper", "install_certificate" ]
+# Pass list of services to start to init
+CMD [ "fmshelper", "first-start" ]

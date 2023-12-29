@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# @copyright
+#  Copyright (c) 2023 Goya Pty Ltd.
+#
+# @license
+#  Licensed under The MIT License. For full copyright and license information,
+#  please see the LICENSE file distributed with this package.
+#  Redistributions of files must retain the above copyright notice.
+#
+# @author
+#  Gavin Stewart <gavin@goya.com.au>
+
+exit 0

@@ -1,6 +1,0 @@
-[Unit]
-Description=Install certificate into FileMaker Server
-
-[Service]
-Type=simple
-ExecStart=-/install_certificate.sh
