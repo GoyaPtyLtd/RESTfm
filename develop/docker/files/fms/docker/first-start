@@ -5,7 +5,7 @@
 #
 # Performs the following once-off actions:
 #   - Install SSL/TLS Certificate into FileMaker Server.
-#   - Enable 
+#   - Enable various FileMaker Server functions.
 #
 # Note: It is not possible to install a certificate during docker image build
 #       as the encryption key that FMS uses (presumably a hash of something
@@ -75,7 +75,7 @@ install_certificate() {
         fmsadmin_code=$?
 
         if [[ $fmsadmin_code -ne 0 ]]; then
-            log "  ++ fmsadmin certificate import failed attempt: ${attempt_count}"
+            log "  ==> fmsadmin certificate import failed attempt: ${attempt_count}"
 
             if [[ "$fmsadmin_output" =~ .*"Error: 9"|"10502".* ]]; then
                 # Error: 9 (Access denied)
@@ -86,7 +86,7 @@ install_certificate() {
                 :
             else
                 # Output this fmsadmin error message though, and try again.
-                log "  !! Unexpected error: $fmsadmin_code: $fmsadmin_output"
+                log "  ==> Unexpected error: $fmsadmin_code: $fmsadmin_output"
             fi
 
             ((attempt_count+=1))

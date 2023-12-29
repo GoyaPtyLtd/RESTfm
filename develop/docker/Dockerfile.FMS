@@ -62,7 +62,7 @@ RUN if [ "$DEBUG_BUILD" = "true" ]; then \
 # Copy FMS docker scripts to root of container
 COPY ./files/fms/docker/. /
 
-# Install FMS Pseudo-System Tool
+# Install FMS Pseudo-System app
 RUN touch /.dockerenv && /fms-pseudo-sys --install-self
 
 # Copy FMS docker systemd files
@@ -93,5 +93,5 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=30s --retries=3 CMD [ "/
 
 # Run init as the first process
 ENTRYPOINT [ "/usr/sbin/init" ]
-# Pass list of services to start to init
+# Pass list of services to start (in order) to init
 CMD [ "fmshelper", "first-start" ]
