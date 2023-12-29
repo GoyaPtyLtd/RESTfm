@@ -24,8 +24,11 @@ ARG FMS_VERSION=${FMS_VERSION:-20.03}
 COPY --from=dependencies /fms/fms-package-deps.txt /fms/
 
 # Install base packages and fms dependencies
+#   lsb-release     - required by filemaker-server .deb package
+#   inotify-tools   - required by fms-pseudo-sys
+#   jq              - required by first-start
 RUN apt-get update -y && \
-    apt-get install -y lsb-release inotify-tools && \
+    apt-get install -y lsb-release inotify-tools jq && \
     xargs apt-get install -y < /fms/fms-package-deps.txt && \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/* /fms/fms-package-deps.txt
@@ -51,11 +54,10 @@ RUN groupadd --non-unique --gid ${GROUP_ID} fmsadmin && \
         -g fmsadmin fmserver
 
 # Any special config for debug build
-# FIXME: move 'jq' to base package install above
 ARG DEBUG_BUILD=${DEBUG_BUILD:-false}
 RUN if [ "$DEBUG_BUILD" = "true" ]; then \
         apt-get update -y && \
-        apt-get install -y less vim telnet tmux jq && \
+        apt-get install -y less vim telnet tmux && \
         apt-get clean -y && \
         rm -rf /var/lib/apt/lists/*; \
     fi
