@@ -30,52 +30,55 @@ READY_FILE='/opt/FileMaker/FileMaker Server/NginxServer/htdocs/httpsRoot/ready.t
 # Log output to this file as well
 LOG_FILE='/first-start.log'
 
+# Base URL for Admin API
+ADMIN_API_BASE='https://localhost/fmi/admin/api/v2'
+
 # Don't allow unset variables
 set -u
 
-# Don't run again if we have already run
-if [[ -e "${READY_FILE}" ]]; then
-    if [[ -v FIRST_START_FORCE && "${FIRST_START_FORCE}" == "true" ]]; then
-        :   # Forced to run again, do nothing here
-    else
-        log "already run."
-        exit 0
+# This function will exit the script if we have already been run, unless
+# forced to continue running via FIRST_START_FORCE=true env var.
+#
+only_run_once() {
+    if [[ -e "${READY_FILE}" ]]; then
+        if [[ -v FIRST_START_FORCE && "${FIRST_START_FORCE}" == "true" ]]; then
+            :   # Forced to run again, do nothing here
+        else
+            log "We have already run before ... exiting"
+            exit 0
+        fi
     fi
-fi
+}
 
 # Fetch the FMS Admin Console user and password from Assisted Install.txt
 #
 # Globals:
 #   FMS_AC_USER
 #   FMS_AC_PASS
-fetch_credentials() {
+fetch_ac_credentials() {
     log "Fetch credentials from Assisted Install.txt"
-    FMS_AC_USER="$(grep "Admin Console User=" "/fms/Assisted Install.txt")"
+    FMS_AC_USER="$(grep "^Admin Console User=" "/fms/Assisted Install.txt")"
     FMS_AC_USER="${FMS_AC_USER#*=}"
-    FMS_AC_PASS="$(grep "Admin Console Password=" "/fms/Assisted Install.txt")"
+    FMS_AC_PASS="$(grep "^Admin Console Password=" "/fms/Assisted Install.txt")"
     FMS_AC_PASS="${FMS_AC_PASS#*=}"
-
 }
 
-# Install SSL/TLS certificate via fmsadmin
-# Globals:
-#   FMS_AC_USER
-#   FMS_AC_PASS
-install_certificate() {
-    log "Installing SSL/TLS certificate ..."
+# Try to execute the fmsadmin command, and retry on error. This is to allow
+# FileMaker Server to fully start.
+#
+# Parameters:
+#   $@ - parameters to pass to fmsadmin
+try_fmsadmin() {
     local fmsadmin_output
     local fmsadmin_code=-999
     local attempt_count=1
     while [[ $fmsadmin_code -ne 0 && $attempt_count -le 10 ]]; do
 
-        fmsadmin_output=$(fmsadmin certificate import -y -u "${FMS_AC_USER}" -p "${FMS_AC_PASS}" \
-            /certs/certificate.pem \
-            --keyfile /certs/certificate.key  \
-            --keyfilepass "$(cat /certs/certificate.pass)" 2>&1)
+        fmsadmin_output=$(fmsadmin "${@}" 2>&1)
         fmsadmin_code=$?
 
         if [[ $fmsadmin_code -ne 0 ]]; then
-            log "  ==> fmsadmin certificate import failed attempt: ${attempt_count}"
+            log "  ==> fmsadmin command failed attempt: ${attempt_count}/10"
 
             if [[ "$fmsadmin_output" =~ .*"Error: 9"|"10502".* ]]; then
                 # Error: 9 (Access denied)
@@ -100,16 +103,279 @@ install_certificate() {
     done
 
     if [[ $fmsadmin_code -ne 0 ]]; then
-        log "ERROR: Failed to install SSL/TLS certificate, last fmsadmin error was:"
+        log "ERROR: Failed all attempts to run fmsadmin, last error was:"
         log "$fmsadmin_output"
         exit 1
     fi
-
-    log "... done"
-
-    log "Restarting fmshelper"
-    systemctl restart fmshelper
 }
+
+# Install SSL/TLS certificate via fmsadmin
+# Globals:
+#   FMS_AC_USER
+#   FMS_AC_PASS
+install_certificate() {
+    log "Installing SSL/TLS certificate ..."
+    declare -a fmsadmin_args=(
+        certificate import -y -u "${FMS_AC_USER}" -p "${FMS_AC_PASS}"
+            /certs/certificate.pem
+            --keyfile /certs/certificate.key
+            --keyfilepass "$(cat /certs/certificate.pass)"
+    )
+    try_fmsadmin "${fmsadmin_args[@]}"
+    log "... SSL/TLS installation done"
+}
+
+# Try to request the FMS Admin API access token, and retry on error. This is
+# to allow FileMaker Server to fully start.
+#
+# Globals:
+#   FMS_AC_USER
+#   FMS_AC_PASS
+#   FMS_AA_TOKEN    - Admin API token
+try_access_token() {
+    if [[ -v FMS_AA_TOKEN ]]; then
+        # Already have token
+        return
+    fi
+
+    log "  Requesting Admin API access token ..."
+    declare -a curl_command=()
+    local curl_response
+    local curl_ret=-999
+    local attempt_count=1
+    while [[ ! -v FMS_AA_TOKEN && $attempt_count -le 10 ]]; do
+        curl_command=(
+            --silent
+            --show-error
+            --insecure
+            --header "Content-Type: application/json"
+            --user "${FMS_AC_USER}:${FMS_AC_PASS}"
+            --request POST
+            "${ADMIN_API_BASE}/user/auth"
+        )
+        curl_response=$(curl "${curl_command[@]}" 2>&1)
+        curl_ret=$?
+
+        local failed=0
+
+        # Did cURL return an error?
+        if [[ $failed -eq 0 && "$curl_ret" != "0" ]]; then
+            log "  cURL failed access token request: $curl_ret"
+            log "  $curl_response"
+            ((failed++))
+        fi
+
+        # Did we get a known non-JSON response?
+        if [[ $failed -eq 0 && "$curl_response" =~ "502 Bad Gateway" ]]; then
+            ((failed++))
+        fi
+
+        # Did we get a valid JSON response?
+        local jq_ret
+        jq '.' <<<"${curl_response}" >/dev/null 2>&1
+        jq_ret=$?
+        if [[ $failed -eq 0 && $jq_ret -eq 0 ]]; then
+            local response_code
+            response_code=$(jq -r '.messages[0].code' <<<"${curl_response}")
+
+            # Did we get an unexpected error from the server?
+            if [[ "$response_code" != "0" ]]; then
+                log "  server error: ${curl_response}"
+                ((failed++))
+            fi
+        fi
+
+        if [[ $failed -gt 0 ]]; then
+            log "  ==> request token failed attempt: ${attempt_count}/10"
+            ((attempt_count++))
+            sleep 2
+        else
+            FMS_AA_TOKEN=$(jq -r '.response.token' <<<"${curl_response}")
+        fi
+    done
+
+    log "  ... got access token"
+}
+
+# Use cURL to interact with the FMS Admin API
+#
+# FMS Admin API is documented at the URL: /fmi/admin/apidoc
+#
+# Globals:
+#   JSON_RESPONSE   - Set with received response data
+#
+# Parameters:
+#   $1 - required HTTP method (e.g. PATCH)
+#   $2 - required endpoint minus base URL (e.g. /fmdapi/config)
+#   $3 - optional JSON formatted payload to send
+admin_api() {
+    local method="$1"
+    local endpoint="$2"
+    local payload=""
+    if [[ -v 3 ]]; then
+        payload="$3"
+    fi
+
+    declare -a curl_command=()
+    local curl_response curl_ret
+
+    if [[ ! -v FMS_AA_TOKEN ]]; then
+        try_access_token
+    fi
+
+    curl_command=(
+        --silent
+        --show-error
+        --insecure
+        --header "Content-Type: application/json"
+        --header "Authorization: Bearer ${FMS_AA_TOKEN}"
+        --request "${method}"
+    )
+
+    if [[ -n "$payload" ]]; then
+        curl_command+=(
+            --data-raw "${payload}"
+        )
+    fi
+
+    curl_command+=(
+        "${ADMIN_API_BASE}${endpoint}"
+    )
+
+    curl_response=$(curl "${curl_command[@]}" 2>&1)
+    curl_ret=$?
+
+    if [[ "$curl_ret" != "0" ]]; then
+        log "cURL failed request: $curl_ret"
+        log "${curl_command[@]}"
+        log "$curl_response"
+        exit 1
+    fi
+
+    JSON_RESPONSE="$curl_response"
+}
+
+# Invalidate the Admin API access token, if it is set
+#
+# Globals:
+#   FMS_AA_TOKEN    - Admin API token
+invalidate_access_token(){
+    if [[ ! -v FMS_AA_TOKEN ]]; then
+        return
+    fi
+
+    declare -a curl_command=()
+    local curl_response curl_ret
+
+    log "Invalidating Admin API access token ..."
+    curl_command=(
+        --silent
+        --show-error
+        --insecure
+        --header "Content-Type: application/json"
+        --header "Authorization: Bearer ${FMS_AA_TOKEN}"
+        --request DELETE
+        "${ADMIN_API_BASE}/user/auth/${FMS_AA_TOKEN}"
+    )
+    curl_response=$(curl "${curl_command[@]}" 2>&1)
+    curl_ret=$?
+
+    if [[ "$curl_ret" != "0" ]]; then
+        log "cURL failed invalidate access token request: $curl_ret"
+        log "$curl_response"
+        exit 1
+    fi
+
+    local response_code
+    response_code=$(jq -r '.messages[0].code' <<<"${curl_response}")
+
+    if [[ "$response_code" != "0" ]]; then
+        log "ERROR: ${response_code}:" "$(jq -r '.messages[0].text' <<<"${curl_response}")"
+        exit 1
+    fi
+
+    unset -v FMS_AA_TOKEN
+
+    log " ... token invalidation done"
+}
+
+# Log the first messages[] code and text
+#
+# Parameters:
+#   $1  - required prefix string, may be empty
+#   $2  - a formatted JSON string containing .messages[0].code and .text
+log_json_msg() {
+    local code text
+    code=$(jq -r '.messages[0].code' <<<"$2")
+    text=$(jq -r '.messages[0].text' <<<"$2")
+
+    log "$1" "${code}:" "${text}"
+}
+
+# Enable FileMaker Server features as listed in the FMS_ENABLE_FEATURES env var
+#
+# Globals:
+#   JSON_RESPONSE
+fms_enable_features() {
+    if [[ ! -v FMS_ENABLE_FEATURES ]]; then
+        return
+    fi
+
+    local old_ifs
+    old_ifs="$IFS"
+
+    declare -a features
+    IFS=' ' # Space
+    read -ra features <<<"$FMS_ENABLE_FEATURES"
+    IFS="$old_ifs"
+
+    for feature in "${features[@]}"; do
+        case "$feature" in
+            dataapi)
+                log "Enable Data API ..."
+                admin_api "PATCH" "/fmdapi/config" '{ "enabled": true }'
+                log_json_msg "..." "${JSON_RESPONSE}"
+                ;;
+            odata)
+                log "Enable OData ..."
+                admin_api "PATCH" "/fmodata/config" '{ "enabled": true }'
+                log_json_msg "..." "${JSON_RESPONSE}"
+                ;;
+            odbc)
+                log "Enable ODBC / JDBC ..."
+                admin_api "PATCH" "/xdbc/config" '{ "enabled": true }'
+                log_json_msg "..." "${JSON_RESPONSE}"
+                ;;
+            phpapi)
+                log "Enable PHP API ..."
+                admin_api "PATCH" "/php/config" '{ "characterEncoding": "UTF-8", "enabled": true }'
+                log_json_msg "..." "${JSON_RESPONSE}"
+                ;;
+            webdirect)
+                log "Enable WebDirect ..."
+                admin_api "PATCH" "/webdirect/config" '{ "enabled": true }'
+                log_json_msg "..." "${JSON_RESPONSE}"
+                ;;
+            wpe)
+                log "Enable Web Publishing Engine ..."
+                admin_api "PATCH" "/wpe/config/1" '{ "enabled": true }'
+                log_json_msg "..." "${JSON_RESPONSE}"
+                ;;
+            xmlapi)
+                log "Enable XML API"
+                admin_api "PATCH" "/xml/config" '{ "enabled": true }'
+                log_json_msg "..." "${JSON_RESPONSE}"
+                ;;
+            *)
+                # Default
+                log "Ignoring unknown feature: '$feature'"
+                ;;
+        esac
+    done
+
+    invalidate_access_token
+}
+
 
 # Set up to log file descriptor 5 to file and stdout
 setup_log() {
@@ -121,19 +387,36 @@ log() {
     echo "${I_AM}[$BASHPID]" "$@" >&5
 }
 
+# Save knowledge that we have run
+#
+# Globals:
+#   READY_FILE
+set_run_once() {
+    { echo "READY"; date; } > "${READY_FILE}"
+}
+
 # This comment intentionally blank
 main() {
-    setup_log
-
     I_AM=$(basename "$0")
 
-    fetch_credentials
+    setup_log
+
+    only_run_once
+
+    log "Running"
+
+    fetch_ac_credentials
 
     install_certificate
 
-    # Save knowledge that we have run
-    log "Ready"
-    { echo "READY"; date; } > "${READY_FILE}"
+    fms_enable_features
+
+    log "Restarting fmshelper"
+    systemctl restart fmshelper
+
+    set_run_once
+
+    log "Done"
 
     exit 0
 }

@@ -42,7 +42,8 @@ services:
     container_name: fms
     hostname: fms
     restart: unless-stopped
-    #environment:
+    environment:
+      FMS_ENABLE_FEATURES: ${FMS_ENABLE_FEATURES}
     volumes:
       - ./files/certs:/certs:ro
       - "./files/fms/databases:/opt/FileMaker/FileMaker\ Server/Data/Databases"
