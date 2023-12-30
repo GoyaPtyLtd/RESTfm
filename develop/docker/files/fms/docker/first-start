@@ -138,7 +138,7 @@ try_access_token() {
         return
     fi
 
-    log "  Requesting Admin API access token ..."
+    log "Requesting Admin API access token ..."
     declare -a curl_command=()
     local curl_response
     local curl_ret=-999
@@ -160,8 +160,8 @@ try_access_token() {
 
         # Did cURL return an error?
         if [[ $failed -eq 0 && "$curl_ret" != "0" ]]; then
-            log "  cURL failed access token request: $curl_ret"
-            log "  $curl_response"
+            log "cURL failed access token request: $curl_ret"
+            log "$curl_response"
             ((failed++))
         fi
 
@@ -180,7 +180,7 @@ try_access_token() {
 
             # Did we get an unexpected error from the server?
             if [[ "$response_code" != "0" ]]; then
-                log "  server error: ${curl_response}"
+                log "server error: ${curl_response}"
                 ((failed++))
             fi
         fi
@@ -194,7 +194,13 @@ try_access_token() {
         fi
     done
 
-    log "  ... got access token"
+    if [[ ! -v FMS_AA_TOKEN ]]; then
+        log "ERROR: Failed all attempts to request token, last error was:"
+        log "$curl_response"
+        exit 1
+    fi
+
+    log "... got access token"
 }
 
 # Use cURL to interact with the FMS Admin API
@@ -280,18 +286,26 @@ invalidate_access_token(){
     curl_response=$(curl "${curl_command[@]}" 2>&1)
     curl_ret=$?
 
+    # Did cURL return an error?
     if [[ "$curl_ret" != "0" ]]; then
         log "cURL failed invalidate access token request: $curl_ret"
         log "$curl_response"
         exit 1
     fi
 
-    local response_code
-    response_code=$(jq -r '.messages[0].code' <<<"${curl_response}")
+    # Did we get a valid JSON response?
+    local jq_ret
+    jq '.' <<<"${curl_response}" >/dev/null 2>&1
+    jq_ret=$?
+    if [[ $jq_ret -eq 0 ]]; then
+        local response_code
+        response_code=$(jq -r '.messages[0].code' <<<"${curl_response}")
 
-    if [[ "$response_code" != "0" ]]; then
-        log "ERROR: ${response_code}:" "$(jq -r '.messages[0].text' <<<"${curl_response}")"
-        exit 1
+        # Did we get an unexpected error from the server?
+        if [[ "$response_code" != "0" ]]; then
+            log "Server error: ${curl_response}"
+            exit 1
+        fi
     fi
 
     unset -v FMS_AA_TOKEN
@@ -328,6 +342,8 @@ fms_enable_features() {
     IFS=' ' # Space
     read -ra features <<<"$FMS_ENABLE_FEATURES"
     IFS="$old_ifs"
+
+    try_access_token
 
     for feature in "${features[@]}"; do
         case "$feature" in
@@ -376,6 +392,15 @@ fms_enable_features() {
     invalidate_access_token
 }
 
+# Cleanup routine
+cleanup() {
+    log "Cleanup on signal: $1"
+
+    # Block further signals
+    trap - INT TERM EXIT
+
+    invalidate_access_token
+}
 
 # Set up to log file descriptor 5 to file and stdout
 setup_log() {
@@ -405,6 +430,11 @@ main() {
 
     log "Running"
 
+    log 'Trapping signals'
+    for SIG in INT TERM EXIT; do
+        trap "cleanup ${SIG}" "${SIG}"
+    done
+
     fetch_ac_credentials
 
     install_certificate
@@ -415,6 +445,9 @@ main() {
     systemctl restart fmshelper
 
     set_run_once
+
+    log 'Reset trapped signals'
+    trap "" INT TERM EXIT
 
     log "Done"
 
