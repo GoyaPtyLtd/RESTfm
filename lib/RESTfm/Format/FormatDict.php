@@ -19,10 +19,11 @@
 
 namespace RESTfm\Format;
 
+use RESTfm\FormatAbstract;
 use RESTfm\FormatInterface;
 use RESTfm\Message\Message;
 
-class FormatDict implements FormatInterface {
+class FormatDict extends FormatAbstract implements FormatInterface {
 
     // --- Interface Implementation --- //
 
