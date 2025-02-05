@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit colors="true">
+<phpunit
+    colors="true"
+ >
+    <!-- Handy to show extra information like deprecations. Place these attrinbutes in phpunit tag: -->
+    <!--
+    testdox="false" 
+    displayDetailsOnIncompleteTests="true"
+    displayDetailsOnSkippedTests="true"
+    displayDetailsOnTestsThatTriggerDeprecations="true"
+    displayDetailsOnTestsThatTriggerErrors="true"
+    displayDetailsOnTestsThatTriggerNotices="true"
+    displayDetailsOnTestsThatTriggerWarnings="true"
+    -->
   <testsuites>
     <testsuite name="RESTfm-lib">
       <directory>libTests</directory>
