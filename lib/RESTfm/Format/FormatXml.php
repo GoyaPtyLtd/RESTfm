@@ -19,7 +19,7 @@
 
 namespace RESTfm\Format;
 
-class FormatXml implements \RESTfm\FormatInterface {
+class FormatXml extends \RESTfm\FormatAbstract implements \RESTfm\FormatInterface {
 
     // --- Interface Implementation --- //
 

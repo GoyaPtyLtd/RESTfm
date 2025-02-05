@@ -21,7 +21,8 @@ namespace RESTfmTests;
 
 use PHPUnit\Framework\TestCase;
 
-// Manually include Diagnostics.php as autoload can't find Report class.
+// Manually include Diagnostics.php as autoload can't find Report class
+// within it.
 include "lib/RESTfm/Diagnostics.php";
 
 class ReportTest extends TestCase {
