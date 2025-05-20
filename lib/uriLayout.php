@@ -22,7 +22,8 @@
  *
  * @uri /{database}/layout/{layout}
  */
-class uriLayout extends RESTfm\Resource {
+class uriLayout extends RESTfm\Resource
+{
 
     const URI = '/{database}/layout/{layout}';
 
@@ -67,7 +68,8 @@ class uriLayout extends RESTfm\Resource {
      *
      * @return RESTfm\Response
      */
-    function get($request, $database, $layout) {
+    function get($request, $database, $layout)
+    {
         $database = RESTfm\Url::decode($database);
         $layout = RESTfm\Url::decode($layout);
 
@@ -170,14 +172,14 @@ class uriLayout extends RESTfm\Resource {
         // Iterate records and set navigation hrefs.
         /** @var \RESTfm\Message\Message $restfmMessage */
         /** @var \RESTfm\Message\Record $record */
-        foreach($restfmMessage->getRecords() as $record) {
+        foreach ($restfmMessage->getRecords() as $record) {
             if ($record->getRecordId() === NULL) {
                 continue;
             }
             $record->setHref(
-                $request->baseUri.'/'.
-                        $databaseEnc.'/layout/'.$layoutEnc.'/'.
-                        RESTfm\Url::encode($record->getRecordId()).'.'.$format
+                $request->baseUri . '/' .
+                $databaseEnc . '/layout/' . $layoutEnc . '/' .
+                RESTfm\Url::encode($record->getRecordId()) . '.' . $format
             );
         }
 
@@ -191,34 +193,38 @@ class uriLayout extends RESTfm\Resource {
 
         // Start nav link.
         unset($queryString->RFMskip);
-        $restfmMessage->setNav('start',
-                    $request->baseUri.'/'.$databaseEnc.'/layout/'.
-                    $layoutEnc.'.'.$format.$queryString->build()
+        $restfmMessage->setNav(
+            'start',
+            $request->baseUri . '/' . $databaseEnc . '/layout/' .
+            $layoutEnc . '.' . $format . $queryString->build()
         );
 
         // Only build a next nav link if we have not exhausted the found set.
         if ($skipNext < $foundSetCount) {
             $queryString->RFMskip = $skipNext;
-            $restfmMessage->setNav('next',
-                        $request->baseUri.'/'.$databaseEnc.'/layout/'.
-                        $layoutEnc.'.'.$format.$queryString->build()
+            $restfmMessage->setNav(
+                'next',
+                $request->baseUri . '/' . $databaseEnc . '/layout/' .
+                $layoutEnc . '.' . $format . $queryString->build()
             );
         }
 
         // Only build a prev nav link if we have skipped something.
         if ($findSkip != 0) {
             $queryString->RFMskip = $skipPrev;
-            $restfmMessage->setNav('prev',
-                        $request->baseUri.'/'.$databaseEnc.'/layout/'.
-                        $layoutEnc.'.'.$format.$queryString->build()
+            $restfmMessage->setNav(
+                'prev',
+                $request->baseUri . '/' . $databaseEnc . '/layout/' .
+                $layoutEnc . '.' . $format . $queryString->build()
             );
         }
 
         // End nav link.
         $queryString->RFMskip = $foundSetCount - 1;
-        $restfmMessage->setNav('end',
-                    $request->baseUri.'/'.$databaseEnc.'/layout/'.
-                    $layoutEnc.'.'.$format.$queryString->build()
+        $restfmMessage->setNav(
+            'end',
+            $request->baseUri . '/' . $databaseEnc . '/layout/' .
+            $layoutEnc . '.' . $format . $queryString->build()
         );
 
 
@@ -242,7 +248,7 @@ class uriLayout extends RESTfm\Resource {
      *  - RFMpreScriptParam=<string> : (optional) url encoded parameter string
      *                                 to pass to pre-script.
      *  - RFMsuppressData : set flag to suppress 'data' section from response.
-     *  - RFMgetAfterPOST  : Set flag to return record data after POST, mimiking the PHP API 
+     *  - RFMgetAfterPOST  : Return record data after POST, mimiking the PHP API 
      *                       behavior when using the Data API.
      *
      * @param RESTfm\Request $request
@@ -253,7 +259,8 @@ class uriLayout extends RESTfm\Resource {
      *
      * @return RESTfm\Response
      */
-    function post($request, $database, $layout) {
+    function post($request, $database, $layout)
+    {
         $database = RESTfm\Url::decode($database);
         $layout = RESTfm\Url::decode($layout);
 
@@ -291,28 +298,48 @@ class uriLayout extends RESTfm\Resource {
         // Meta section.
         // Iterate records and set navigation hrefs.
         $record = NULL;         // @var \RESTfm\Message\Record
-        foreach($restfmMessage->getRecords() as $record) {
+        foreach ($restfmMessage->getRecords() as $record) {
             if ($record->getRecordId() === NULL) {
                 continue;
             }
             $record->setHref(
-                $request->baseUri.'/'.
-                        RESTfm\Url::encode($database).'/layout/'.
-                        RESTfm\Url::encode($layout).'/'.
-                        RESTfm\Url::encode($record->getRecordId()).'.'.$format
+                $request->baseUri . '/' .
+                RESTfm\Url::encode($database) . '/layout/' .
+                RESTfm\Url::encode($layout) . '/' .
+                RESTfm\Url::encode($record->getRecordId()) . '.' . $format
             );
-            if (isset($restfmParameters->RFMgetAfterPOST)) {
-                $record->setData(array("key" => $record->getRecordId()));
+            $record->setData($record->getRecordId());
+        }
+
+        // Override Data section (if RFMgetAfterPOST).
+        // Iterate records and set navigation hrefs.
+        if (isset($restfmParameters->RFMgetAfterPOST)) {
+            $record = NULL;         // @var \RESTfm\Message\Record
+            foreach ($restfmMessage->getRecords() as $record) {
+
+                // Setup tonic config for new request.
+                $requestConfigGAP = array(
+                    'baseUri' => RESTfm\Config::getVar('settings', 'baseURI'),
+                    'acceptFormats' => RESTfm\Config::getFormats(),
+                    'method' => 'GET',
+                    'uri' => $record->getHref(),
+                    'data' => ''
+                );
+
+                $rawRecordID = $record->getRecordId();
+                $opsRecordGAP = $backend->makeOpsRecord($database, $layout);
+                $restfmMessageGAP = $opsRecordGAP->readSingle(new \RESTfm\Message\Record($rawRecordID));
+                $sectionDataGAP = array();
+                $sectionGAP = $restfmMessageGAP->getSection('data');
+                $sectionRowsGAP = &$sectionGAP->_getRowsreference();
+                $sectionDataGAP = &$sectionRowsGAP[0];
+                $record->setData( $sectionDataGAP);
             }
         }
-        
-
-
-
-
 
         $response->setMessage($restfmMessage);
         $response->setStatus(RESTfm\Response::CREATED);
+
         return $response;
     }
 
