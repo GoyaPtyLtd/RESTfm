@@ -242,6 +242,8 @@ class uriLayout extends RESTfm\Resource {
      *  - RFMpreScriptParam=<string> : (optional) url encoded parameter string
      *                                 to pass to pre-script.
      *  - RFMsuppressData : set flag to suppress 'data' section from response.
+     *  - RFMgetAfterPOST  : Set flag to return record data after POST, mimiking the PHP API 
+     *                       behavior when using the Data API.
      *
      * @param RESTfm\Request $request
      * @param string $database
@@ -299,7 +301,15 @@ class uriLayout extends RESTfm\Resource {
                         RESTfm\Url::encode($layout).'/'.
                         RESTfm\Url::encode($record->getRecordId()).'.'.$format
             );
+            if (isset($restfmParameters->RFMgetAfterPOST)) {
+                $record->setData(array("key" => $record->getRecordId()));
+            }
         }
+        
+
+
+
+
 
         $response->setMessage($restfmMessage);
         $response->setStatus(RESTfm\Response::CREATED);
