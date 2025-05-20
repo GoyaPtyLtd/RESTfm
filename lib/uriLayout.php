@@ -308,7 +308,6 @@ class uriLayout extends RESTfm\Resource
                 RESTfm\Url::encode($layout) . '/' .
                 RESTfm\Url::encode($record->getRecordId()) . '.' . $format
             );
-            $record->setData($record->getRecordId());
         }
 
         // Override Data section (if RFMgetAfterPOST).
