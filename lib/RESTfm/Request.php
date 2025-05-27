@@ -158,9 +158,6 @@ class Request extends \Tonic\Request {
         if (isset($this->_parametersQueryString['RFMformat'])) {
             $this->_format = $this->_parametersQueryString['RFMformat'];
         }
-        if (\RESTfm\Config::getVar('settings', 'GETafterPOST') === TRUE) {
-            $this->_parametersQueryString['RFMgetAfterPOST'] = 'true';
-        }
 
         $this->_parseFormattedData();
 
