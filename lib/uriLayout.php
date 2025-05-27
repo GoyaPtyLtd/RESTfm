@@ -242,6 +242,8 @@ class uriLayout extends RESTfm\Resource {
      *  - RFMpreScriptParam=<string> : (optional) url encoded parameter string
      *                                 to pass to pre-script.
      *  - RFMsuppressData : set flag to suppress 'data' section from response.
+     *  - RFMgetAfterPOST  : Return record data after POST, mimiking the PHP API 
+     *                       behavior when using the Data API.
      *
      * @param RESTfm\Request $request
      * @param string $database
@@ -303,7 +305,7 @@ class uriLayout extends RESTfm\Resource {
 
         // Override Data section (if GETafterPOST=true).
         // Iterate records and set navigation hrefs.
-        if (RESTfm\Config::getVar('settings', 'GETafterPOST') === TRUE) {
+        if ((RESTfm\Config::getVar('settings', 'GETafterPOST') === TRUE) or isset($restfmParameters->RFMgetAfterPOST)) {
             $record = NULL;         // @var \RESTfm\Message\Record
             foreach ($restfmMessage->getRecords() as $record) {
 

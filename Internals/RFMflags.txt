@@ -27,6 +27,7 @@ RFMfind - uriLayout.php
 RFMfixFM01 - RESTfmQueryString.php
 RFMfixFM02 - RESTfmQueryString.php
 RFMformat - RESTfmRequest.php
+RFMgetAfterPOST - uriLayout.php
 RFMkey - RESTfmCredentials.php
 RFMlink - uriRoot.php
 RFMmax - uriLayout.php
