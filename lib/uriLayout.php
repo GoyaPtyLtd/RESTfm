@@ -176,8 +176,8 @@ class uriLayout extends RESTfm\Resource {
             }
             $record->setHref(
                 $request->baseUri.'/'.
-                $databaseEnc.'/layout/'.$layoutEnc.'/' .
-                RESTfm\Url::encode($record->getRecordId()).'.'.$format
+                        $databaseEnc.'/layout/'.$layoutEnc.'/'.
+                        RESTfm\Url::encode($record->getRecordId()).'.'.$format
             );
         }
 
@@ -192,16 +192,16 @@ class uriLayout extends RESTfm\Resource {
         // Start nav link.
         unset($queryString->RFMskip);
         $restfmMessage->setNav('start',
-            $request->baseUri.'/'.$databaseEnc.'/layout/'.
-            $layoutEnc.'.'.$format.$queryString->build()
+                    $request->baseUri.'/'.$databaseEnc.'/layout/'.
+                    $layoutEnc.'.'.$format.$queryString->build()
         );
 
         // Only build a next nav link if we have not exhausted the found set.
         if ($skipNext < $foundSetCount) {
             $queryString->RFMskip = $skipNext;
             $restfmMessage->setNav('next',
-                $request->baseUri.'/'.$databaseEnc.'/layout/'.
-                $layoutEnc.'.'.$format.$queryString->build()
+                        $request->baseUri.'/'.$databaseEnc.'/layout/'.
+                        $layoutEnc.'.'.$format.$queryString->build()
             );
         }
 
@@ -209,16 +209,16 @@ class uriLayout extends RESTfm\Resource {
         if ($findSkip != 0) {
             $queryString->RFMskip = $skipPrev;
             $restfmMessage->setNav('prev',
-                $request->baseUri.'/'.$databaseEnc.'/layout/'.
-                $layoutEnc.'.'.$format.$queryString->build()
+                        $request->baseUri.'/'.$databaseEnc.'/layout/'.
+                        $layoutEnc.'.'.$format.$queryString->build()
             );
         }
 
         // End nav link.
         $queryString->RFMskip = $foundSetCount - 1;
         $restfmMessage->setNav('end',
-            $request->baseUri.'/'.$databaseEnc.'/layout/'.
-            $layoutEnc.'.'.$format.$queryString->build()
+                    $request->baseUri.'/'.$databaseEnc.'/layout/'.
+                    $layoutEnc.'.'.$format.$queryString->build()
         );
 
 
@@ -297,9 +297,9 @@ class uriLayout extends RESTfm\Resource {
             }
             $record->setHref(
                 $request->baseUri.'/'.
-                RESTfm\Url::encode($database).'/layout/'.
-                RESTfm\Url::encode($layout).'/'.
-                RESTfm\Url::encode($record->getRecordId()).'.'.$format
+                        RESTfm\Url::encode($database).'/layout/'.
+                        RESTfm\Url::encode($layout).'/'.
+                        RESTfm\Url::encode($record->getRecordId()).'.'.$format
             );
         }
 
