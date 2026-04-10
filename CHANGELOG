@@ -1,4 +1,4 @@
-### 6.1.1beta ###
+### 6.1.1beta (Released 2026-04-10) ###
  - Add Content-Type setting to Formats. This allows a Format to explicitly set
    it's own Content-type if needed.
  - New .jsondataonly format added (returns data section as a simple array of
