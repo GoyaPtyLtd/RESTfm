@@ -19,11 +19,12 @@
 
 namespace RESTfm\Format;
 
+use RESTfm\FormatAbstract;
 use RESTfm\FormatInterface;
 use RESTfm\Message\Message;
 use RESTfm\Message\Record;
 
-class FormatChargify implements FormatInterface {
+class FormatChargify extends FormatAbstract implements FormatInterface {
 
     // --- Interface Implementation --- //
 

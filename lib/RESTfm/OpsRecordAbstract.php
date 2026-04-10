@@ -514,8 +514,9 @@ abstract class OpsRecordAbstract {
      * the 'info' section. e.g.:
      * X-RESTfm-Status          500
      * X-RESTfm-Reason          FileMaker Error
-     * X-RESTfm-FM-Status       802
-     * X-RESTfm-FM-Reason       Unable to open file
+     * X-RESTfm-Backend         FileMaker PHP API
+     * X-RESTfm-Backend-Status  802
+     * X-RESTfm-Backend-Reason  Unable to open file
      *
      * @param boolean $isSingle
      *  Set TRUE if this is to be a single operation, not a bulk operation.

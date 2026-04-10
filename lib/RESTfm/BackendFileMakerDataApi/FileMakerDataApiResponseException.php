@@ -35,7 +35,7 @@ class FileMakerDataApiResponseException extends \RESTfm\ResponseException {
         $code = 500;                // Default status code. Overridden below.
         $reason = '';
 
-        // Exctract error code and message from result.
+        // Extract error code and message from result.
         $fmDataApiCode = $result->getCode();
         $fmDataApiMessage = $result->getMessage();
 
@@ -60,11 +60,12 @@ class FileMakerDataApiResponseException extends \RESTfm\ResponseException {
         }
 
         // Additional headers for this exception.
-        $this->addHeader('X-RESTfm-FMDataAPI-Status', $fmDataApiCode);
-        $this->addHeader('X-RESTfm-FMDataAPI-Reason', $fmDataApiMessage);
+        $this->addHeader('X-RESTfm-Backend', 'FileMaker Data API');
+        $this->addHeader('X-RESTfm-Backend-Status', $fmDataApiCode);
+        $this->addHeader('X-RESTfm-Backend-Reason', $fmDataApiMessage);
         $scriptResults = $result->getScriptResults();
         foreach ($scriptResults as $res => $val) {
-            $this->addHeader('X-RESTfm-FMDataAPI-' . $res, $val);
+            $this->addHeader('X-RESTfm-Backend-Script-' . $res, $val);
         }
 
         // Set a generic reason for status 500 if not already set.

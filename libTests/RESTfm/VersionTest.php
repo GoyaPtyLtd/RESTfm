@@ -35,14 +35,20 @@ class VersionTest extends TestCase {
         ob_end_clean();
 
         // Protocol is always an integer.
-        $this->assertRegExp('/^\d+$/', Version::getProtocol());
+        $this->assertMatchesRegularExpression(
+            '/^\d+$/',
+            Version::getProtocol()
+        );
 
         // Revision and release could be any non empty string.
         $this->assertNotEmpty(Version::getRelease());
         $this->assertNotEmpty(Version::getRevision());
 
         // Versions always contains a slash.
-        $this->assertRegExp('/\//', Version::getVersion());
+        $this->assertMatchesRegularExpression(
+            '/\//',
+            Version::getVersion()
+        );
     }
 
     /**

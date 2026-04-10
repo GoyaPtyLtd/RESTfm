@@ -19,6 +19,7 @@
 
 namespace RESTfm\Format;
 
+use RESTfm\FormatAbstract;
 use RESTfm\FormatInterface;
 use RESTfm\Message\Message;
 
@@ -37,7 +38,7 @@ use RESTfm\Message\Message;
  *      - value chars \ ¶ " escaped with        : \
  *      - value char \n translated to           : ¶
  */
-class FormatSimple implements FormatInterface {
+class FormatSimple extends FormatAbstract implements FormatInterface {
 
     /**
      * Parse the provided data string into the provided \RESTfm\Message\Message

@@ -134,23 +134,23 @@ class Parameters implements \Iterator {
 
     // --- Iterator interface implementation --- //
 
-    public function current() {
+    public function current(): mixed {
         return current($this->_parameters);
     }
 
-    public function key() {
+    public function key(): mixed {
         return key($this->_parameters);
     }
 
-    public function next() {
-        return next($this->_parameters);
+    public function next(): void {
+        next($this->_parameters);
     }
 
-    public function rewind() {
-        return reset($this->_parameters);
+    public function rewind(): void {
+        reset($this->_parameters);
     }
 
-    public function valid() {
+    public function valid(): bool {
         return key($this->_parameters) !== NULL;
     }
 

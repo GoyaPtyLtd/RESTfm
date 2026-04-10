@@ -291,7 +291,11 @@ class Response extends \Tonic\Response {
                     $request->getCredentials()->getUsername() );
         }
 
-        $this->addHeader('Content-type', $this->contentType($formatAs));
+        if ($formatter->contentType !== NULL) {
+            $this->addHeader('Content-type', $formatter->contentType);
+        } else {
+            $this->addHeader('Content-type', $this->contentType($formatAs));
+        }
         $this->body = $formatter->write($this->_Message);
 
         // Use XSLT to produce final format.

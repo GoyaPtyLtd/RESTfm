@@ -23,7 +23,9 @@ use RESTfm\FormatAbstract;
 use RESTfm\FormatInterface;
 use RESTfm\Message\Message;
 
-class FormatJson extends FormatAbstract implements FormatInterface {
+class FormatJsonDataOnly extends FormatAbstract implements FormatInterface {
+
+    public $contentType = 'application/json';
 
     // --- Interface Implementation --- //
     /**
@@ -34,10 +36,7 @@ class FormatJson extends FormatAbstract implements FormatInterface {
      * @param string $data
      */
     public function parse (Message $restfmMessage, $data) {
-        $a = json_decode($data, TRUE);
-        foreach ($a as $sectionName => $sectionData) {
-            $restfmMessage->setSection($sectionName, $sectionData);
-        }
+        return; // This format doesn't accept data
     }
 
     /**
@@ -48,10 +47,12 @@ class FormatJson extends FormatAbstract implements FormatInterface {
      * @return string
      */
     public function write (Message $restfmMessage) {
+        $rawArray = $restfmMessage->exportArray();
+
         if (\RESTfm\Config::getVar('settings', 'formatNicely')) {
-            return $this->_json_encode_pretty($restfmMessage->exportArray());
+            return $this->_json_encode_pretty($rawArray['data']);
         } else {
-            return json_encode($restfmMessage->exportArray());
+            return json_encode($rawArray['data']);
         }
     }
 
